@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/Nemesis/build/cmake_install.cmake",
+		"D:/Nemesis/build/Infections/src/Nemesis/cmake_install.cmake",
+		"D:/Nemesis/build/NemesisLoader/TestDll/cmake_install.cmake",
+		"D:/Nemesis/build/NemesisLoader/SecondaryDll/cmake_install.cmake",
+		"D:/Nemesis/build/Loader/cmake_install.cmake",
+		"D:/Nemesis/build/Testatatck/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
