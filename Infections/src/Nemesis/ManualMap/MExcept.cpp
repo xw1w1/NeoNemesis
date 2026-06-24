@@ -227,6 +227,13 @@ NTSTATUS MExcept::CreateVEH( Process& proc, ModuleData& mod, bool partial )
         ModuleTable table = { };
         _pModTable.Read ( 0, table );
 
+        if (table.count >= _countof( table.entry ))
+        {
+            NEMESIS_TRACE( "ManualMap: ModuleTable overflow (count=%llu, max=%zu)",
+                           static_cast<uint64_t>(table.count), _countof( table.entry ) );
+            return STATUS_INSUFFICIENT_RESOURCES;
+        }
+
         // Add new entry to the table
         table.entry[table.count].base = mod.baseAddress;
         table.entry[table.count].size = mod.size;

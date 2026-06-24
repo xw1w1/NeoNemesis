@@ -252,6 +252,10 @@ void MMap::FixManagedPath( ptr_t base, const std::wstring &path )
             if (localdata.DllBase == base)
             {
                 auto len = path.length()* sizeof( wchar_t );
+
+                if (len + sizeof( wchar_t ) > localdata.FullDllName.MaximumLength || len > 0xFFFE)
+                    return;
+
                 _process.memory().Write( localdata.FullDllName.Buffer, len + 2, path.c_str() );
                 _process.memory().Write<short>(
                     head + FIELD_OFFSET( _LDR_DATA_TABLE_ENTRY_BASE_T<T>, FullDllName.Length ),
@@ -1247,7 +1251,12 @@ NTSTATUS MMap::CreateActx( const pe::PEImage& image  )
     NTSTATUS status = STATUS_SUCCESS;
     uint64_t result = 0;
 
-    auto mem = _process.memory().Allocate( 512, PAGE_READWRITE );
+    const size_t pathBytes  = (image.manifestFile().length() + 1) * sizeof( wchar_t );
+    const size_t headerSize = sizeof( ptr_t ) + sizeof( _ACTCTXW_T<uint64_t> );
+    const size_t needed     = headerSize + pathBytes;
+    const size_t allocSize  = (needed < 512) ? 512 : ((needed + 0xFFF) & ~static_cast<size_t>(0xFFF));
+
+    auto mem = _process.memory().Allocate( allocSize, PAGE_READWRITE );
     if (!mem)
         return mem.status;
 
