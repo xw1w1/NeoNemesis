@@ -175,9 +175,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
-    <ProjectReference Include="D:\Nemesis\build\NemesisLoader\TestDll\TestDll.vcxproj">
-      <Project>{3851847F-077F-3D4D-A18D-A5FD1762A8FB}</Project>
-      <Name>TestDll</Name>
+    <ProjectReference Include="D:\Nemesis\build\NemesisLoader\TestDll\NemesisLoader.vcxproj">
+      <Project>{2E574437-ED65-3803-AE76-FF826C8844A2}</Project>
+      <Name>NemesisLoader</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

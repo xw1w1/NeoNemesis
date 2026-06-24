@@ -2,11 +2,9 @@ D:/Nemesis/build/CMakeFiles/ALL_BUILD.dir
 D:/Nemesis/build/CMakeFiles/ZERO_CHECK.dir
 D:/Nemesis/build/Infections/src/Nemesis/CMakeFiles/Nemesis.dir
 D:/Nemesis/build/Infections/src/Nemesis/CMakeFiles/ALL_BUILD.dir
-D:/Nemesis/build/NemesisLoader/TestDll/CMakeFiles/TestDll.dir
+D:/Nemesis/build/NemesisLoader/TestDll/CMakeFiles/NemesisLoader.dir
 D:/Nemesis/build/NemesisLoader/TestDll/CMakeFiles/ALL_BUILD.dir
 D:/Nemesis/build/NemesisLoader/SecondaryDll/CMakeFiles/SecondaryDll.dir
 D:/Nemesis/build/NemesisLoader/SecondaryDll/CMakeFiles/ALL_BUILD.dir
 D:/Nemesis/build/Loader/CMakeFiles/Loader.dir
 D:/Nemesis/build/Loader/CMakeFiles/ALL_BUILD.dir
-D:/Nemesis/build/Testatatck/CMakeFiles/TargetApp.dir
-D:/Nemesis/build/Testatatck/CMakeFiles/ALL_BUILD.dir

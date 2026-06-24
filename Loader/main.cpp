@@ -10,7 +10,7 @@ int main()
     Process proc;
 
     // 1) Запускаем целевой процесс БЕЗ suspend, чтобы у него были живые потоки для hijack
-    NTSTATUS status = proc.CreateAndAttach( L"TargetApp.exe", false /* not suspended */ );
+    NTSTATUS status = proc.CreateAndAttach( L"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64\\cs2.exe", false /* not suspended */ );
     if (!NT_SUCCESS( status ))
     {
         printf( "CreateAndAttach failed, status = 0x%X\n", status );
@@ -25,7 +25,7 @@ int main()
     printf( "Calling MapImage with NoThreads (Thread Hijack)...\n" );
 
     // 3) Manual Map + Thread Hijack (NoThreads = не создавать новый поток, угнать существующий)
-    auto result = proc.mmap().MapImage( L"TestDll.dll", NoThreads );
+    auto result = proc.mmap().MapImage( L"NemesisLoader.dll", NoThreads );
     if (!result.success())
     {
         printf( "MapImage failed, status = 0x%X\n", result.status );
@@ -33,7 +33,7 @@ int main()
         return 1;
     }
 
-    printf( "TestDll.dll mapped successfully\n" );
+    printf( "NemesisLoader.dll mapped successfully\n" );
 
     // 4) Дать DLL отработать DllMain и открыть cmd
     printf( "DLL injected. Closing target in 5 seconds (cmd останется открытым).\n" );

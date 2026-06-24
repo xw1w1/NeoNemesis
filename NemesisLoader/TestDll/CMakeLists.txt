@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 3.13)
-project(TestDll)
+project(NemesisLoader)
 
-add_library(TestDll SHARED dllmain.cpp)
+add_library(NemesisLoader SHARED dllmain.cpp)

@@ -8,13 +8,10 @@
       <FullPath>D:\Nemesis\build\Loader\Debug\Loader.exe</FullPath>
     </ProjectOutput>
     <ProjectOutput>
+      <FullPath>D:\Nemesis\build\NemesisLoader\TestDll\Debug\NemesisLoader.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
       <FullPath>D:\Nemesis\build\NemesisLoader\SecondaryDll\Debug\SecondaryDll.dll</FullPath>
-    </ProjectOutput>
-    <ProjectOutput>
-      <FullPath>D:\Nemesis\build\Testatatck\Debug\TargetApp.exe</FullPath>
-    </ProjectOutput>
-    <ProjectOutput>
-      <FullPath>D:\Nemesis\build\NemesisLoader\TestDll\Debug\TestDll.dll</FullPath>
     </ProjectOutput>
     <ProjectOutput>
       <FullPath>D:\Nemesis\build\x64\Debug\ALL_BUILD</FullPath>

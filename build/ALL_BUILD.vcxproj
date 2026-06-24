@@ -183,17 +183,13 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{50F1EF15-344F-34C5-BC6D-CC00EA6877D1}</Project>
       <Name>Nemesis</Name>
     </ProjectReference>
+    <ProjectReference Include="D:\Nemesis\build\NemesisLoader\TestDll\NemesisLoader.vcxproj">
+      <Project>{2E574437-ED65-3803-AE76-FF826C8844A2}</Project>
+      <Name>NemesisLoader</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\Nemesis\build\NemesisLoader\SecondaryDll\SecondaryDll.vcxproj">
       <Project>{2847883E-54D7-34ED-8E13-46EBB70FD34B}</Project>
       <Name>SecondaryDll</Name>
-    </ProjectReference>
-    <ProjectReference Include="D:\Nemesis\build\Testatatck\TargetApp.vcxproj">
-      <Project>{946092FF-26E0-395F-AA2E-62BC4EA752C8}</Project>
-      <Name>TargetApp</Name>
-    </ProjectReference>
-    <ProjectReference Include="D:\Nemesis\build\NemesisLoader\TestDll\TestDll.vcxproj">
-      <Project>{3851847F-077F-3D4D-A18D-A5FD1762A8FB}</Project>
-      <Name>TestDll</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

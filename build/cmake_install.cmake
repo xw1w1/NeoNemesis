@@ -38,7 +38,6 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("D:/Nemesis/build/NemesisLoader/TestDll/cmake_install.cmake")
   include("D:/Nemesis/build/NemesisLoader/SecondaryDll/cmake_install.cmake")
   include("D:/Nemesis/build/Loader/cmake_install.cmake")
-  include("D:/Nemesis/build/Testatatck/cmake_install.cmake")
 
 endif()
 

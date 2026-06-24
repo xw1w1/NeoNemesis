@@ -237,6 +237,15 @@ NemesisLib_IS_TOP_LEVEL:STATIC=OFF
 NemesisLib_SOURCE_DIR:STATIC=D:/Nemesis/Infections/src/Nemesis
 
 //Value Computed by CMake
+NemesisLoader_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader/TestDll
+
+//Value Computed by CMake
+NemesisLoader_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+NemesisLoader_SOURCE_DIR:STATIC=D:/Nemesis/NemesisLoader/TestDll
+
+//Value Computed by CMake
 SecondaryDll_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader/SecondaryDll
 
 //Value Computed by CMake
