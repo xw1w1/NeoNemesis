@@ -23,7 +23,7 @@ target_include_directories(NemesisDLC PRIVATE
 )
 
 add_subdirectory(RequiredDependencies/minhook-master)
-target_link_libraries(NemesisDLC PRIVATE minhook)
+target_link_libraries(NemesisDLC PRIVATE minhook Psapi)
 
 set_target_properties(NemesisDLC PROPERTIES
     OUTPUT_NAME "NemesisLoader"

@@ -4,6 +4,7 @@
 #include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <thread>
@@ -76,7 +77,8 @@ namespace Nemesis::CameraPositionChange
                 return false;
             }
 
-            if (MH_Initialize() != MH_OK && MH_Initialize() != MH_ERROR_ALREADY_INITIALIZED)
+            const MH_STATUS init = MH_Initialize();
+            if (init != MH_OK && init != MH_ERROR_ALREADY_INITIALIZED)
             {
                 NERR("MH_Initialize failed");
                 return false;
