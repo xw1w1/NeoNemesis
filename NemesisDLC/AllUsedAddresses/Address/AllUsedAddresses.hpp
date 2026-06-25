@@ -17,8 +17,8 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t dwLocalPlayerController = 0x2320720;
         inline constexpr std::uintptr_t dwViewAngles            = 0x23568C8;
         inline constexpr std::uintptr_t dwViewMatrix            = 0x2346B30;
-        inline constexpr std::uintptr_t dwViewRender            = 0x2346EE0;
         inline constexpr std::uintptr_t dwEntityList            = 0x24E76A0;
+        inline constexpr std::uintptr_t dwCameraManager         = 0x2079860;
     }
 
     namespace Schema
@@ -30,15 +30,17 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_bPawnIsAlive    = 0x914;
     }
 
-    namespace Sig
+    namespace ThirdpersonCam
     {
-        inline constexpr const char* kViewSetup = "";
+        inline constexpr std::ptrdiff_t kEnableFlag = 0x229;
+        inline constexpr std::ptrdiff_t kAnglePitch = 0x230;
+        inline constexpr std::ptrdiff_t kAngleYaw   = 0x234;
+        inline constexpr std::ptrdiff_t kDistance   = 0x238;
     }
 
     namespace CameraView
     {
-        inline constexpr float kDistance = 120.0f;
-        inline constexpr float kHeight   = 25.0f;
         inline constexpr int   kToggleKey = 0x73;
+        inline constexpr float kDistance  = 120.0f;
     }
 }
