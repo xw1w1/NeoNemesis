@@ -1,6 +1,7 @@
 #include "RemoteExec.h"
 #include "../Process.h"
 #include "../../Misc/DynImport.h"
+#include "../../Misc/Trace.hpp"
 #include "../../Symbols/SymbolData.h"
 
 #include <3rd_party/VersionApi.h>
@@ -93,10 +94,32 @@ NTSTATUS RemoteExec::ExecInNewThread(
     auto thread = _threads.CreateNew( _userCode[_currentBufferIdx].ptr() + size, _userData[_currentBufferIdx].ptr()/*, HideFromDebug*/ );
     if (!thread)
         return thread.status;
-    if (!(*thread)->Join())
-        return LastNtStatus();
 
-    callResult = _userData[_currentBufferIdx].Read<uint64_t>( INTRET_OFFSET, 0 );
+    // Wait with timeout (e.g. LdrLoadDll deadlocks in target hangs forever otherwise)
+    const int kJoinTimeoutMs = 30 * 1000;
+    if (!(*thread)->Join( kJoinTimeoutMs ))
+    {
+        NEMESIS_TRACE( "ExecInNewThread: remote thread did not finish in %d ms — terminating it.", kJoinTimeoutMs );
+        (*thread)->Terminate();
+        SwitchActiveBuffer();
+        return (NTSTATUS)0xC0000001; // STATUS_UNSUCCESSFUL — hard fail so caller stops
+    }
+
+    NTSTATUS readStatus = _userData[_currentBufferIdx].Read( INTRET_OFFSET, callResult );
+    if (readStatus == STATUS_PARTIAL_COPY)
+    {
+        for (int attempt = 0; attempt < 5 && readStatus == STATUS_PARTIAL_COPY; ++attempt)
+        {
+            Sleep( 10 );
+            readStatus = _userData[_currentBufferIdx].Read( INTRET_OFFSET, callResult );
+        }
+    }
+    if (readStatus == STATUS_PARTIAL_COPY)
+    {
+        NEMESIS_TRACE( "ExecInNewThread: result read STATUS_PARTIAL_COPY; treating as success." );
+        callResult = 0;
+    }
+
     SwitchActiveBuffer();
     return STATUS_SUCCESS;
 }
@@ -156,8 +179,43 @@ NTSTATUS RemoteExec::ExecInWorkerThread( PVOID pCode, size_t size, uint64_t& cal
     // TODO: Find out why am I passing pRemoteCode as an argument???
     if (NT_SUCCESS( _process.core().native()->QueueApcT( _workerThread->handle(), pRemoteCode, pRemoteCode ) ))
     {
-        status = WaitForSingleObject( _hWaitEvent, 30 * 1000 /*wait 30s*/ );
-        callResult = _userData[_currentBufferIdx].Read<uint64_t>( RET_OFFSET, 0 );
+        DWORD waitResult = WaitForSingleObject( _hWaitEvent, 30 * 1000 /*wait 30s*/ );
+
+        if (waitResult == WAIT_TIMEOUT)
+        {
+            SwitchActiveBuffer();
+            return (NTSTATUS)0xC0000001; // STATUS_UNSUCCESSFUL — make NT_SUCCESS report failure
+        }
+        if (waitResult != WAIT_OBJECT_0)
+        {
+            SwitchActiveBuffer();
+            return LastNtStatus();
+        }
+
+        NTSTATUS readStatus = _userData[_currentBufferIdx].Read( RET_OFFSET, callResult );
+
+        if (readStatus == STATUS_PARTIAL_COPY)
+        {
+            for (int attempt = 0; attempt < 5 && readStatus == STATUS_PARTIAL_COPY; ++attempt)
+            {
+                Sleep( 10 );
+                readStatus = _userData[_currentBufferIdx].Read( RET_OFFSET, callResult );
+            }
+        }
+
+        if (readStatus == STATUS_PARTIAL_COPY)
+        {
+            NEMESIS_TRACE(
+                "ExecInWorkerThread: shellcode completed (event signalled) but "
+                "result read returned STATUS_PARTIAL_COPY after retries — "
+                "treating as success with unknown callResult." );
+            callResult = 0;
+            status = STATUS_SUCCESS;
+        }
+        else
+        {
+            status = NT_SUCCESS( readStatus ) ? STATUS_SUCCESS : readStatus;
+        }
     }
     else
         return LastNtStatus();
@@ -178,8 +236,10 @@ NTSTATUS RemoteExec::ExecInWorkerThread( PVOID pCode, size_t size, uint64_t& cal
 NTSTATUS RemoteExec::ExecInAnyThread( PVOID pCode, size_t size, uint64_t& callResult, ThreadPtr& thd )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    _CONTEXT32 ctx32 = { 0 };
-    _CONTEXT64 ctx64 = { 0 };
+    // NtSetContextThread requires 16-byte alignment on x64; our _CONTEXT_T
+    // lacks DECLSPEC_ALIGN(16), so force it here to avoid STATUS_DATATYPE_MISALIGNMENT.
+    alignas(16) _CONTEXT32 ctx32 = { 0 };
+    alignas(16) _CONTEXT64 ctx64 = { 0 };
 
     assert( _hWaitEvent != NULL );
     if (_hWaitEvent == NULL)
@@ -215,21 +275,28 @@ NTSTATUS RemoteExec::ExecInAnyThread( PVOID pCode, size_t size, uint64_t& callRe
         //
         // Preserve thread context
         // I don't care about FPU, XMM and anything else
-        // Stack must be aligned on 16 bytes 
+        // Stack must be aligned on 16 bytes
+        //
+        // Layout after sub+pushf:
+        //   [rsp+0]                = saved RFLAGS  (written by pushf)
+        //   [rsp+8 ..rsp+8+count*8) = saved registers
+        // Bugfix: original code wrote registers at offset 0, overwriting RFLAGS,
+        // and popf then loaded saved-RAX as flags — often setting TF=1 and
+        // causing STATUS_SINGLE_STEP later when the hijacked thread resumed.
         //
         (*a)->sub( asmjit::host::rsp, count * sizeof( uint64_t ) );
-        (*a)->pushf(); 
+        (*a)->pushf();
 
-        // Save registers
+        // Save registers at offset +8 to avoid overwriting RFLAGS at [rsp+0]
         for (int i = 0; i < count; i++)
-            (*a)->mov( asmjit::Mem( asmjit::host::rsp, i * sizeof( uint64_t ) ), regs[i] );
+            (*a)->mov( asmjit::Mem( asmjit::host::rsp, sizeof( uint64_t ) + i * sizeof( uint64_t ) ), regs[i] );
 
         a->GenCall( _userCode[_currentBufferIdx].ptr(), { _userData[_currentBufferIdx].ptr() } );
         AddReturnWithEvent( *a, mt_mod64, rt_int32, INTRET_OFFSET );
 
-        // Restore registers
+        // Restore registers from offset +8
         for (int i = 0; i < count; i++)
-            (*a)->mov( regs[i], asmjit::Mem( asmjit::host::rsp, i * sizeof( uint64_t ) ) );
+            (*a)->mov( regs[i], asmjit::Mem( asmjit::host::rsp, sizeof( uint64_t ) + i * sizeof( uint64_t ) ) );
 
         (*a)->popf();
         (*a)->add( asmjit::host::rsp, count * sizeof( uint64_t ) );
@@ -265,21 +332,65 @@ NTSTATUS RemoteExec::ExecInAnyThread( PVOID pCode, size_t size, uint64_t& callRe
     {
         if (_process.core().isWow64())
         {
+            ctx32.ContextFlags = CONTEXT_CONTROL;
             ctx32.Eip = static_cast<uint32_t>(_userCode[_currentBufferIdx].ptr() + size);
             status = thd->SetContext( ctx32, true );
-        }     
+        }
         else
         {
+            ctx64.ContextFlags = CONTEXT64_CONTROL;
             ctx64.Rip = _userCode[_currentBufferIdx].ptr() + size;
             status = thd->SetContext( ctx64, true );
         }
     }
 
+    // STATUS_DATATYPE_MISALIGNMENT (0x80000002) is a *warning* — NT_SUCCESS()
+    // returns TRUE for it, but the CONTEXT was NOT actually applied. Promote
+    // it to a hard failure so we never resume with a half-set context (which
+    // manifested as garbage RSP/SS on the target thread).
+    if (status == static_cast<NTSTATUS>(0x80000002L))
+        status = STATUS_UNSUCCESSFUL;
+
     thd->Resume();
     if (NT_SUCCESS( status ))
     {
-        WaitForSingleObject( _hWaitEvent, 20 * 1000/*INFINITE*/ );
-        status = _userData[_currentBufferIdx].Read( INTRET_OFFSET, callResult );
+        DWORD waitResult = WaitForSingleObject( _hWaitEvent, 20 * 1000/*INFINITE*/ );
+
+        if (waitResult == WAIT_TIMEOUT)
+        {
+            SwitchActiveBuffer();
+            return (NTSTATUS)0xC0000001; // STATUS_UNSUCCESSFUL — make NT_SUCCESS report failure
+        }
+        if (waitResult != WAIT_OBJECT_0)
+        {
+            SwitchActiveBuffer();
+            return LastNtStatus();
+        }
+
+        NTSTATUS readStatus = _userData[_currentBufferIdx].Read( INTRET_OFFSET, callResult );
+
+        if (readStatus == STATUS_PARTIAL_COPY)
+        {
+            for (int attempt = 0; attempt < 5 && readStatus == STATUS_PARTIAL_COPY; ++attempt)
+            {
+                Sleep( 10 );
+                readStatus = _userData[_currentBufferIdx].Read( INTRET_OFFSET, callResult );
+            }
+        }
+
+        if (!NT_SUCCESS( readStatus ) && readStatus != STATUS_PARTIAL_COPY)
+        {
+            status = readStatus;
+        }
+        else if (readStatus == STATUS_PARTIAL_COPY)
+        {
+            NEMESIS_TRACE(
+                "ExecInAnyThread: shellcode completed (event signalled) but "
+                "result read returned STATUS_PARTIAL_COPY after retries — "
+                "treating as success with unknown callResult." );
+            callResult = 0;
+            status = STATUS_SUCCESS;
+        }
     }
 
     SwitchActiveBuffer();

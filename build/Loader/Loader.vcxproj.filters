@@ -4,6 +4,9 @@
     <ClCompile Include="D:\Nemesis\Loader\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\Nemesis\Loader\monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Nemesis\Loader\CMakeLists.txt" />

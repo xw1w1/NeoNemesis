@@ -237,40 +237,13 @@ NemesisLib_IS_TOP_LEVEL:STATIC=OFF
 NemesisLib_SOURCE_DIR:STATIC=D:/Nemesis/Infections/src/Nemesis
 
 //Value Computed by CMake
-NemesisLoader_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader/TestDll
+NemesisLoader_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader
 
 //Value Computed by CMake
 NemesisLoader_IS_TOP_LEVEL:STATIC=OFF
 
 //Value Computed by CMake
-NemesisLoader_SOURCE_DIR:STATIC=D:/Nemesis/NemesisLoader/TestDll
-
-//Value Computed by CMake
-SecondaryDll_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader/SecondaryDll
-
-//Value Computed by CMake
-SecondaryDll_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-SecondaryDll_SOURCE_DIR:STATIC=D:/Nemesis/NemesisLoader/SecondaryDll
-
-//Value Computed by CMake
-TargetApp_BINARY_DIR:STATIC=D:/Nemesis/build/Testatatck
-
-//Value Computed by CMake
-TargetApp_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-TargetApp_SOURCE_DIR:STATIC=D:/Nemesis/Testatatck
-
-//Value Computed by CMake
-TestDll_BINARY_DIR:STATIC=D:/Nemesis/build/NemesisLoader/TestDll
-
-//Value Computed by CMake
-TestDll_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-TestDll_SOURCE_DIR:STATIC=D:/Nemesis/NemesisLoader/TestDll
+NemesisLoader_SOURCE_DIR:STATIC=D:/Nemesis/NemesisLoader
 
 
 ########################
@@ -372,7 +345,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib

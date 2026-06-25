@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(Loader)
 
-add_executable(Loader main.cpp)
+add_executable(Loader main.cpp monitor.cpp)
 target_include_directories(Loader PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../Infections/src/Nemesis
     ${CMAKE_CURRENT_SOURCE_DIR}/../Infections/src/3rd_party

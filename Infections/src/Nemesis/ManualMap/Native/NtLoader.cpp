@@ -385,19 +385,9 @@ ptr_t NtLdr::InitBaseNode( NtLdrEntry& mod )
     if (entryPtr == 0)
         return 0;
 
+    // Allocate space for Unicode string
     _UNICODE_STRING_T<T> strLocal = { 0 };
-
-    const size_t nameBytes     = (mod.name.length() + 1) * sizeof( wchar_t );
-    const size_t fullPathBytes = (mod.fullPath.length() + 1) * sizeof( wchar_t );
-
-    if (nameBytes > 0xFFFE || fullPathBytes > 0xFFFE)
-        return 0;
-
-    const size_t nameSlotSize     = ((nameBytes + 0xFFF) & ~static_cast<size_t>(0xFFF));
-    const size_t fullPathSlotSize = ((fullPathBytes + 0xFFF) & ~static_cast<size_t>(0xFFF));
-    const size_t totalSize        = nameSlotSize + fullPathSlotSize;
-
-    auto mem = _process.memory().Allocate( totalSize, PAGE_READWRITE, 0, false );
+    auto mem = _process.memory().Allocate( 0x1000, PAGE_READWRITE, 0, false );
     if (!mem)
         return 0;
 
@@ -417,7 +407,7 @@ ptr_t NtLdr::InitBaseNode( NtLdrEntry& mod )
 
     // Dll name
     strLocal.Length = static_cast<WORD>(mod.name.length() * sizeof( wchar_t ));
-    strLocal.MaximumLength = static_cast<WORD>(nameSlotSize);
+    strLocal.MaximumLength = 0x600;
     strLocal.Buffer = StringBuf.ptr<T>();
     StringBuf.Write( 0, strLocal.Length + 2, mod.name.c_str() );
 
@@ -426,9 +416,8 @@ ptr_t NtLdr::InitBaseNode( NtLdrEntry& mod )
 
     // Dll full path
     strLocal.Length = static_cast<WORD>(mod.fullPath.length() * sizeof( wchar_t ));
-    strLocal.MaximumLength = static_cast<WORD>(fullPathSlotSize);
-    strLocal.Buffer = StringBuf.ptr<T>() + nameSlotSize;
-    StringBuf.Write( nameSlotSize, strLocal.Length + 2, mod.fullPath.c_str() );
+    strLocal.Buffer = StringBuf.ptr<T>() + 0x800;
+    StringBuf.Write( 0x800, strLocal.Length + 2, mod.fullPath.c_str() );
 
     // entryPtr->FullDllName = strLocal;
     _process.memory().Write( fieldPtr( entryPtr, &EntryType::FullDllName ), strLocal );

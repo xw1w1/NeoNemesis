@@ -51,10 +51,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -86,7 +86,7 @@ events:
       The output was:
       0
       ╨Т╨╡╤А╤Б╨╕╤П MSBuild 18.7.1+024f5b037 ╨┤╨╗╤П .NET Framework
-      ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 15:14:23.
+      ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 23:19:02.
       
       ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\4.3.3\\CompilerIdC\\CompilerIdC.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
       PrepareForBuild:
@@ -115,7 +115,7 @@ events:
           ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
           ╨Ю╤И╨╕╨▒╨╛╨║: 0
       
-      ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:17.72
+      ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:02.56
       
       
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
@@ -160,10 +160,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -198,10 +198,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -252,10 +252,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -309,9 +309,6 @@ events:
       - "C:/Program Files/dotnet/lld-link.com"
       - "C:/Program Files/dotnet/lld-link.exe"
       - "C:/Program Files/dotnet/lld-link"
-      - "C:/Program Files/Git/cmd/lld-link.com"
-      - "C:/Program Files/Git/cmd/lld-link.exe"
-      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Program Files/CMake/bin/lld-link.com"
       - "C:/Program Files/CMake/bin/lld-link.exe"
       - "C:/Program Files/CMake/bin/lld-link"
@@ -321,6 +318,9 @@ events:
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.com"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.exe"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.com"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link"
@@ -379,10 +379,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -431,10 +431,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -469,10 +469,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -521,10 +521,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -578,9 +578,6 @@ events:
       - "C:/Program Files/dotnet/mt.com"
       - "C:/Program Files/dotnet/mt.exe"
       - "C:/Program Files/dotnet/mt"
-      - "C:/Program Files/Git/cmd/mt.com"
-      - "C:/Program Files/Git/cmd/mt.exe"
-      - "C:/Program Files/Git/cmd/mt"
       - "C:/Program Files/CMake/bin/mt.com"
       - "C:/Program Files/CMake/bin/mt.exe"
       - "C:/Program Files/CMake/bin/mt"
@@ -590,6 +587,9 @@ events:
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/mt.com"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/mt.exe"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/mt"
+      - "C:/Program Files/Git/cmd/mt.com"
+      - "C:/Program Files/Git/cmd/mt.exe"
+      - "C:/Program Files/Git/cmd/mt"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/mt.com"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/mt.exe"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/mt"
@@ -648,10 +648,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -700,10 +700,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -738,10 +738,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -800,10 +800,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -835,7 +835,7 @@ events:
       The output was:
       0
       ╨Т╨╡╤А╤Б╨╕╤П MSBuild 18.7.1+024f5b037 ╨┤╨╗╤П .NET Framework
-      ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 15:14:42.
+      ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 23:19:06.
       
       ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\4.3.3\\CompilerIdCXX\\CompilerIdCXX.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
       PrepareForBuild:
@@ -864,7 +864,7 @@ events:
           ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
           ╨Ю╤И╨╕╨▒╨╛╨║: 0
       
-      ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:02.51
+      ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.16
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -909,10 +909,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -966,9 +966,6 @@ events:
       - "C:/Program Files/dotnet/lld-link.com"
       - "C:/Program Files/dotnet/lld-link.exe"
       - "C:/Program Files/dotnet/lld-link"
-      - "C:/Program Files/Git/cmd/lld-link.com"
-      - "C:/Program Files/Git/cmd/lld-link.exe"
-      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Program Files/CMake/bin/lld-link.com"
       - "C:/Program Files/CMake/bin/lld-link.exe"
       - "C:/Program Files/CMake/bin/lld-link"
@@ -978,6 +975,9 @@ events:
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.com"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.exe"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.com"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link"
@@ -1036,10 +1036,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -1090,10 +1090,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -1156,9 +1156,6 @@ events:
       - "C:/Program Files/dotnet/rc.com"
       - "C:/Program Files/dotnet/rc.exe"
       - "C:/Program Files/dotnet/rc"
-      - "C:/Program Files/Git/cmd/rc.com"
-      - "C:/Program Files/Git/cmd/rc.exe"
-      - "C:/Program Files/Git/cmd/rc"
       - "C:/Program Files/CMake/bin/rc.com"
       - "C:/Program Files/CMake/bin/rc.exe"
       - "C:/Program Files/CMake/bin/rc"
@@ -1168,6 +1165,9 @@ events:
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/rc.com"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/rc.exe"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/rc"
+      - "C:/Program Files/Git/cmd/rc.com"
+      - "C:/Program Files/Git/cmd/rc.exe"
+      - "C:/Program Files/Git/cmd/rc"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/rc.com"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/rc.exe"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/rc"
@@ -1262,10 +1262,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -1296,8 +1296,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-lsepu0"
-      binary: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-lsepu0"
+      source: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-l3r0xe"
+      binary: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-l3r0xe"
     cmakeVariables:
       CMAKE_CXX_STDLIB_MODULES_JSON: ""
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
@@ -1307,39 +1307,39 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-lsepu0'
+        Change Dir: 'D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-l3r0xe'
         
-        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_50275.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_60e05.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
         ╨Т╨╡╤А╤Б╨╕╤П MSBuild 18.7.1+024f5b037 ╨┤╨╗╤П .NET Framework
-        ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 15:14:46.
+        ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 23:19:10.
         
-        ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-lsepu0\\cmTC_50275.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+        ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-l3r0xe\\cmTC_60e05.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         PrepareForBuild:
           ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-lsepu0\\Debug\\".
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_50275.dir\\Debug\\cmTC_50275.tlog\\".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-l3r0xe\\Debug\\".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_60e05.dir\\Debug\\cmTC_60e05.tlog\\".
         InitializeBuildStatus:
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_50275.dir\\Debug\\cmTC_50275.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_50275.dir\\Debug\\cmTC_50275.tlog\\unsuccessfulbuild".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_60e05.dir\\Debug\\cmTC_60e05.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_60e05.dir\\Debug\\cmTC_60e05.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_50275.dir\\Debug\\\\" /Fd"cmTC_50275.dir\\Debug\\vc145.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_60e05.dir\\Debug\\\\" /Fd"cmTC_60e05.dir\\Debug\\vc145.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
           Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36247 for x64
           (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_50275.dir\\Debug\\\\" /Fd"cmTC_50275.dir\\Debug\\vc145.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_60e05.dir\\Debug\\\\" /Fd"cmTC_60e05.dir\\Debug\\vc145.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
           CMakeCCompilerABI.c
         Link:
-          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-lsepu0\\Debug\\cmTC_50275.exe" /INCREMENTAL /ILK:"cmTC_50275.dir\\Debug\\cmTC_50275.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-lsepu0/Debug/cmTC_50275.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-lsepu0/Debug/cmTC_50275.lib" /MACHINE:X64  /machine:x64 cmTC_50275.dir\\Debug\\CMakeCCompilerABI.obj
-          cmTC_50275.vcxproj -> D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-lsepu0\\Debug\\cmTC_50275.exe
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-l3r0xe\\Debug\\cmTC_60e05.exe" /INCREMENTAL /ILK:"cmTC_60e05.dir\\Debug\\cmTC_60e05.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-l3r0xe/Debug/cmTC_60e05.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-l3r0xe/Debug/cmTC_60e05.lib" /MACHINE:X64  /machine:x64 cmTC_60e05.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_60e05.vcxproj -> D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-l3r0xe\\Debug\\cmTC_60e05.exe
         FinalizeBuildStatus:
-          ╨д╨░╨╣╨╗ "cmTC_50275.dir\\Debug\\cmTC_50275.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
-          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_50275.dir\\Debug\\cmTC_50275.tlog\\cmTC_50275.lastbuildstate".
-        ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-lsepu0\\cmTC_50275.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+          ╨д╨░╨╣╨╗ "cmTC_60e05.dir\\Debug\\cmTC_60e05.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_60e05.dir\\Debug\\cmTC_60e05.tlog\\cmTC_60e05.lastbuildstate".
+        ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-l3r0xe\\cmTC_60e05.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         
         ╨б╨▒╨╛╤А╨║╨░ ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░.
             ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
             ╨Ю╤И╨╕╨▒╨╛╨║: 0
         
-        ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.73
+        ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.82
         
       exitCode: 0
   -
@@ -1379,8 +1379,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-6b4l77"
-      binary: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-6b4l77"
+      source: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-xt2tls"
+      binary: "D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-xt2tls"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
@@ -1391,39 +1391,39 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-6b4l77'
+        Change Dir: 'D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-xt2tls'
         
-        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_e0f91.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_58881.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
         ╨Т╨╡╤А╤Б╨╕╤П MSBuild 18.7.1+024f5b037 ╨┤╨╗╤П .NET Framework
-        ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 15:14:49.
+        ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 24.06.2026 23:19:13.
         
-        ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6b4l77\\cmTC_e0f91.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+        ╨Я╤А╨╛╨╡╨║╤В "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xt2tls\\cmTC_58881.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         PrepareForBuild:
           ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6b4l77\\Debug\\".
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_e0f91.dir\\Debug\\cmTC_e0f91.tlog\\".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xt2tls\\Debug\\".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_58881.dir\\Debug\\cmTC_58881.tlog\\".
         InitializeBuildStatus:
-          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_e0f91.dir\\Debug\\cmTC_e0f91.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_e0f91.dir\\Debug\\cmTC_e0f91.tlog\\unsuccessfulbuild".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_58881.dir\\Debug\\cmTC_58881.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_58881.dir\\Debug\\cmTC_58881.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_e0f91.dir\\Debug\\\\" /Fd"cmTC_e0f91.dir\\Debug\\vc145.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_58881.dir\\Debug\\\\" /Fd"cmTC_58881.dir\\Debug\\vc145.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
           Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36247 for x64
           (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_e0f91.dir\\Debug\\\\" /Fd"cmTC_e0f91.dir\\Debug\\vc145.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_58881.dir\\Debug\\\\" /Fd"cmTC_58881.dir\\Debug\\vc145.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6b4l77\\Debug\\cmTC_e0f91.exe" /INCREMENTAL /ILK:"cmTC_e0f91.dir\\Debug\\cmTC_e0f91.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-6b4l77/Debug/cmTC_e0f91.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-6b4l77/Debug/cmTC_e0f91.lib" /MACHINE:X64  /machine:x64 cmTC_e0f91.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_e0f91.vcxproj -> D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6b4l77\\Debug\\cmTC_e0f91.exe
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xt2tls\\Debug\\cmTC_58881.exe" /INCREMENTAL /ILK:"cmTC_58881.dir\\Debug\\cmTC_58881.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-xt2tls/Debug/cmTC_58881.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/Nemesis/build/CMakeFiles/CMakeScratch/TryCompile-xt2tls/Debug/cmTC_58881.lib" /MACHINE:X64  /machine:x64 cmTC_58881.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_58881.vcxproj -> D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xt2tls\\Debug\\cmTC_58881.exe
         FinalizeBuildStatus:
-          ╨д╨░╨╣╨╗ "cmTC_e0f91.dir\\Debug\\cmTC_e0f91.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
-          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_e0f91.dir\\Debug\\cmTC_e0f91.tlog\\cmTC_e0f91.lastbuildstate".
-        ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6b4l77\\cmTC_e0f91.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+          ╨д╨░╨╣╨╗ "cmTC_58881.dir\\Debug\\cmTC_58881.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_58881.dir\\Debug\\cmTC_58881.tlog\\cmTC_58881.lastbuildstate".
+        ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "D:\\Nemesis\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xt2tls\\cmTC_58881.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         
         ╨б╨▒╨╛╤А╨║╨░ ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░.
             ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
             ╨Ю╤И╨╕╨▒╨╛╨║: 0
         
-        ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.08
+        ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.23
         
       exitCode: 0
   -
@@ -1497,10 +1497,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"
@@ -1740,10 +1740,10 @@ events:
       - "C:/Windows/System32/OpenSSH/"
       - "C:/Program Files/nodejs/"
       - "C:/Program Files/dotnet/"
-      - "C:/Program Files/Git/cmd/"
       - "C:/Program Files/CMake/bin/"
       - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/"
+      - "C:/Program Files/Git/cmd/"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/"
       - "C:/Program Files/JetBrains/CLion 2026.1.1/bin/"
       - "C:/Users/artem/.platformio/penv/Scripts/"
@@ -1809,9 +1809,6 @@ events:
       - "C:/Program Files/dotnet/lld-link.com"
       - "C:/Program Files/dotnet/lld-link.exe"
       - "C:/Program Files/dotnet/lld-link"
-      - "C:/Program Files/Git/cmd/lld-link.com"
-      - "C:/Program Files/Git/cmd/lld-link.exe"
-      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Program Files/CMake/bin/lld-link.com"
       - "C:/Program Files/CMake/bin/lld-link.exe"
       - "C:/Program Files/CMake/bin/lld-link"
@@ -1821,6 +1818,9 @@ events:
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.com"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link.exe"
       - "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.com"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
       - "C:/Users/artem/AppData/Local/Microsoft/WindowsApps/lld-link"
@@ -1915,10 +1915,10 @@ events:
         - "C:\\Windows\\System32\\OpenSSH"
         - "C:\\Program Files\\nodejs"
         - "C:\\Program Files\\dotnet"
-        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Program Files\\CMake\\bin"
         - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit"
         - "C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit"
+        - "C:\\Program Files\\Git\\cmd"
         - "C:\\Users\\artem\\AppData\\Local\\Microsoft\\WindowsApps"
         - "C:\\Program Files\\JetBrains\\CLion 2026.1.1\\bin"
         - "C:\\Users\\artem\\.platformio\\penv\\Scripts"

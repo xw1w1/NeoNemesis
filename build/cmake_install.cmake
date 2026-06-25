@@ -35,8 +35,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("D:/Nemesis/build/Infections/src/Nemesis/cmake_install.cmake")
-  include("D:/Nemesis/build/NemesisLoader/TestDll/cmake_install.cmake")
-  include("D:/Nemesis/build/NemesisLoader/SecondaryDll/cmake_install.cmake")
+  include("D:/Nemesis/build/NemesisLoader/cmake_install.cmake")
   include("D:/Nemesis/build/Loader/cmake_install.cmake")
 
 endif()

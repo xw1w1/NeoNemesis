@@ -10,8 +10,7 @@
 	<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a2c82192-e555-39c6-995c-66bddd5e87d4" DefaultStartup="true">
 		<BuildDependency Project="Loader/Loader.vcxproj"/>
 		<BuildDependency Project="Infections/src/Nemesis/Nemesis.vcxproj"/>
-		<BuildDependency Project="NemesisLoader/TestDll/NemesisLoader.vcxproj"/>
-		<BuildDependency Project="NemesisLoader/SecondaryDll/SecondaryDll.vcxproj"/>
+		<BuildDependency Project="NemesisLoader/NemesisLoader.vcxproj"/>
 		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
 		<Build Solution="Debug|*" Project="false"/>
 		<Build Solution="Release|*" Project="false"/>
@@ -25,10 +24,7 @@
 	<Project Path="Infections/src/Nemesis/Nemesis.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="50f1ef15-344f-34c5-bc6d-cc00ea6877d1">
 		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
 	</Project>
-	<Project Path="NemesisLoader/TestDll/NemesisLoader.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="2e574437-ed65-3803-ae76-ff826c8844a2">
-		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
-	</Project>
-	<Project Path="NemesisLoader/SecondaryDll/SecondaryDll.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="2847883e-54d7-34ed-8e13-46ebb70fd34b">
+	<Project Path="NemesisLoader/NemesisLoader.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="2e574437-ed65-3803-ae76-ff826c8844a2">
 		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
 	</Project>
 	<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b9e567de-1625-39f0-b02a-dcab9cc9f4be"/>

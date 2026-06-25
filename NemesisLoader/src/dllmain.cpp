@@ -1,0 +1,188 @@
+#include <windows.h>
+#include <cstdio>
+
+static const wchar_t* kLogPath = L"D:\\Nemesis\\Ready\\NemesisLoader.log";
+
+// ============================================================
+//  Logging
+// ============================================================
+static void LogLine( const char* line )
+{
+    HANDLE h = CreateFileW( kLogPath, FILE_APPEND_DATA,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr );
+    if (h == INVALID_HANDLE_VALUE) return;
+    SetFilePointer( h, 0, nullptr, FILE_END );
+    DWORD w = 0;
+    WriteFile( h, line, (DWORD)strlen( line ), &w, nullptr );
+    WriteFile( h, "\r\n", 2, &w, nullptr );
+    CloseHandle( h );
+}
+
+static void LogF( const char* fmt, ... )
+{
+    char buf[512];
+    va_list va;
+    va_start( va, fmt );
+    int n = _vsnprintf_s( buf, _TRUNCATE, fmt, va );
+    va_end( va );
+    if (n > 0) LogLine( buf );
+}
+
+static DWORD LogException( EXCEPTION_POINTERS* xp, const char* where )
+{
+    if (!xp || !xp->ExceptionRecord)
+        return EXCEPTION_EXECUTE_HANDLER;
+
+    EXCEPTION_RECORD* er = xp->ExceptionRecord;
+    LogF( "[SEH] (%s) code=0x%08lX  addr=0x%p  params=%lu",
+          where, (unsigned long)er->ExceptionCode, er->ExceptionAddress,
+          (unsigned long)er->NumberParameters );
+    for (DWORD i = 0; i < er->NumberParameters && i < EXCEPTION_MAXIMUM_PARAMETERS; ++i)
+        LogF( "[SEH]   param[%lu] = 0x%p", i, (void*)er->ExceptionInformation[i] );
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+// ============================================================
+//  Run cmd "inside" the target process
+//  - AllocConsole creates a console attached to the host process
+//  - The new cmd.exe inherits that console (no CREATE_NEW_CONSOLE)
+//  - cmd.exe becomes a CHILD of the target — closing target closes cmd
+// ============================================================
+static void OpenCmdInTarget()
+{
+    LogLine( "[Worker] OpenCmdInTarget begin" );
+
+    // If host already has a console (rare for GUI app), reuse it.
+    BOOL freshConsole = AllocConsole();
+    if (freshConsole)
+    {
+        // Wire up CRT std handles to the new console (so writes from CRT work)
+        FILE* dummy = nullptr;
+        freopen_s( &dummy, "CONOUT$", "w", stdout );
+        freopen_s( &dummy, "CONOUT$", "w", stderr );
+        freopen_s( &dummy, "CONIN$",  "r", stdin );
+
+        SetConsoleTitleW( L"NemesisLoader — embedded shell" );
+        LogLine( "[Worker] AllocConsole OK (host had no console)" );
+    }
+    else
+    {
+        LogF( "[Worker] AllocConsole returned 0, err=%lu (host probably already had a console)",
+              GetLastError() );
+    }
+
+    // Print marker into the new console
+    HANDLE hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+    if (hOut != INVALID_HANDLE_VALUE && hOut != nullptr)
+    {
+        char banner[256];
+        int blen = sprintf_s( banner,
+            "================================================\r\n"
+            "  NemesisLoader: cmd attached to PID %lu\r\n"
+            "================================================\r\n",
+            GetCurrentProcessId() );
+        DWORD w;
+        WriteFile( hOut, banner, blen, &w, nullptr );
+    }
+
+    // Spawn cmd as CHILD of target, sharing the same console
+    STARTUPINFOW si = { sizeof( si ) };
+    si.dwFlags    = STARTF_USESTDHANDLES;
+    si.hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
+    si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+    si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
+
+    PROCESS_INFORMATION pi = {};
+    wchar_t cmdLine[256];
+    swprintf_s( cmdLine, L"cmd.exe /K title cmd in PID %lu", GetCurrentProcessId() );
+
+    // No CREATE_NEW_CONSOLE — cmd inherits target's console
+    BOOL ok = CreateProcessW( nullptr, cmdLine, nullptr, nullptr,
+                              TRUE /* inherit handles */, 0,
+                              nullptr, nullptr, &si, &pi );
+    if (ok)
+    {
+        LogF( "[Worker] cmd.exe spawned as child, PID=%lu, parent=PID %lu",
+              pi.dwProcessId, GetCurrentProcessId() );
+        CloseHandle( pi.hThread );
+        CloseHandle( pi.hProcess );
+    }
+    else
+    {
+        LogF( "[Worker] CreateProcess(cmd.exe) failed, err=%lu", GetLastError() );
+    }
+
+    LogLine( "[Worker] OpenCmdInTarget end" );
+}
+
+static DWORD WINAPI HeartbeatThread( LPVOID )
+{
+    ULONGLONG start = GetTickCount64();
+    int i = 0;
+    while (true)
+    {
+        Sleep( 1000 );
+        ULONGLONG alive = (GetTickCount64() - start) / 1000;
+        LogF( "[Heartbeat #%d] alive=%llus, thread_id=%lu, threads_in_host=approx",
+              ++i, (unsigned long long)alive, GetCurrentThreadId() );
+        // The last heartbeat in NemesisLoader.log shows when the host died.
+    }
+    return 0;
+}
+
+static DWORD WINAPI WorkerThread( LPVOID )
+{
+    LogF( "[Worker] thread started, PID=%lu TID=%lu",
+          GetCurrentProcessId(), GetCurrentThreadId() );
+
+    __try
+    {
+        OpenCmdInTarget();
+    }
+    __except (LogException( GetExceptionInformation(), "WorkerThread" ))
+    {
+    }
+
+    LogLine( "[Worker] OpenCmd done, starting heartbeat" );
+
+    // Heartbeat keeps logging each second so when host dies the .log file
+    // shows exactly how long it lived after injection.
+    HANDLE hb = CreateThread( nullptr, 0, HeartbeatThread, nullptr, 0, nullptr );
+    if (hb) CloseHandle( hb );
+
+    LogLine( "[Worker] thread exit" );
+    return 0;
+}
+
+// ============================================================
+//  DllMain — minimal, defers everything to a worker thread
+// ============================================================
+BOOL APIENTRY DllMain( HMODULE hModule, DWORD reason, LPVOID )
+{
+    if (reason != DLL_PROCESS_ATTACH)
+        return TRUE;
+
+    __try
+    {
+        DisableThreadLibraryCalls( hModule );
+        LogF( "[DllMain] PROCESS_ATTACH, PID=%lu TID=%lu",
+              GetCurrentProcessId(), GetCurrentThreadId() );
+
+        HANDLE h = CreateThread( nullptr, 0, WorkerThread, nullptr, 0, nullptr );
+        if (h)
+        {
+            LogLine( "[DllMain] CreateThread OK" );
+            CloseHandle( h );
+        }
+        else
+        {
+            LogF( "[DllMain] CreateThread FAILED, err=%lu", GetLastError() );
+        }
+    }
+    __except (LogException( GetExceptionInformation(), "DllMain" ))
+    {
+    }
+
+    return TRUE;
+}

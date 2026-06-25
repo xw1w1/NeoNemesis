@@ -89,14 +89,29 @@ NTSTATUS Process::CreateAndAttach(
     if (!pStartup)
         pStartup = &si;
 
+    SetLastError( 0 );
     if (!CreateProcessW(
-        path.c_str(), const_cast<LPWSTR>(cmdLine.c_str()), 
+        path.c_str(), const_cast<LPWSTR>(cmdLine.c_str()),
         nullptr, nullptr, FALSE, CREATE_SUSPENDED, nullptr,
         currentDir, pStartup, &pi
         ))
     {
-        return LastNtStatus();
-    } 
+        DWORD err = GetLastError();
+        NTSTATUS nt = LastNtStatus();
+        if (NT_SUCCESS( nt ))
+        {
+            switch (err)
+            {
+                case ERROR_FILE_NOT_FOUND:    nt = (NTSTATUS)0xC0000034; break; // STATUS_OBJECT_NAME_NOT_FOUND
+                case ERROR_PATH_NOT_FOUND:    nt = (NTSTATUS)0xC000003A; break; // STATUS_OBJECT_PATH_NOT_FOUND
+                case ERROR_ACCESS_DENIED:     nt = (NTSTATUS)0xC0000022; break; // STATUS_ACCESS_DENIED
+                case ERROR_BAD_EXE_FORMAT:    nt = (NTSTATUS)0xC000007B; break; // STATUS_INVALID_IMAGE_FORMAT
+                case ERROR_INVALID_PARAMETER: nt = (NTSTATUS)0xC000000D; break; // STATUS_INVALID_PARAMETER
+                default:                      nt = (NTSTATUS)0xC0000001; break; // STATUS_UNSUCCESSFUL
+            }
+        }
+        return nt;
+    }
 
     // Get handle ownership
     auto status = _core.Open( pi.hProcess );
@@ -111,6 +126,16 @@ NTSTATUS Process::CreateAndAttach(
         }
         else
             ResumeThread( pi.hThread );
+
+        // Sanity check: target may crash immediately after Resume
+        // (bad PE, missing dependencies, INT3 in main, etc.)
+        Sleep( 50 );
+        DWORD exitCode = 0;
+        if (GetExitCodeProcess( pi.hProcess, &exitCode ) && exitCode != STILL_ACTIVE)
+        {
+            CloseHandle( pi.hThread );
+            return (NTSTATUS)0xC000010A; // STATUS_PROCESS_IS_TERMINATING
+        }
     }
 
     // Close unneeded handles
