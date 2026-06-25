@@ -1,13 +1,63 @@
 #include <windows.h>
 #include <cstdio>
 
+#include "address/AllUsedAddresses/AllUsedAddresses.hpp"
+#include "config/Config.hpp"
+#include "audio/KillSound.hpp"
+#include "kill/KillWatcher.hpp"
+#include "hook/SoundHook.hpp"
+
 static const wchar_t* kLogPath = L"D:\\Nemesis\\Ready\\NemesisLoader.log";
+
+// Logging master switch. Defaults to OFF so nothing is written before the
+// config is loaded. WorkerThread re-applies the value from Nemesis.json.
+static volatile LONG g_loggingEnabled = 0;
+
+// ============================================================
+//  Read local player name from CS2 client.dll memory.
+//  Safe to call before the player is connected — returns nullptr.
+// ============================================================
+static const char* GetLocalPlayerName()
+{
+    HMODULE client = GetModuleHandleA( "client.dll" );
+    if (!client) return nullptr;
+
+    const std::uintptr_t base = reinterpret_cast<std::uintptr_t>( client );
+
+    __try
+    {
+        auto controller = *reinterpret_cast<std::uintptr_t*>(
+            base + Addr::Client::dwLocalPlayerController );
+        if (!controller) return nullptr;
+
+        const char* name = reinterpret_cast<const char*>(
+            controller + Addr::PlayerController::m_iszPlayerName );
+        if (!name || !*name) return nullptr;
+        return name;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return nullptr;
+    }
+}
 
 // ============================================================
 //  Logging
 // ============================================================
+// Always echoes to the cmd console that OpenCmdInTarget creates.
+// File logging is only active when Nemesis.json has logging_enabled=true.
 static void LogLine( const char* line )
 {
+    HANDLE hCon = GetStdHandle( STD_OUTPUT_HANDLE );
+    if (hCon != INVALID_HANDLE_VALUE && hCon != nullptr)
+    {
+        DWORD w = 0;
+        WriteFile( hCon, "[Loader] ", 9, &w, nullptr );
+        WriteFile( hCon, line, (DWORD)strlen( line ), &w, nullptr );
+        WriteFile( hCon, "\r\n", 2, &w, nullptr );
+    }
+
+    if (!InterlockedCompareExchange( &g_loggingEnabled, 0, 0 )) return;
     HANDLE h = CreateFileW( kLogPath, FILE_APPEND_DATA,
                             FILE_SHARE_READ | FILE_SHARE_WRITE,
                             nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr );
@@ -76,12 +126,15 @@ static void OpenCmdInTarget()
     HANDLE hOut = GetStdHandle( STD_OUTPUT_HANDLE );
     if (hOut != INVALID_HANDLE_VALUE && hOut != nullptr)
     {
+        const char* playerName = GetLocalPlayerName();
+        if (!playerName) playerName = "<unknown>";
+
         char banner[256];
         int blen = sprintf_s( banner,
             "================================================\r\n"
-            "  NemesisLoader: cmd attached to PID %lu\r\n"
+            "  Hello user %s\r\n"
             "================================================\r\n",
-            GetCurrentProcessId() );
+            playerName );
         DWORD w;
         WriteFile( hOut, banner, blen, &w, nullptr );
     }
@@ -133,9 +186,7 @@ static DWORD WINAPI HeartbeatThread( LPVOID )
 
 static DWORD WINAPI WorkerThread( LPVOID )
 {
-    LogF( "[Worker] thread started, PID=%lu TID=%lu",
-          GetCurrentProcessId(), GetCurrentThreadId() );
-
+    // Open the cmd console FIRST so every subsequent log line is visible.
     __try
     {
         OpenCmdInTarget();
@@ -144,12 +195,42 @@ static DWORD WINAPI WorkerThread( LPVOID )
     {
     }
 
-    LogLine( "[Worker] OpenCmd done, starting heartbeat" );
+    // Now the console exists — load config and announce state.
+    Cfg::Config cfg = Cfg::Load();
+    InterlockedExchange( &g_loggingEnabled, cfg.logging_enabled ? 1 : 0 );
 
-    // Heartbeat keeps logging each second so when host dies the .log file
-    // shows exactly how long it lived after injection.
-    HANDLE hb = CreateThread( nullptr, 0, HeartbeatThread, nullptr, 0, nullptr );
-    if (hb) CloseHandle( hb );
+    LogF( "[Worker] thread started, PID=%lu TID=%lu",
+          GetCurrentProcessId(), GetCurrentThreadId() );
+    LogF( "[Cfg] logging=%d sound_enabled=%d sound_hook_enabled=%d sound_option=%d",
+          (int)cfg.logging_enabled, (int)cfg.sound_enabled,
+          (int)cfg.sound_hook_enabled, cfg.sound_option );
+
+    if (cfg.sound_enabled)
+    {
+        // Memory-poll watcher: detects kills via m_iKills delta and plays our
+        // sound. Always safe — no code patching.
+        Kill::Start( cfg.sound_option );
+    }
+
+    // Hook is opt-in (RISK if the RVA is stale on a patched CS2).
+    if (cfg.sound_hook_enabled)
+    {
+        for (int i = 0; i < 50; ++i)
+        {
+            if (GetModuleHandleA( "soundsystem.dll" )) break;
+            Sleep( 100 );
+        }
+        bool hooked = SoundHook::Install( cfg.sound_option, /*suppressOriginal*/ true );
+        LogF( "[SoundHook] Install -> %s", hooked ? "OK" : "FAIL" );
+    }
+
+    // Heartbeat is opt-in: only useful when logging is on.
+    if (cfg.logging_enabled)
+    {
+        LogLine( "[Worker] OpenCmd done, starting heartbeat" );
+        HANDLE hb = CreateThread( nullptr, 0, HeartbeatThread, nullptr, 0, nullptr );
+        if (hb) CloseHandle( hb );
+    }
 
     LogLine( "[Worker] thread exit" );
     return 0;
@@ -166,6 +247,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD reason, LPVOID )
     __try
     {
         DisableThreadLibraryCalls( hModule );
+        Audio::Init( hModule );
         LogF( "[DllMain] PROCESS_ATTACH, PID=%lu TID=%lu",
               GetCurrentProcessId(), GetCurrentThreadId() );
 

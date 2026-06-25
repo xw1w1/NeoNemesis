@@ -1,0 +1,4 @@
+#include "resource.h"
+
+IDR_KILLSOUND_OPT1 RCDATA "../../beta1/BetaTester/KillMusic/option 1/headshot_rust.wav"
+IDR_KILLSOUND_OPT2 RCDATA "../../beta1/BetaTester/KillMusic/option 2/perfect-fart.wav"
