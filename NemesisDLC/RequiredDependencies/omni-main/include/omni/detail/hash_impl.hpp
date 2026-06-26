@@ -1,0 +1,119 @@
+#pragma once
+
+#include "omni/concepts/concepts.hpp"
+
+namespace omni::detail {
+
+  template <typename CharT>
+  [[nodiscard]] constexpr static CharT to_lower(CharT c) {
+    return (
+      (c >= static_cast<CharT>('A') && c <= static_cast<CharT>('Z')) ? static_cast<CharT>(c + static_cast<CharT>(32)) : c);
+  }
+
+  template <std::unsigned_integral T>
+  class fnv1a_hash {
+    constexpr static T FNV_prime = (sizeof(T) == 4) ? static_cast<T>(16777619U) : static_cast<T>(1099511628211ULL);
+    constexpr static T FNV_offset_basis =
+      (sizeof(T) == 4) ? static_cast<T>(2166136261U) : static_cast<T>(14695981039346656037ULL);
+
+   public:
+    constexpr static auto initial_value = FNV_offset_basis;
+    using value_type = T;
+
+    constexpr fnv1a_hash() = default;
+
+    constexpr explicit(false) fnv1a_hash(value_type value): value_(value) {}
+
+    // Implicit constructor is key here. It allows passing string literals in
+    // parameter-list where basic_hash type is expected, using this implicit
+    // consteval constructor we perform compile-time string hashing without
+    // forcing user to specify hash type, so instead of writing this:
+    // `foo(omni::hash_name{"string"})`
+    // user will need to write:
+    // `foo("string")`
+    // while still achieving absolutely the same result and still being able
+    // to specify their own hashing policy
+    template <typename CharT, std::size_t N>
+    consteval explicit(false) fnv1a_hash(const CharT (&string)[N]) {
+      for (std::size_t i{}; i < N - 1; i++) {
+        value_ = fnv1a_append_bytes<CharT>(value_, string[i]);
+      }
+    }
+
+    consteval explicit(false) fnv1a_hash(concepts::hashable auto string) {
+      for (std::size_t i{}; i < string.size(); i++) {
+        value_ = fnv1a_append_bytes<>(value_, string[i]);
+      }
+    }
+
+    [[nodiscard]] value_type operator()(concepts::hashable auto object) {
+      T value{FNV_offset_basis};
+      for (std::size_t i{}; i < object.size(); i++) {
+        value = fnv1a_append_bytes<>(value, object[i]);
+      }
+      return value;
+    }
+
+    template <typename CharT>
+    [[nodiscard]] value_type operator()(const CharT* string) const noexcept {
+      constexpr auto alphabet_last_index = static_cast<value_type>('Z' - 'A');
+      T value{FNV_offset_basis};
+
+      for (;;) {
+        const auto ch = *string++;
+        if (ch == static_cast<CharT>('\0')) {
+          return value;
+        }
+
+        auto unsigned_ch = static_cast<value_type>(static_cast<std::make_unsigned_t<CharT>>(ch));
+
+        // Keep this as a simple range check and let the optimizer pick branch/cmov/setcc.
+        // Forcing branchless arithmetic lengthens the FNV loop-carried dependency chain
+        const bool is_uppercase = unsigned_ch - static_cast<value_type>('A') <= alphabet_last_index;
+        if (is_uppercase) {
+          unsigned_ch += 32U;
+        }
+
+        // Inlined FNV1A byte append
+        value ^= unsigned_ch;
+        value *= FNV_prime;
+      }
+    }
+
+    [[nodiscard]] value_type value() const {
+      return value_;
+    }
+
+    [[nodiscard]] constexpr auto operator<=>(const fnv1a_hash&) const = default;
+
+    [[nodiscard]] constexpr auto operator<=>(value_type other) const {
+      return value_ <=> other;
+    }
+
+    [[nodiscard]] constexpr bool operator==(value_type other) const {
+      return value_ == other;
+    }
+
+    [[nodiscard]] constexpr bool operator==(const fnv1a_hash& other) const {
+      return value_ == other.value_;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const fnv1a_hash& hash) {
+      return os << hash.value();
+    }
+
+   private:
+    template <typename CharT>
+    [[nodiscard]] constexpr static value_type fnv1a_append_bytes(value_type accumulator, CharT byte) {
+      accumulator ^= static_cast<value_type>(to_lower(byte));
+      accumulator *= FNV_prime;
+      return accumulator;
+    }
+
+    value_type value_{FNV_offset_basis};
+  };
+
+  static_assert(concepts::hash<fnv1a_hash<std::uint32_t>>);
+  static_assert(concepts::hash<fnv1a_hash<std::uint64_t>>);
+
+} // namespace omni::detail
