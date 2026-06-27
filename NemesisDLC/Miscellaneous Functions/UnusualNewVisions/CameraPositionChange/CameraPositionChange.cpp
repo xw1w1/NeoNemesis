@@ -60,9 +60,7 @@ namespace Nemesis::CameraPositionChange
                         if (!held)
                         {
                             held = true;
-                            const bool fg = GameInForeground();
-                            NLOG("hotkey toggle pressed foreground=%d", static_cast<int>(fg));
-                            if (fg)
+                            if (GameInForeground())
                                 Toggle();
                         }
                     }
@@ -103,20 +101,11 @@ namespace Nemesis::CameraPositionChange
                 const std::uintptr_t mgr = CameraManager();
                 const bool want = g_enabled.load();
 
-                if (want && !mgr)
-                {
-                    static int warnThrottle = 0;
-                    if ((warnThrottle++ % 100) == 0)
-                        NWARN("thirdperson wanted but cameraManager is null");
-                }
-
                 if (mgr)
                 {
                     if (want && !lastEnabled)
                     {
                         EnableThirdperson(mgr);
-                        NLOG("enable tp mgr=0x%p flagAfter=%d", reinterpret_cast<void*>(mgr),
-                             static_cast<int>(Mem::Read<std::uint8_t>(mgr + ThirdpersonCam::kEnableFlag)));
                     }
                     else if (!want && lastEnabled)
                     {

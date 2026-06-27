@@ -25,8 +25,13 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t fnSetPaintKit           = 0x8DEE60;
         inline constexpr std::uintptr_t fnGetRenderItemView     = 0x8BB840;
         inline constexpr std::uintptr_t fnApplyModel            = 0xC1B280;
+        inline constexpr std::uintptr_t fnGetPaintKitId         = 0x105F9B0;
         inline constexpr std::uintptr_t dwButterflySubclass     = 0x22AB2F0;
         inline constexpr std::uintptr_t dwSubclassManager       = 0x21D9720;
+        inline constexpr std::uintptr_t dwSvCheatsRef           = 0x232ED38;
+        inline constexpr std::uintptr_t dwSvCheatsConVar        = 0x232ED40;
+        inline constexpr std::uintptr_t dwSvCheatsRef2          = 0x2355FE0;
+        inline constexpr std::uintptr_t fnResolveConVarValue    = 0x1826BA0;
     }
 
     namespace Schema
@@ -61,7 +66,9 @@ namespace Nemesis::Addresses
 
     namespace EconView
     {
-        inline constexpr std::size_t kPaintGetterIndex = 13;
+        inline constexpr std::size_t    kPaintGetterIndex    = 13;
+        inline constexpr std::size_t    kVisualsGetterIndex  = 12;
+        inline constexpr std::ptrdiff_t kCompositePaintData  = 0x1F0;
     }
 
     namespace Subclass

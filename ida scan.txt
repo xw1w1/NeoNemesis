@@ -1,0 +1,11 @@
+оторую ты видишь в 3-м лице):
+
+sub_1808CAAA0 (RVA 0x8CAAA0) — цепочка:
+[weapon+0x330] (scene node) → vtable[0x50]() → +0x3D0 (render econ view) → vtable[0x60]() → +0x1F0 (paint-kit-data) → sub_181613AF0
+
+Главное, что искать: функцию, которая ЗАПИСЫВАЕТ/строит объект по [visuals+0x1F0] — это визуал-процессор, читающий атрибут «set item texture prefab» и собирающий composite-inputs. Конкретные зацепки:
+
+xref'ы на запись +0x1F0 у этого типа объекта;
+строки CompositeMaterialGameSystem / composite_material → функция, которая запрашивает композит оружия по paint kit id;
+xref'ы на sub_181613AF0 (резолвер) — увидишь формат ключа в *(paintData).
+Цель: одна функция «построить composite из econ-item» (читает paintkit+seed+wear). Хукнуть ЕЁ и подсунуть 415 — либо найти, кто заполняет +0x1F0, и кормить туда. (Прошлый хук 0x105F9B0 безвреден — no-op, можешь оставить.)

@@ -87,7 +87,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -114,15 +114,15 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <MASM>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
-      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(IncludePaths)</IncludePaths>
+      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(IncludePaths)</IncludePaths>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -130,10 +130,11 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\Infections\src\Nemesis\Debug\Nemesis.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\Infections\src\Nemesis\Debug\Nemesis.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
@@ -141,7 +142,9 @@
       <LinkErrorReporting></LinkErrorReporting>
       <ProgramDataBaseFile>D:/Nemesis/build/Loader/Debug/Loader.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -149,7 +152,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -177,15 +180,15 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <MASM>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
-      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(IncludePaths)</IncludePaths>
+      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(IncludePaths)</IncludePaths>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -193,10 +196,11 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\Infections\src\Nemesis\Release\Nemesis.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\Infections\src\Nemesis\Release\Nemesis.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
@@ -204,7 +208,9 @@
       <LinkErrorReporting></LinkErrorReporting>
       <ProgramDataBaseFile>D:/Nemesis/build/Loader/Release/Loader.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -212,7 +218,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -240,15 +246,15 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <MASM>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
-      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(IncludePaths)</IncludePaths>
+      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(IncludePaths)</IncludePaths>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -256,10 +262,11 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\Infections\src\Nemesis\MinSizeRel\Nemesis.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\Infections\src\Nemesis\MinSizeRel\Nemesis.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
@@ -267,7 +274,9 @@
       <LinkErrorReporting></LinkErrorReporting>
       <ProgramDataBaseFile>D:/Nemesis/build/Loader/MinSizeRel/Loader.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -275,7 +284,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -302,15 +311,15 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <MASM>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ASMJIT_STATIC;CONSOLE_TRACE;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
-      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(IncludePaths)</IncludePaths>
+      <IncludePaths>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(IncludePaths)</IncludePaths>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Nemesis\Loader\..\Infections\src\Nemesis;D:\Nemesis\Loader\..\Infections\src\3rd_party;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master;D:\Nemesis\Loader\..\NemesisDLC\RequiredDependencies\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -318,10 +327,11 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\Infections\src\Nemesis\RelWithDebInfo\Nemesis.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\Infections\src\Nemesis\RelWithDebInfo\Nemesis.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;D:\Nemesis\Loader\..\Infections\src\3rd_party\DIA\lib\amd64\diaguids.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
@@ -329,7 +339,9 @@
       <LinkErrorReporting></LinkErrorReporting>
       <ProgramDataBaseFile>D:/Nemesis/build/Loader/RelWithDebInfo/Loader.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -395,6 +407,12 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="D:\Nemesis\Loader\main.cpp" />
     <ClCompile Include="D:\Nemesis\Loader\monitor.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_draw.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_widgets.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_tables.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_dx11.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

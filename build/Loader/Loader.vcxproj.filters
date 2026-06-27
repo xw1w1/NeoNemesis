@@ -7,6 +7,24 @@
     <ClCompile Include="D:\Nemesis\Loader\monitor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_tables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Nemesis\Loader\CMakeLists.txt" />

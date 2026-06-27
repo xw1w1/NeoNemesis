@@ -30,6 +30,10 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.cpp"
     "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.cpp"
     "Miscellaneous Utilities/LogsSystem/LogsSystem.cpp"
+    "Miscellaneous Utilities/sc_cheat/SvCheats.cpp"
+    "RenderDrx11/RenderHook.cpp"
+    "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
+    "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
 )
 
@@ -41,7 +45,7 @@ target_include_directories(NemesisDLC PRIVATE
     "${NEM_DEPS}/Detours-main/src"
     "${NEM_DEPS}/DirectXShaderCompiler-main/include"
     "${NEM_DEPS}/google Fronst"
-    "${NEM_DEPS}/Hikari-master"
+    "${NEM_DEPS}/ensia-main"
     "${NEM_DEPS}/HImGuiAnimation-main"
     "${NEM_DEPS}/IconFontCppHeaders-main"
     "${NEM_DEPS}/imgui-master"
