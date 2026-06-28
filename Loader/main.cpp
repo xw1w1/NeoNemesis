@@ -825,7 +825,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                     sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
                     btn_text = timer_buf;
                     btn_disabled = true;
-                    progress = 0.60f + (1.0f - g_runTimer / 30.0f) * 0.25f;
+                    progress = 0.60f + (1.0f - g_runTimer / 80.0f) * 0.25f;
                 }
                 else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
                 else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
@@ -908,7 +908,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                             if (IsProcessWindowVisible(L"cs2.exe"))
                             {
                                 g_runState = RS_Countdown; 
-                                g_runTimer = 30.0f; 
+                                g_runTimer = 80.0f; 
                             }
                             else
                             {
