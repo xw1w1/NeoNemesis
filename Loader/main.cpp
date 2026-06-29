@@ -2,6 +2,7 @@
 #include <windowsx.h> // для макросов GET_X_LPARAM/GET_Y_LPARAM
 #include <shlobj.h>   // для IsUserAnAdmin
 #include <d3d11.h>
+#include <filesystem>
 #include <wincodec.h>
 #include <tchar.h>
 #include <cmath>
@@ -30,7 +31,8 @@ static IDXGISwapChain*          g_pSwapChain = nullptr;
 static ID3D11RenderTargetView*  g_mainRenderTargetView = nullptr;
 
 // Пользовательский шрифт для заголовка
-static ImFont*                  g_titleFont = nullptr;
+static ImFont*                   g_titleFont = nullptr;
+static ID3D11ShaderResourceView* g_titleIcon = nullptr;
 static ID3D11ShaderResourceView* g_cs2BigTexture = nullptr;
 static ID3D11ShaderResourceView* g_cs2MiniTexture = nullptr;
 static ID3D11Texture2D*          g_sceneCaptureTexture = nullptr;
@@ -39,9 +41,15 @@ static int                       g_cs2BigWidth = 0;
 static int                       g_cs2BigHeight = 0;
 static int                       g_cs2MiniWidth = 0;
 static int                       g_cs2MiniHeight = 0;
+static int                       g_titleIconWidth = 0;
+static int                       g_titleIconHeight = 0;
 static bool                      g_productPopupOpen = false;
 static float                     g_productPopupAnim = 0.0f;
 static bool                      g_productPopupInputActive = false;
+
+// Время, которое программа должна ждать после захвата процесса
+// Это время появляется в таймере до инжекта, давая кске больше времени открыться
+static int                       g_rsCountdownTime = 45.0f;
 
 enum eRunState {
     RS_Idle,
@@ -67,6 +75,7 @@ void ReleaseTexture(ID3D11ShaderResourceView*& texture);
 void CleanupSceneCapture();
 bool EnsureSceneCapture(UINT width, UINT height);
 void UpdateSceneCapture();
+std::filesystem::path GetExecutableDirectory();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Хелперы для процессов
@@ -230,17 +239,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Nemesis Loader", WS_POPUP, winX, winY, kWinW, kWinH, nullptr, nullptr, wc.hInstance, nullptr);
 
-    // Формируем регион окна: 3 скругленных угла (TL/TR/BL) и ПРЯМОЙ нижний-правый угол (BR)
+    // Формируем регион окна: 4 скругленных угла (TL/TR/BL/BR)
     // Радиус делаем немного меньше (10px), чтобы углы были поменьше и визуально мягче
     const int kRadius = 10;          // радиус скругления в пикселях
     const int kDiam   = kRadius * 2; // диаметр для CreateRoundRectRgn
 
     HRGN rRoundAll = CreateRoundRectRgn(0, 0, kWinW + 1, kWinH + 1, kDiam, kDiam);
-    // Восстанавливаем квадратный нижний-правый угол, объединив с прямоугольником r x r в этом углу
-    HRGN rBR = CreateRectRgn(kWinW - kRadius, kWinH - kRadius, kWinW + 1, kWinH + 1);
-    CombineRgn(rRoundAll, rRoundAll, rBR, RGN_OR);
     SetWindowRgn(hwnd, rRoundAll, TRUE); // система возьмёт владение rRoundAll
-    DeleteObject(rBR);
 
     // Инициализация Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -280,13 +285,15 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
     // Загрузка пользовательского шрифта для текста "Nemesis Launcher"
-    // Путь из ТЗ: D:\Nemesis\Loader\Google Front\google Fronst
+    auto rootDir = GetExecutableDirectory();
+    // Путь {ПАПКА_С_Loader.exe}/Resources/Fonts/Roboto-Regular.ttf
+    auto fontPath = rootDir / L"Resources" / L"Fonts" / L"Roboto-Regular.ttf";
     // Используем Roboto-Regular.ttf и увеличиваем размер шрифта на +3.0 от базового
     {
         const float base_sz  = (io.Fonts->Fonts.Size > 0) ? io.Fonts->Fonts[0]->LegacySize : 13.0f;
         const float title_sz = base_sz + 3.0f;       // было +0.5, добавили ещё +2.5 по требованию
         g_titleFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(
-            "D:\\Nemesis\\Loader\\Google Front\\google Fronst\\static\\Roboto-Regular.ttf",
+            fontPath.string().c_str(),
             title_sz,
             nullptr,
             ImGui::GetIO().Fonts->GetGlyphRangesCyrillic()
@@ -295,8 +302,15 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
         ImGui_ImplDX11_CreateDeviceObjects();
     }
 
-    LoadTextureFromFile(L"D:\\Nemesis\\Loader\\cs2 icon\\Bigs.jpg", &g_cs2BigTexture, &g_cs2BigWidth, &g_cs2BigHeight);
-    LoadTextureFromFile(L"D:\\Nemesis\\Loader\\cs2 icon\\mini.png", &g_cs2MiniTexture, &g_cs2MiniWidth, &g_cs2MiniHeight);
+    // Путь {ПАПКА_С_Loader.exe}/Resources/Icons/CS2/Bigs.jpg
+    auto bigIconPath = rootDir / L"Resources" / L"Icons" / L"CS2" / L"Bigs.jpg";
+    LoadTextureFromFile(bigIconPath.c_str(), &g_cs2BigTexture, &g_cs2BigWidth, &g_cs2BigHeight);
+    // Путь {ПАПКА_С_Loader.exe}/Resources/Icons/CS2/mini.png
+    auto smallIconPath = rootDir / L"Resources" / L"Icons" / L"CS2" / L"mini.png";
+    LoadTextureFromFile(smallIconPath.c_str(), &g_cs2MiniTexture, &g_cs2MiniWidth, &g_cs2MiniHeight);
+
+    auto titleIconPath = rootDir / L"Resources" / L"Icons" / L"nemesis.png";
+    LoadTextureFromFile(titleIconPath.c_str(), &g_titleIcon, &g_titleIconWidth, &g_titleIconHeight);
 
     // Цвет фона: 31, 30, 30
     ImVec4 clear_color = ImVec4(31.0f / 255.0f, 30.0f / 255.0f, 30.0f / 255.0f, 1.00f);
@@ -327,150 +341,102 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
             ImGui::SetNextWindowSize(ImVec2(685, 450));
             
             ImGuiWindowFlags main_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-            if (g_productPopupInputActive)
-                main_flags |= ImGuiWindowFlags_NoInputs; // Отключаем клики по главному окну, чтобы они не перехватывали фокус
+            if (g_productPopupInputActive) main_flags |= ImGuiWindowFlags_NoInputs; // Отключаем клики по главному окну, чтобы они не перехватывали фокус
             
             ImGui::Begin("Nemesis Loader", nullptr, main_flags);
+            ImDrawList* dl = ImGui::GetWindowDrawList();
 
-            // Заголовок в левом верхнем углу: "Nemesis Launcher" (шрифт из Google Fonts)
+            // Добавляем иконку и заголовок окна
             {
+                const ImVec2 tIconPos(12.0f, 10.0f);
+                const float tIconSz = 36.0f;
+                dl->AddImage(
+                    (ImTextureID)g_titleIcon,
+                    tIconPos,
+                    ImVec2(tIconPos.x + tIconSz, tIconPos.y + tIconSz),
+                    ImVec2(0, 0),
+                    ImVec2(1, 1),
+                    IM_COL32_WHITE
+                );
+
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.82f, 0.82f, 0.82f, 1.0f)); // светло-серый
-                ImGui::SetCursorPos(ImVec2(12, 12)); // опускаем ещё на 2 пикселя ниже
-                if (g_titleFont) ImGui::PushFont(g_titleFont);
+                ImGui::SetCursorPos(ImVec2(60, 15)); // опускаем ещё на 2 пикселя ниже
+                if (g_titleFont) ImGui::PushFont(g_titleFont, style.FontSizeBase * 1.2f);
                 ImGui::TextUnformatted("Nemesis Launcher");
                 if (g_titleFont) ImGui::PopFont();
                 ImGui::PopStyleColor();
             }
 
             // Дизайнерские кнопки в правом верхнем углу: _ и X
+            // ЧТО Я ПОМЕНЯЛ: теперь под кнопками не спавнятся чекбоксы, а вместо этого появляются ДЕЙСТВИТЕЛЬНО СЕРЫЕ полоски
             {
-                // Флаги активации (управляются чекбоксами, которые показываются при наведении)
-                static bool s_enableClose = true;
-                static bool s_enableMin   = true;
-
                 const float pad = 8.0f;
-                const float btn = 22.0f; // квадратные кнопки
+                const float btn = 22.0f;
                 ImVec2 ws = ImGui::GetWindowSize();
+                ImVec2 wnd = ImGui::GetWindowPos();
 
-                // Векторные иконки для чётких кнопок
                 auto draw_icon_button = [&](const char* id,
-                                            const ImVec2& local_pos,
-                                            bool is_close,
-                                            ImU32 col_bg, ImU32 col_bg_hover, ImU32 col_symbol,
-                                            float rounding) -> bool
-                {
-                    ImGui::SetCursorPos(local_pos);
-                    ImVec2 p = ImGui::GetCursorScreenPos();
-                    ImDrawList* dl = ImGui::GetWindowDrawList();
-                    bool pressed = ImGui::InvisibleButton(id, ImVec2(btn, btn));
-                    bool hovered = ImGui::IsItemHovered();
-
-                    // Фоновая плашка не рисуется (прозрачная), оставляем только иконку
-                    (void)hovered; (void)col_bg; (void)col_bg_hover; (void)rounding;
-
-                    // Иконка
-                    const float m = 6.0f;          // поля от краёв
-                    const float thick = 2.0f;      // толщина линий
-                    if (is_close)
+                    const ImVec2& local_pos,
+                    bool is_close,
+                    ImU32 col_symbol,
+                    ImU32 col_bar) -> bool
                     {
-                        // «X» — две диагонали
-                        dl->AddLine(ImVec2(p.x + m,       p.y + m),       ImVec2(p.x + btn - m, p.y + btn - m), col_symbol, thick);
-                        dl->AddLine(ImVec2(p.x + btn - m, p.y + m),       ImVec2(p.x + m,       p.y + btn - m), col_symbol, thick);
-                    }
-                    else
-                    {
-                        // «_» — ровная линия
-                        float y = p.y + btn * 0.60f;
-                        dl->AddLine(ImVec2(p.x + m, y), ImVec2(p.x + btn - m, y), col_symbol, thick);
-                    }
+                        ImGui::SetCursorPos(local_pos);
+                        ImVec2 p = ImGui::GetCursorScreenPos();
+                        ImDrawList* dl = ImGui::GetWindowDrawList();
 
-                    return pressed;
-                };
+                        bool pressed = ImGui::InvisibleButton(id, ImVec2(btn, btn));
 
-                // Немного темнее сами кнопки (цвет иконок)
-                const ImU32 col_btn_bg       = ImColor(0, 0, 0, 0);
-                const ImU32 col_btn_bg_hover = ImColor(0, 0, 0, 0);
-                const ImU32 col_symbol       = ImColor(210, 214, 225, 255); // чуть темнее, без «пиксельности»
-                const float btn_rounding     = 6.0f;
+                        const float m = 6.0f;
+                        const float thick = 2.0f;
+
+                        if (is_close)
+                        {
+                            dl->AddLine(ImVec2(p.x + m, p.y + m), ImVec2(p.x + btn - m, p.y + btn - m), col_symbol, thick);
+                            dl->AddLine(ImVec2(p.x + btn - m, p.y + m), ImVec2(p.x + m, p.y + btn - m), col_symbol, thick);
+                        }
+                        else
+                        {
+                            float y = p.y + btn * 0.60f;
+                            dl->AddLine(ImVec2(p.x + m, y), ImVec2(p.x + btn - m, y), col_symbol, thick);
+                        }
+
+                        if (ImGui::IsItemHovered())
+                        {
+                            float w = 14.0f;
+                            float h = 2.0f;
+
+                            ImVec2 p0(wnd.x + local_pos.x + (btn - w) * 0.5f, wnd.y + local_pos.y + btn + 5.0f);
+                            ImVec2 p1(p0.x + w, p0.y + h);
+                            dl->AddRectFilled(p0, p1, col_bar, 1.0f);
+                        }
+
+                        return pressed;
+                    };
+
+                const ImU32 col_symbol = ImColor(210, 214, 225, 255);
+                const ImU32 col_bar = ImColor(55, 55, 55, 255);
 
                 ImVec2 pos_close(ws.x - pad - btn, pad);
-                ImVec2 pos_min  (ws.x - pad - 2.0f*btn - 6.0f, pad);
+                ImVec2 pos_min(ws.x - pad - 2.0f * btn - 6.0f, pad);
 
-                if (draw_icon_button("##btn_close", pos_close, true,  col_btn_bg, col_btn_bg_hover, col_symbol, btn_rounding))
+                if (draw_icon_button("##btn_close", pos_close, true, col_symbol, col_bar))
                 {
-                    if (s_enableClose)
-                        done = true; // закрыть приложение
+                    done = true;
                 }
-                bool hovered_close = ImGui::IsItemHovered(); // наведение на кнопку X
 
-                if (draw_icon_button("##btn_min", pos_min, false, col_btn_bg, col_btn_bg_hover, col_symbol, btn_rounding))
+                if (draw_icon_button("##btn_min", pos_min, false, col_symbol, col_bar))
                 {
-                    if (s_enableMin)
-                        ShowWindow(hwnd, SW_MINIMIZE); // свернуть приложение
+                    ShowWindow(hwnd, SW_MINIMIZE);
                 }
-                bool hovered_min = ImGui::IsItemHovered(); // наведение на кнопку _
 
-                // ТЕМНО-СЕРЫЕ чекбоксы появляются при наведении на соответствующие кнопки
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-                ImGui::PushStyleColor(ImGuiCol_FrameBg,        ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.30f, 0.30f, 0.30f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgActive,  ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_CheckMark,      ImVec4(0.80f, 0.80f, 0.80f, 1.0f));
-
-                auto show_checkbox_for_button = [&](const char* id, const ImVec2& btn_pos, bool hovered_btn, bool* value)
-                {
-                    // Задаём прямоугольник появления чекбокса под кнопкой
-                    ImVec2 cb_local = ImVec2(btn_pos.x + 2.0f, btn_pos.y + btn + 4.0f);
-                    ImVec2 wnd_pos  = ImGui::GetWindowPos();
-                    ImVec2 scr_pos0 = ImVec2(wnd_pos.x + cb_local.x, wnd_pos.y + cb_local.y);
-                    ImVec2 scr_pos1 = ImVec2(scr_pos0.x + (btn - 4.0f), scr_pos0.y + (btn - 4.0f));
-
-                    // Показываем чекбокс, если наводка на КНОПКУ или на область самого чекбокса
-                    bool hover_cb = ImGui::IsMouseHoveringRect(scr_pos0, scr_pos1);
-                    if (hovered_btn || hover_cb)
-                    {
-                        ImGui::SetCursorPos(cb_local);
-                        ImGui::Checkbox(id, value);
-                    }
-                };
-
-                show_checkbox_for_button("##cb_close", pos_close, hovered_close, &s_enableClose);
-                show_checkbox_for_button("##cb_min",   pos_min,   hovered_min,   &s_enableMin);
-
-                ImGui::PopStyleColor(4);
-                ImGui::PopStyleVar(2);
-            }
-
-            // Fix: выровнять нижний правый угол окна ImGui под квадратный регион Win32
-            // (окно ОС имеет квадратный BR-угол, а ImGui по умолчанию скругляет все 4 угла).
-            // Заливаем вырезанную область и дорисовываем 1px бордер, чтобы убрать визуальный "зазубренный" угол.
-            {
-                const float r = ImGui::GetStyle().WindowRounding;
-                if (r > 0.0f)
-                {
-                    ImDrawList* dl = ImGui::GetWindowDrawList();
-                    ImVec2 p = ImGui::GetWindowPos();
-                    ImVec2 s = ImGui::GetWindowSize();
-                    ImU32 bg     = ImGui::GetColorU32(ImGuiCol_WindowBg);
-                    ImU32 border = ImGui::GetColorU32(ImGuiCol_Border);
-
-                    // Заполняем квадрат r x r в нижнем правом углу цветом фона окна
-                    dl->AddRectFilled(ImVec2(p.x + s.x - r, p.y + s.y - r), ImVec2(p.x + s.x, p.y + s.y), bg, 0.0f);
-
-                    // Продлеваем бордер вдоль правой и нижней границ только в пределах заплатки
-                    const float px = 0.5f; // для чёткой 1px линии на целевой сетке
-                    dl->AddLine(ImVec2(p.x + s.x - r,   p.y + s.y - px), ImVec2(p.x + s.x - px, p.y + s.y - px), border, 1.0f);
-                    dl->AddLine(ImVec2(p.x + s.x - px,  p.y + s.y - r),  ImVec2(p.x + s.x - px, p.y + s.y - px), border, 1.0f);
-                }
             }
             
-            // Создаем «оболочку»: позиция (65,35), размер (620,415), фон 23,23,23
+            // Создаем «оболочку»: позиция (65,48), размер (620,415), фон 23,23,23
             // Исправление нижнего правого угла: рисуем фон и рамку вручную с квадратным BR-углом,
             // а затем создаём дочернее окно без фона поверх отрисованной области.
-            // Позиция: 65 пикселей вправо, 35 пикселей вниз
-            ImGui::SetCursorPos(ImVec2(65, 35));
-            ImDrawList* dl = ImGui::GetWindowDrawList();
+            // Позиция: 65 пикселей вправо, 48 пикселей вниз
+            ImGui::SetCursorPos(ImVec2(65, 48));
             const ImVec2 child_size(620, 415);
             const ImVec2 child_pos = ImGui::GetCursorScreenPos();
             const float  cr = ImGui::GetStyle().ChildRounding; // радиус скругления оболочки
@@ -479,14 +445,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
             // Заливка оболочки со скруглением всех углов
             dl->AddRectFilled(child_pos, ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y), child_bg, cr);
-            // «Квадратная заплатка» в нижнем правом углу, чтобы убрать скругление BR
-            if (cr > 0.0f)
-            {
-                dl->AddRectFilled(
-                    ImVec2(child_pos.x + child_size.x - cr, child_pos.y + child_size.y - cr),
-                    ImVec2(child_pos.x + child_size.x,      child_pos.y + child_size.y),
-                    child_bg, 0.0f);
-            }
             // Рамка 1px вокруг оболочки
             dl->AddRect(child_pos, ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y), child_border, cr);
             if (cr > 0.0f)
@@ -499,109 +457,125 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
             // Само дочернее окно без фона (контент поверх отрисованной оболочки)
             ImGui::BeginChild("MainShell", child_size, false, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-            // Блок с CS2-иконками внутри оболочки — ближе к референсу слева
+            // CS2 Card
             {
-                ImDrawList* child_dl = ImGui::GetWindowDrawList();
-                const ImVec2 shell_pos = ImGui::GetWindowPos();
+                const char* title = "Counter-Strike 2";
+                ImDrawList* dl = ImGui::GetWindowDrawList();
+                const ImVec2 shell = ImGui::GetWindowPos();
 
-                const ImVec2 big_pos(shell_pos.x + 18.0f, shell_pos.y + 18.0f);
-                const ImVec2 big_size(155.0f, 182.0f);
-                const float big_rounding = 9.0f;
-                const ImU32 big_border = ImColor(46, 46, 46, 255);
+                const ImVec2 card_pos(shell.x + 18.0f, shell.y + 18.0f);
+                const ImVec2 card_size(155.0f, 210.0f);
+
+                const float rounding = 10.0f;
+
+                const ImU32 bg = ImColor(34, 34, 34, 255);
+                const ImU32 border = ImColor(48, 48, 48, 255);
+
+                // Карточка
+                dl->AddRectFilled(
+                    card_pos,
+                    ImVec2(card_pos.x + card_size.x, card_pos.y + card_size.y),
+                    bg,
+                    rounding
+                );
+
+                dl->AddRect(
+                    card_pos,
+                    ImVec2(card_pos.x + card_size.x, card_pos.y + card_size.y),
+                    border,
+                    rounding,
+                    0,
+                    1.0f
+                );
+
+                const float padding = 2.0f;
+
+                const ImVec2 poster_pos(
+                    card_pos.x + padding,
+                    card_pos.y + padding
+                );
+
+                const ImVec2 poster_size(
+                    card_size.x - padding * 2.0f,
+                    170.0f
+                );
 
                 if (g_cs2BigTexture)
                 {
-                    child_dl->AddImageRounded(
+                    dl->AddImageRounded(
                         (ImTextureID)g_cs2BigTexture,
-                        big_pos,
-                        ImVec2(big_pos.x + big_size.x, big_pos.y + big_size.y),
-                        ImVec2(0.0f, 0.0f),
-                        ImVec2(1.0f, 1.0f),
+                        poster_pos,
+                        ImVec2(poster_pos.x + poster_size.x, poster_pos.y + poster_size.y),
+                        ImVec2(0, 0),
+                        ImVec2(1, 1),
                         IM_COL32_WHITE,
-                        big_rounding
+                        8.0f,
+                        ImDrawFlags_RoundCornersTop
                     );
                 }
                 else
                 {
-                    child_dl->AddRectFilled(
-                        big_pos,
-                        ImVec2(big_pos.x + big_size.x, big_pos.y + big_size.y),
-                        ImColor(35, 35, 35, 255),
-                        big_rounding
+                    dl->AddRectFilled(
+                        poster_pos,
+                        ImVec2(poster_pos.x + poster_size.x, poster_pos.y + poster_size.y),
+                        ImColor(45, 45, 45),
+                        8.0f,
+                        ImDrawFlags_RoundCornersTop
                     );
                 }
 
-                child_dl->AddRect(
-                    big_pos,
-                    ImVec2(big_pos.x + big_size.x, big_pos.y + big_size.y),
-                    big_border,
-                    big_rounding,
-                    0,
-                    1.0f
+                auto textSize = ImGui::CalcTextSize(title).x;
+
+                const ImVec2 icon_size(22, 22);
+                auto contentWidth = icon_size.x + textSize;
+                auto rowPadding = (card_size.x - contentWidth) / 2.0f;
+
+                const ImVec2 row_pos(
+                    card_pos.x + rowPadding - (padding * 2.0f),
+                    poster_pos.y + poster_size.y + rowPadding / 2.0f
                 );
 
-                ImGui::SetCursorScreenPos(big_pos);
-                ImGui::InvisibleButton("Cs2BigPosterButton", big_size);
+                const ImVec2 icon_pos(row_pos.x + icon_size.x, row_pos.y + icon_size.y);
+
+                if (g_cs2MiniTexture)
+                {
+                    dl->AddImageRounded(
+                        (ImTextureID)g_cs2MiniTexture,
+                        row_pos,
+                        icon_pos,
+                        ImVec2(0, 0),
+                        ImVec2(1, 1),
+                        IM_COL32_WHITE,
+                        5.0f
+                    );
+                }
+                else
+                {
+                    dl->AddRectFilled(
+                        row_pos,
+                        icon_pos,
+                        ImColor(55, 55, 55),
+                        5.0f
+                    );
+                }
+
+                dl->AddText(
+                    ImVec2(
+                        row_pos.x + 30.0f,
+                        row_pos.y + (icon_size.y - ImGui::GetFontSize()) * 0.5f
+                    ),
+                    ImColor(230, 230, 230),
+                    title
+                );
+
+                ImGui::SetCursorScreenPos(card_pos);
+                ImGui::InvisibleButton("##CS2Card", card_size);
+
                 if (ImGui::IsItemHovered())
                     ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
-                if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-                {
+                if (ImGui::IsItemClicked())
                     g_productPopupOpen = true;
-                }
-
-                const ImVec2 pill_pos(big_pos.x, big_pos.y + big_size.y + 10.0f);
-                const ImVec2 pill_size(145.0f, 30.0f);
-                const float pill_rounding = 7.0f;
-                const ImU32 pill_bg = ImColor(38, 38, 38, 255);
-                const ImU32 pill_border = ImColor(48, 48, 48, 255);
-
-                child_dl->AddRectFilled(
-                    pill_pos,
-                    ImVec2(pill_pos.x + pill_size.x, pill_pos.y + pill_size.y),
-                    pill_bg,
-                    pill_rounding
-                );
-                child_dl->AddRect(
-                    pill_pos,
-                    ImVec2(pill_pos.x + pill_size.x, pill_pos.y + pill_size.y),
-                    pill_border,
-                    pill_rounding,
-                    0,
-                    1.0f
-                );
-
-                const ImVec2 mini_pos(pill_pos.x + 4.0f, pill_pos.y + 4.0f);
-                const ImVec2 mini_size(22.0f, 22.0f);
-                if (g_cs2MiniTexture)
-                {
-                    child_dl->AddImageRounded(
-                        (ImTextureID)g_cs2MiniTexture,
-                        mini_pos,
-                        ImVec2(mini_pos.x + mini_size.x, mini_pos.y + mini_size.y),
-                        ImVec2(0.0f, 0.0f),
-                        ImVec2(1.0f, 1.0f),
-                        IM_COL32_WHITE,
-                        5.0f
-                    );
-                }
-                else
-                {
-                    child_dl->AddRectFilled(
-                        mini_pos,
-                        ImVec2(mini_pos.x + mini_size.x, mini_pos.y + mini_size.y),
-                        ImColor(50, 50, 50, 255),
-                        5.0f
-                    );
-                }
-
-                const char* cs2_title = "Counter-Strike 2";
-                const float text_y = pill_pos.y + ((pill_size.y - ImGui::GetFontSize()) * 0.5f) - 1.0f;
-                child_dl->AddText(
-                    ImVec2(pill_pos.x + 31.0f, text_y),
-                    ImColor(228, 228, 228, 255),
-                    cs2_title
-                );
             }
 
             ImGui::EndChild();
@@ -634,8 +608,21 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_NoScrollbar |
-                ImGuiWindowFlags_NoScrollWithMouse |
-                ImGuiWindowFlags_NoInputs);
+                ImGuiWindowFlags_NoScrollWithMouse
+);
+
+            // Я убрал NoInputs из ^ флагов окна и добавил:
+            ImGui::InvisibleButton("overlay", display_size);
+
+            if (ImGui::IsItemClicked())
+            {
+                g_productPopupOpen = false;
+                g_runState = RS_Idle;
+            }
+
+            // Невидимую кнопку на весь размер окна. При клике на нее
+            // карточка (g_productPopupOpen) становится не открытой,
+            // g_runState становится idle чтобы аутист не пытался снова захватить инпуты
 
             ImDrawList* overlay_dl = ImGui::GetWindowDrawList();
             const ImVec2 overlay_pos = ImGui::GetWindowPos();
@@ -825,7 +812,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                     sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
                     btn_text = timer_buf;
                     btn_disabled = true;
-                    progress = 0.60f + (1.0f - g_runTimer / 30.0f) * 0.25f;
+                    progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
                 }
                 else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
                 else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
@@ -908,7 +895,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                             if (IsProcessWindowVisible(L"cs2.exe"))
                             {
                                 g_runState = RS_Countdown; 
-                                g_runTimer = 30.0f; 
+                                g_runTimer = g_rsCountdownTime;
                             }
                             else
                             {
@@ -994,6 +981,14 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
         CoUninitialize();
 
     return 0;
+}
+
+// АРТЕМ, этот метод возвращает папку в которой находится EXEшник, из которого вызвана функция.
+std::filesystem::path GetExecutableDirectory()
+{
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    return std::filesystem::path(buffer).parent_path();
 }
 
 // Помощники DirectX 11
