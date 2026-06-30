@@ -38,7 +38,10 @@ powershell -Command ^
 powershell -Command ^
 "cmake --build '%ROOT%\build' --config Release --target Nemesis NemesisLoader Loader"
 
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+powershell -Command ^
+	"Error"
+)
 
 copy /Y "%ROOT%\build\Infections\src\Nemesis\Release\Nemesis.lib" "%ROOT%\Test\" >nul
 copy /Y "%ROOT%\build\Loader\Release\Loader.exe" "%ROOT%\Test\" >nul

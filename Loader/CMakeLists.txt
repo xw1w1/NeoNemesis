@@ -12,7 +12,7 @@ add_executable(Loader WIN32
     "${NEM_DEPS}/imgui-master/imgui_tables.cpp"
     "${NEM_DEPS}/imgui-master/backends/imgui_impl_win32.cpp"
     "${NEM_DEPS}/imgui-master/backends/imgui_impl_dx11.cpp"
-)
+  "product.cpp")
 
 set_target_properties(Loader PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 

@@ -40,6 +40,7 @@
 *.app
 
 # Build directories
+.vs/
 build/
 Build/
 build-*/
@@ -57,6 +58,11 @@ compile_commands.json
 *.log
 *.bak
 *.swp
+*.suo
+*.user
+*.VC.db
+*.opendb
+*.ipch
 
 # vcpkg
 vcpkg_installed/
