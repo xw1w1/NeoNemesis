@@ -21,6 +21,7 @@
 
 // Подключение ImGui
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 
@@ -109,6 +110,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 Product* p_counterStrike2 = nullptr;
 Product* p_dota2 = nullptr;
 Product* p_example = nullptr;
+
+// Хелперы для ImGui
+inline ImVec2  operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
+inline ImVec2  operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
 
 // Хелперы для процессов
 bool KillProcessByName(const wchar_t* name)
@@ -801,7 +806,7 @@ void DrawWindowHeader()
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.82f, 0.82f, 0.82f, 1.0f)); // светло-серый
     ImGui::SetCursorPos(ImVec2(60, 15)); // опускаем ещё на 2 пикселя ниже
-    if (g_titleFont) ImGui::PushFont(g_titleFont, style.FontSizeBase * 1.2f);
+    if (g_titleFont) ImGui::PushFont(g_titleFont, style.FontSizeBase);
     ImGui::TextUnformatted("Nemesis Launcher");
     if (g_titleFont) ImGui::PopFont();
     ImGui::PopStyleColor();
@@ -966,18 +971,26 @@ void DrawControlPanel(ImVec2 avail, float lPw)
         ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
     );
     {
-        ImGui::Dummy(ImVec2(0.0f, padding * 2.0f));
+        auto padding = ImGui::GetTextLineHeight() / 2.0f;
 
-        if (ImGui::Button("Library", ImVec2(lPw, 0.0f)))
+        ImGui::Dummy(ImVec2(0.0f, padding * 2.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, cr);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(padding, padding));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(35.0f / 255.0f, 35.0f / 255.0f, 35.0f / 255.0f, 1.00f));
+
+        if (CustomButtonEx("Library", ImVec2(lPw - 10.0f, 0.0f), ImGuiButtonFlags_None))
         {
             g_currentPage = 0;
         }
 
         ImGui::Dummy(ImVec2(0.0f, padding));
 
-        if (ImGui::Button("Profile", ImVec2(lPw, 0.0f))) {
+        if (CustomButtonEx("Profile", ImVec2(lPw - 10.0f, 0.0f), ImGuiButtonFlags_None)) {
             g_currentPage = 1;
         }
+
+        ImGui::PopStyleColor(1);
+        ImGui::PopStyleVar(2);
 
         float cursorY = ImGui::GetCursorPosY();
         float windowHeight = ImGui::GetWindowHeight();
@@ -1170,6 +1183,43 @@ void DrawProductC(int pos, Product* product)
             p_currentProduct = product;
         }
     }
+}
+
+bool CustomButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags)
+{
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+    const ImGuiID id = window->GetID(label);
+    const char* label_end = ImGui::FindRenderedTextEnd(label);
+    const ImVec2 label_size = ImGui::CalcTextSize(label, label_end, false);
+
+    ImVec2 pos = window->DC.CursorPos;
+    if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
+        pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
+    ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+    const ImRect bb(pos, pos + size);
+    ImGui::ItemSize(size, style.FramePadding.y);
+    if (!ImGui::ItemAdd(bb, id)) return false;
+
+    bool hovered, held;
+    bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, flags);
+
+    // Render
+    const ImU32 col = ImGui::GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+    ImGui::RenderNavCursor(bb, id);
+    ImGui::RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+
+    if (g.LogEnabled)
+        ImGui::LogSetNextTextDecoration("[", "]");
+    ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, label_end, &label_size, style.ButtonTextAlign, &bb);
+
+    IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+    return pressed;
 }
 
 // АРТЕМ, этот метод возвращает папку в которой находится EXEшник, из которого вызвана функция.
