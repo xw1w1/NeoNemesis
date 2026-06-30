@@ -1,0 +1,16 @@
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\alloc.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\alloc.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\alloc-aligned.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\alloc-aligned.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\alloc-posix.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\alloc-posix.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\arena.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\arena.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\bitmap.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\bitmap.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\heap.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\heap.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\init.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\init.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\libc.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\libc.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\options.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\options.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\os.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\os.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\page.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\page.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\random.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\random.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\segment.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\segment.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\segment-map.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\segment-map.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\stats.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\stats.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\mimalloc-main\src\prim\prim.c;D:\Nemesis\NemesisDLC\build\RequiredDependencies\mimalloc-main\mimalloc-static.dir\Release\prim.obj

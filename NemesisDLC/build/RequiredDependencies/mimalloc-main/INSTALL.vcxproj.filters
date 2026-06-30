@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Nemesis\NemesisDLC\build\CMakeFiles\10215a7b0264a3b54e33559677363471\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{AD6CA358-C90E-3B2A-97D0-087A8A2EF7D6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

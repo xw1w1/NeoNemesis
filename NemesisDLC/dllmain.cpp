@@ -4,6 +4,7 @@
 
 #include "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.hpp"
 #include "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.hpp"
+#include "Miscellaneous Functions/UnusualNewVisions/InventoryGive/InventoryGive.hpp"
 #include "Miscellaneous Utilities/sc_cheat/SvCheats.hpp"
 #include "RenderDrx11/RenderHook.hpp"
 #include "RenderDrx11/UsedHook.hpp"
@@ -36,7 +37,8 @@ static DWORD WINAPI Bootstrap(LPVOID)
 
     Nemesis::SvCheats::Start();
     Nemesis::CameraPositionChange::Start();
-    Nemesis::CustomSkins::Start();
+    // Nemesis::CustomSkins::Start();   // старая логика отключена на время теста inventory
+    Nemesis::InventoryGive::Start();
     Nemesis::RenderHook::Start();
     return 0;
 }

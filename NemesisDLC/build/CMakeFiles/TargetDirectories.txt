@@ -1,0 +1,12 @@
+D:/Nemesis/NemesisDLC/build/CMakeFiles/NemesisDLC.dir
+D:/Nemesis/NemesisDLC/build/CMakeFiles/INSTALL.dir
+D:/Nemesis/NemesisDLC/build/CMakeFiles/ALL_BUILD.dir
+D:/Nemesis/NemesisDLC/build/CMakeFiles/ZERO_CHECK.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/minhook-master/CMakeFiles/minhook.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/minhook-master/CMakeFiles/INSTALL.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/minhook-master/CMakeFiles/ALL_BUILD.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/asmjit-master/CMakeFiles/asmjit.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/asmjit-master/CMakeFiles/INSTALL.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/mimalloc-main/CMakeFiles/mimalloc-static.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/mimalloc-main/CMakeFiles/INSTALL.dir
+D:/Nemesis/NemesisDLC/build/RequiredDependencies/mimalloc-main/CMakeFiles/ALL_BUILD.dir

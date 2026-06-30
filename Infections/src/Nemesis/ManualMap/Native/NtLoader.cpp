@@ -321,8 +321,31 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
         return false;
     };
 
+    // Win11 (build >= 22000) reordered _RTL_INVERTED_FUNCTION_TABLE_ENTRY fields.
+    // Using the Win8/10 layout there crashes the target at inject because the
+    // ImageBase match never hits and the ExceptionDirectory write lands at the
+    // wrong offset, corrupting the loader table. Detect via RtlGetVersion.
+    auto IsWindows11 = []() -> bool
+    {
+        using RtlGetVersionFn = LONG (WINAPI*)(OSVERSIONINFOW*);
+        static auto fn = reinterpret_cast<RtlGetVersionFn>(
+            GetProcAddress( GetModuleHandleW( L"ntdll.dll" ), "RtlGetVersion" ) );
+        if (!fn) return false;
+        OSVERSIONINFOW vi{};
+        vi.dwOSVersionInfoSize = sizeof( vi );
+        return fn( &vi ) == 0 && vi.dwMajorVersion >= 10 && vi.dwBuildNumber >= 22000;
+    };
+
     if (IsWindows8OrGreater())
     {
+        if (IsWindows11())
+        {
+            if (mod.type == mt_mod64)
+                return InsertP( _RTL_INVERTED_FUNCTION_TABLE_WIN11<DWORD64>() );
+            else
+                return InsertP( _RTL_INVERTED_FUNCTION_TABLE_WIN11<DWORD>() );
+        }
+
         if(mod.type == mt_mod64)
             return InsertP( _RTL_INVERTED_FUNCTION_TABLE8<DWORD64>() );
         else

@@ -762,6 +762,15 @@ struct _RTL_INVERTED_FUNCTION_TABLE_ENTRY
     uint32_t SizeOfTable;
 };
 
+template<typename T>
+struct _RTL_INVERTED_FUNCTION_TABLE_ENTRY_WIN11
+{
+    T     ImageBase;
+    uint32_t SizeOfImage;
+    T     ExceptionDirectory;
+    uint32_t SizeOfTable;
+};
+
 using _UNICODE_STRING32 = _UNICODE_STRING_T<uint32_t>;
 using _UNICODE_STRING64 = _UNICODE_STRING_T<uint64_t>;
 using UNICODE_STRING_T  = _UNICODE_STRING_T<uintptr_t>;

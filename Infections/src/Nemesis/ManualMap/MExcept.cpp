@@ -284,6 +284,31 @@ NTSTATUS MExcept::CreateVEH( Process& proc, ModuleData& mod, bool partial )
     }
     else
     {
+        // Win11 (build >= 22000) changed the layout of _RTL_INVERTED_FUNCTION_TABLE_ENTRY.
+        // The x86 _handler32 shellcode walks LdrpInvertedFunctionTable32 with hardcoded
+        // field offsets baked at compile time, so on Win11 it reads SizeOfImage where it
+        // expects ImageBase and the ExceptionDirectory pointer is misaligned -> the very
+        // first exception in the mapped x86 module crashes the host process. Patching the
+        // opaque shellcode blindly is unsafe, so on Win11 we skip installing this custom
+        // VEH entirely and just return success: the module still maps, exception handling
+        // falls back to whatever SafeSEH / inverted-table entry NtLdr installed earlier.
+        auto IsWindows11 = []() -> bool
+        {
+            using RtlGetVersionFn = LONG (WINAPI*)(OSVERSIONINFOW*);
+            static auto fn = reinterpret_cast<RtlGetVersionFn>(
+                GetProcAddress( GetModuleHandleW( L"ntdll.dll" ), "RtlGetVersion" ) );
+            if (!fn) return false;
+            OSVERSIONINFOW vi{};
+            vi.dwOSVersionInfoSize = sizeof( vi );
+            return fn( &vi ) == 0 && vi.dwMajorVersion >= 10 && vi.dwBuildNumber >= 22000;
+        };
+
+        if (IsWindows11())
+        {
+            _pVEHCode.Free();
+            return STATUS_SUCCESS;
+        }
+
         handlerSize = sizeof( _handler32 );
         memcpy( newHandler, _handler32, handlerSize );
 

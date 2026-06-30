@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\minhook-master\src\buffer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\minhook-master\src\hook.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\minhook-master\src\trampoline.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Nemesis\NemesisDLC\RequiredDependencies\minhook-master\src\hde\hde64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\Nemesis\NemesisDLC\RequiredDependencies\minhook-master\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{C3A14CE5-84E2-316B-8F32-2DB58B030DB4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

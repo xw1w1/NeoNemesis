@@ -29,9 +29,11 @@ add_library(NemesisDLC SHARED
     dllmain.cpp
     "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.cpp"
     "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.cpp"
+    "Miscellaneous Functions/UnusualNewVisions/InventoryGive/InventoryGive.cpp"
     "Miscellaneous Utilities/LogsSystem/LogsSystem.cpp"
     "Miscellaneous Utilities/sc_cheat/SvCheats.cpp"
     "RenderDrx11/RenderHook.cpp"
+    "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
@@ -41,6 +43,7 @@ target_include_directories(NemesisDLC PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/AllUsedAddresses/Address
     "${CMAKE_CURRENT_SOURCE_DIR}/Miscellaneous Utilities/LogsSystem"
+    "${CMAKE_CURRENT_SOURCE_DIR}/System API Rendering/SystemShaderBloom"
     "${NEM_DEPS}/asmjit-master"
     "${NEM_DEPS}/Detours-main/src"
     "${NEM_DEPS}/DirectXShaderCompiler-main/include"

@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/Nemesis/NemesisDLC/build/cmake_install.cmake",
+		"D:/Nemesis/NemesisDLC/build/RequiredDependencies/minhook-master/cmake_install.cmake",
+		"D:/Nemesis/NemesisDLC/build/RequiredDependencies/asmjit-master/cmake_install.cmake",
+		"D:/Nemesis/NemesisDLC/build/RequiredDependencies/mimalloc-main/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
