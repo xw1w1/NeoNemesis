@@ -614,11 +614,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                     sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
                     btn_text = timer_buf;
                     btn_disabled = true;
-<<<<<<< HEAD
-                    progress = 0.60f + (1.0f - g_runTimer / 80.0f) * 0.25f;
-=======
                     progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
->>>>>>> 3cb3685c1e1a4127722789da7682cabb4bbb758d
                 }
                 else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
                 else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
@@ -702,11 +698,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                             if (IsProcessWindowVisible(p_currentProduct->GetProcNameW()))
                             {
                                 g_runState = RS_Countdown; 
-<<<<<<< HEAD
-                                g_runTimer = 80.0f; 
-=======
                                 g_runTimer = g_rsCountdownTime;
->>>>>>> 3cb3685c1e1a4127722789da7682cabb4bbb758d
                             }
                             else
                             {
