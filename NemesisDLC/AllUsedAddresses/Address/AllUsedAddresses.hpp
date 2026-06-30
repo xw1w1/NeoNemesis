@@ -62,6 +62,7 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
         inline constexpr std::ptrdiff_t m_pGameSceneNode        = 0x330;
         inline constexpr std::ptrdiff_t m_bModelDirty           = 0x11E2;
+        inline constexpr std::ptrdiff_t m_bVisualsDataSet = 0x18B9;
     }
 
     namespace EconView

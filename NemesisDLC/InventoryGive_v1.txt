@@ -1,0 +1,154 @@
+// ============================================================================
+// InventoryGive — ИТЕРАЦИЯ 1 (черновик, не подключать в сборку пока не проверим логи)
+// Цель: выдать нож-бабочку (def 515) в лоадаут/инвентарь, чтобы игра засчитала.
+// Метод этой итерации: правка предмета в
+//   CCSPlayerController -> m_pInventoryServices(0x810)
+//     -> m_vecNetworkableLoadout(0x40)  [CUtlVector<NetworkedLoadoutSlot_t>]
+//        -> slot.pItem(0x0)             [C_EconItemView*]
+// Это ИСТОЧНИК, из которого игра строит оружие при спавне.
+//
+// Сейчас задача — НЕ покрасить, а СНЯТЬ ЛОГИ раскладки лоадаута в игре,
+// чтобы узнать реальный шаг слота (kSlotStride — пока догадка) и состав.
+//
+// Оффсеты из дампера a2x/cs2-dumper (client_dll, build 14165):
+//   CCSPlayerController::m_pInventoryServices                 = 0x810
+//   CCSPlayerController_InventoryServices::m_vecNetworkableLoadout = 0x40
+//   NetworkedLoadoutSlot_t::pItem                             = 0x00 (C_EconItemView*)
+//   C_EconItemView: def 0x1BA, quality 0x1BC, itemID 0x1C8,
+//                   high 0x1D0, low 0x1D4, acc 0x1D8, init 0x1E8,
+//                   m_NetworkedDynamicAttributes 0x280
+//   CEconItemAttribute: defIndex 0x30, flValue 0x34
+// ============================================================================
+
+#include "InventoryGive.hpp"
+#include "../Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/Memory.hpp"
+#include "../AllUsedAddresses/Address/AllUsedAddresses.hpp"
+#include "../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <thread>
+#include <cstdint>
+#include <Windows.h>
+
+namespace Nemesis::InventoryGive
+{
+    using namespace Nemesis::Addresses;
+
+    namespace
+    {
+        std::atomic<bool> g_running{ false };
+        std::thread       g_worker;
+
+        constexpr std::ptrdiff_t kInvServices = 0x810; // controller -> inventory services
+        constexpr std::ptrdiff_t kLoadoutVec  = 0x40;  // inv services -> CUtlVector
+        constexpr std::ptrdiff_t kSlotItemPtr = 0x00;  // slot -> C_EconItemView*
+
+        // ВНИМАНИЕ: размер NetworkedLoadoutSlot_t не подтверждён.
+        // pItem на 0x00, дальше обычно loadout_slot_t(int) -> шаг кратен 0x10.
+        // Логи ниже печатают слоты для шагов 0x10 и 0x08 — выберем верный.
+        constexpr std::ptrdiff_t kSlotStrideA = 0x10;
+        constexpr std::ptrdiff_t kSlotStrideB = 0x08;
+
+        bool IsKnife(std::uint16_t d) { return d == 42 || d == 59 || (d >= 500 && d <= 525); }
+
+        void DumpLoadout(std::uintptr_t base)
+        {
+            const std::uintptr_t controller = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
+            NLOG("[inv] controller=%p", (void*)controller);
+            if (!controller) return;
+
+            const std::uintptr_t inv = Mem::Read<std::uintptr_t>(controller + kInvServices);
+            NLOG("[inv] inventoryServices=%p", (void*)inv);
+            if (!inv) return;
+
+            const int          count = Mem::Read<int>(inv + kLoadoutVec + 0x0);
+            const std::uintptr_t data = Mem::Read<std::uintptr_t>(inv + kLoadoutVec + 0x8);
+            NLOG("[inv] loadout count=%d data=%p", count, (void*)data);
+            if (!data || count <= 0 || count > 128) return;
+
+            // Печатаем оба варианта шага, чтобы понять верный
+            for (int i = 0; i < count && i < 64; ++i)
+            {
+                const std::uintptr_t pA = Mem::Read<std::uintptr_t>(data + kSlotStrideA * i + kSlotItemPtr);
+                const std::uintptr_t pB = Mem::Read<std::uintptr_t>(data + kSlotStrideB * i + kSlotItemPtr);
+                const std::uint16_t  dA = pA ? Mem::Read<std::uint16_t>(pA + 0x1BA) : 0;
+                const std::uint16_t  dB = pB ? Mem::Read<std::uint16_t>(pB + 0x1BA) : 0;
+                NLOG("[inv] slot%d  strideA item=%p def=%u | strideB item=%p def=%u", i, (void*)pA, dA, (void*)pB, dB);
+            }
+        }
+
+        // После того как из логов узнаем верный шаг — выдаём нож.
+        void GiveKnife(std::uintptr_t base, std::ptrdiff_t stride)
+        {
+            const std::uintptr_t controller = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
+            if (!controller) return;
+            const std::uintptr_t inv = Mem::Read<std::uintptr_t>(controller + kInvServices);
+            if (!inv) return;
+            const int          count = Mem::Read<int>(inv + kLoadoutVec + 0x0);
+            const std::uintptr_t data = Mem::Read<std::uintptr_t>(inv + kLoadoutVec + 0x8);
+            if (!data || count <= 0 || count > 128) return;
+
+            for (int i = 0; i < count && i < 64; ++i)
+            {
+                const std::uintptr_t item = Mem::Read<std::uintptr_t>(data + stride * i + kSlotItemPtr);
+                if (!item) continue;
+                const std::uint16_t def = Mem::Read<std::uint16_t>(item + 0x1BA);
+                if (!IsKnife(def)) continue;
+
+                Mem::Write<std::uint16_t>(item + 0x1BA, 515);          // def butterfly
+                Mem::Write<int>(item + 0x1BC, 3);                       // quality
+                Mem::Write<std::uint32_t>(item + 0x1D0, 0xFFFFFFFF);    // itemIDHigh
+                Mem::Write<std::uint32_t>(item + 0x1D4, 0xFFFFFFFF);    // itemIDLow
+                Mem::Write<bool>(item + 0x1E8, true);                   // initialized
+                NLOG("[inv] knife slot%d def %u -> 515 applied", i, def);
+            }
+            // TODO(панорама): рефреш UI — нужна ф-я SOUpdated/InventoryManager event.
+            // Пока неизвестна; ищем сигнатуру в IDA.
+        }
+
+        void Worker()
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            NLOG("[inv] worker start (after 5s wait)");
+
+            // Фаза 1: дамп раскладки (1 раз в секунду первые ~10 сек), чтобы снять логи.
+            for (int t = 0; t < 10 && g_running.load(); ++t)
+            {
+                const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+                if (base) DumpLoadout(base);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+
+            // Фаза 2: выдача (по умолчанию шаг 0x10 — поправить после логов).
+            while (g_running.load())
+            {
+                const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+                if (base) GiveKnife(base, kSlotStrideA);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
+        }
+    }
+
+    void Start() { if (g_running.exchange(true)) return; g_worker = std::thread(Worker); }
+    void Stop()  { if (!g_running.exchange(false)) return; if (g_worker.joinable()) g_worker.join(); }
+}
+
+// ============================================================================
+// ПОДКЛЮЧЕНИЕ (когда проверим логи):
+//  1) Создать InventoryGive.hpp:
+//        #pragma once
+//        namespace Nemesis::InventoryGive { void Start(); void Stop(); }
+//  2) В dllmain: Nemesis::Logs::SetEnabled(true);  Nemesis::InventoryGive::Start();
+//  3) В CMakeLists добавить InventoryGive.cpp.
+//  4) Старую логику CustomSkins на время теста НЕ запускать (закомментировать Start()).
+//
+// ДРУГИЕ МЕТОДЫ (на будущее, если лоадаут не отразится в меню):
+//  Метод A (SOCache, как Osiris): найти CSInventoryManager / локальный SOCache,
+//    создать CEconItem(def=515 + атрибут "set item texture prefab"=415),
+//    добавить в кэш, дёрнуть SOUpdated -> Panorama сама подхватит.
+//    Требует сигнатуры: GetLocalInventory, SOCache add, AddEconItem. (нет в дампере)
+//  Метод C (атрибут краски напрямую): в item+m_NetworkedDynamicAttributes(0x280)
+//    вектор CEconItemAttribute{defIndex 0x30, flValue 0x34} — добавить paintkit-атрибут.
+//    Рискованно (рост вектора). Лучше через игровую ф-ю SetOrAddAttribute.
+// ============================================================================

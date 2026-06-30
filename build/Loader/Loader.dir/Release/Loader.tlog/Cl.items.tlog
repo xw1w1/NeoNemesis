@@ -1,0 +1,8 @@
+D:\Nemesis\Loader\main.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\main.obj
+D:\Nemesis\Loader\monitor.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\monitor.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_draw.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_draw.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_widgets.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_widgets.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_tables.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_tables.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_win32.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_win32.obj
+D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_dx11.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_dx11.obj

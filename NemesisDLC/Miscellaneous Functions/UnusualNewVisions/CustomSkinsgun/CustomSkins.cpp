@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <Windows.h>
-#include <MinHook.h>
 
 namespace Nemesis::CustomSkins
 {
@@ -17,60 +16,14 @@ namespace Nemesis::CustomSkins
 
     namespace
     {
-        using GetModelNameFn    = const char* (__fastcall*)(void* itemView);
-        using SetModelStringFn  = void (__fastcall*)(void* entity, const char* model);
-        using ReloadSubclassFn  = void (__fastcall*)(void* entity);
-        using SetPaintKitFn     = void (__fastcall*)(void* entity, int paintKit, int a3, int a4);
-        using GetRenderViewFn   = void* (__fastcall*)(void* entity);
-        using GetPaintKitIdFn   = int (__fastcall*)(void* self);
+        using ReloadSubclassFn = void(__fastcall*)(void* entity);
 
         std::atomic<bool> g_running{ false };
         std::thread       g_worker;
-        GetPaintKitIdFn   g_origGetPaintKitId = nullptr;
-
-        int __fastcall HookGetPaintKitId(void* self)
-        {
-            const int orig = g_origGetPaintKitId(self);
-            __try
-            {
-                const std::uintptr_t s = reinterpret_cast<std::uintptr_t>(self);
-                const std::uint16_t def = *reinterpret_cast<std::uint16_t*>(s + Schema::m_Item + Schema::m_iItemDefinitionIndex);
-                if (def == Addresses::CustomSkins::kKnifeDefIndex)
-                    return Addresses::CustomSkins::kPaintKit;
-            }
-            __except (EXCEPTION_EXECUTE_HANDLER)
-            {
-            }
-            return orig;
-        }
-
-        const char* SafeGetModel(GetModelNameFn fn, void* itemView)
-        {
-            __try { return fn(itemView); }
-            __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
-        }
-
-        bool SafeSetModel(SetModelStringFn fn, void* entity, const char* model)
-        {
-            __try { fn(entity, model); return true; }
-            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
-        }
 
         bool SafeReloadSubclass(ReloadSubclassFn fn, void* entity)
         {
             __try { fn(entity); return true; }
-            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
-        }
-
-        bool SafeApplyModel(ReloadSubclassFn fn, void* entity)
-        {
-            __try { fn(entity); return true; }
-            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
-        }
-
-        bool SafeSetPaintKit(SetPaintKitFn fn, void* entity, int paintKit)
-        {
-            __try { fn(entity, paintKit, 1, 0); return true; }
             __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
         }
 
@@ -96,9 +49,9 @@ namespace Nemesis::CustomSkins
         {
             const std::uint32_t m = 0x5BD1E995u;
             auto lower = [](unsigned char c) -> std::uint32_t
-            {
-                return (c >= 'A' && c <= 'Z') ? static_cast<std::uint32_t>(c + 0x20) : c;
-            };
+                {
+                    return (c >= 'A' && c <= 'Z') ? static_cast<std::uint32_t>(c + 0x20) : c;
+                };
             std::uint32_t len = 0;
             while (s[len]) ++len;
             const auto* d = reinterpret_cast<const unsigned char*>(s);
@@ -145,11 +98,6 @@ namespace Nemesis::CustomSkins
             return defIndex >= 500 && defIndex <= 525;
         }
 
-        std::uint16_t WeaponDef(std::uintptr_t weapon)
-        {
-            return Mem::Read<std::uint16_t>(weapon + Schema::m_AttributeManager + Schema::m_Item + Schema::m_iItemDefinitionIndex);
-        }
-
         std::uint32_t LocalAccountID(std::uintptr_t base)
         {
             const std::uintptr_t controller = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
@@ -161,9 +109,11 @@ namespace Nemesis::CustomSkins
         void ApplyToWeapon(std::uintptr_t base, std::uintptr_t weapon)
         {
             const std::uintptr_t item = weapon + Schema::m_AttributeManager + Schema::m_Item;
-
-            if (!IsKnife(WeaponDef(weapon)))
+            const std::uint16_t curDef = Mem::Read<std::uint16_t>(item + Schema::m_iItemDefinitionIndex);
+            if (!IsKnife(curDef))
                 return;
+
+            const bool fresh = (curDef != Addresses::CustomSkins::kKnifeDefIndex);
 
             Mem::Write<std::uint16_t>(item + Schema::m_iItemDefinitionIndex, Addresses::CustomSkins::kKnifeDefIndex);
             Mem::Write<int>(item + Schema::m_iEntityQuality, 3);
@@ -177,20 +127,21 @@ namespace Nemesis::CustomSkins
             Mem::Write<float>(weapon + Schema::m_flFallbackWear, Addresses::CustomSkins::kWear);
             Mem::Write<int>(weapon + Schema::m_nFallbackStatTrak, -1);
 
-            const auto getModelName = reinterpret_cast<GetModelNameFn>(base + Client::fnGetModelName);
-            const auto setModel     = reinterpret_cast<SetModelStringFn>(base + Client::fnSetModelString);
+            if (fresh)
+                Mem::Write<std::uint8_t>(weapon + Schema::m_bVisualsDataSet, 0);
 
-            const char* path = SafeGetModel(getModelName, reinterpret_cast<void*>(item));
-            if (path && *path)
-                SafeSetModel(setModel, reinterpret_cast<void*>(weapon), path);
+            const std::uint32_t want = MakeTokenU(Addresses::CustomSkins::kKnifeDefIndex);
+            const std::uint32_t cur = Mem::Read<std::uint32_t>(weapon + Schema::m_nSubclassID);
+            Mem::Write<std::uint32_t>(weapon + Schema::m_nSubclassID, want);
+
+            const std::uintptr_t sceneNode = Mem::Read<std::uintptr_t>(weapon + Schema::m_pGameSceneNode);
+            if (!sceneNode)
+                return;
 
             static bool subclassDisabled = false;
-            const std::uint32_t want = MakeTokenU(Addresses::CustomSkins::kKnifeDefIndex);
-            const std::uint32_t cur  = Mem::Read<std::uint32_t>(weapon + Schema::m_nSubclassID);
             if (!subclassDisabled && cur != want)
             {
                 const auto reloadSubclass = reinterpret_cast<ReloadSubclassFn>(base + Client::fnReloadSubclass);
-                Mem::Write<std::uint32_t>(weapon + Schema::m_nSubclassID, want);
                 SafeReloadSubclass(reloadSubclass, reinterpret_cast<void*>(weapon));
 
                 const std::uintptr_t vd = Mem::Read<std::uintptr_t>(weapon + Schema::m_pSubclassVData);
@@ -199,21 +150,7 @@ namespace Nemesis::CustomSkins
                     Mem::Write<std::uint32_t>(weapon + Schema::m_nSubclassID, cur);
                     SafeReloadSubclass(reloadSubclass, reinterpret_cast<void*>(weapon));
                     subclassDisabled = true;
-                    NWARN("Subclass 0x%08X not loaded, reverted to 0x%08X", want, cur);
                 }
-            }
-
-            static bool paintApplied = false;
-            if (!paintApplied)
-            {
-                const auto setPaintKit = reinterpret_cast<SetPaintKitFn>(base + Client::fnSetPaintKit);
-                const auto applyModel  = reinterpret_cast<ReloadSubclassFn>(base + Client::fnApplyModel);
-
-                SafeSetPaintKit(setPaintKit, reinterpret_cast<void*>(weapon), Addresses::CustomSkins::kPaintKit);
-                Mem::Write<std::uint8_t>(weapon + Schema::m_bModelDirty, 1);
-                SafeApplyModel(applyModel, reinterpret_cast<void*>(weapon));
-
-                paintApplied = true;
             }
         }
 
@@ -225,7 +162,8 @@ namespace Nemesis::CustomSkins
                 if (base)
                 {
                     const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
-                    if (pawn)
+                    const int hp = pawn ? Mem::Read<int>(pawn + Schema::m_iHealth, 0) : 0;
+                    if (pawn && hp > 0 && hp <= 100)
                     {
                         const std::uintptr_t ws = Mem::Read<std::uintptr_t>(pawn + Schema::m_pWeaponServices);
                         if (ws)
@@ -257,16 +195,6 @@ namespace Nemesis::CustomSkins
         if (g_running.exchange(true))
             return;
 
-        const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-        if (base)
-        {
-            MH_Initialize();
-            void* target = reinterpret_cast<void*>(base + Client::fnGetPaintKitId);
-            if (MH_CreateHook(target, reinterpret_cast<void*>(&HookGetPaintKitId),
-                              reinterpret_cast<void**>(&g_origGetPaintKitId)) == MH_OK)
-                MH_EnableHook(target);
-        }
-
         g_worker = std::thread(Worker);
     }
 
@@ -274,10 +202,6 @@ namespace Nemesis::CustomSkins
     {
         if (!g_running.exchange(false))
             return;
-
-        const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-        if (base)
-            MH_DisableHook(reinterpret_cast<void*>(base + Client::fnGetPaintKitId));
 
         if (g_worker.joinable())
             g_worker.join();

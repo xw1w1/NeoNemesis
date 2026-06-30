@@ -63,6 +63,18 @@ struct _RTL_INVERTED_FUNCTION_TABLE8
     _RTL_INVERTED_FUNCTION_TABLE_ENTRY<T> Entries[0x200];
 };
 
+// Windows 11 layout (build >= 22000): per-entry fields were reordered.
+// The outer header (Count/MaxCount/Epoch/Overflow) stays the same.
+template<typename T>
+struct _RTL_INVERTED_FUNCTION_TABLE_WIN11
+{
+    ULONG Count;
+    ULONG MaxCount;
+    ULONG Epoch;
+    UCHAR Overflow;
+    _RTL_INVERTED_FUNCTION_TABLE_ENTRY_WIN11<T> Entries[0x200];
+};
+
 using _LDR_DATA_TABLE_ENTRY_W832 = _LDR_DATA_TABLE_ENTRY_W8<uint32_t>;
 using _LDR_DATA_TABLE_ENTRY_W864 = _LDR_DATA_TABLE_ENTRY_W8<uint64_t>;
 using LDR_DATA_TABLE_ENTRY_W8T = _LDR_DATA_TABLE_ENTRY_W8<uintptr_t>;
