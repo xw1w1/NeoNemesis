@@ -38,16 +38,21 @@ static ID3D11RenderTargetView*   g_mainRenderTargetView = nullptr;
 static ImFont*                   g_titleFont = nullptr;
 static ID3D11ShaderResourceView* g_titleIcon = nullptr;
 
+static ImU32                     g_accentColor = ImColor(55, 55, 55, 255);
+
+static ID3D11ShaderResourceView* g_libraryIcon = nullptr;
+static ID3D11ShaderResourceView* g_profileIcon = nullptr;
+static ID3D11ShaderResourceView* g_settingsIcon = nullptr;
+
 static ID3D11Texture2D*          g_sceneCaptureTexture = nullptr;
 static ID3D11ShaderResourceView* g_sceneCaptureSrv = nullptr;
 
-static int                       g_titleIconWidth = 0;
-static int                       g_titleIconHeight = 0;
-static int                       g_titleRegionHeight = 50.0f;
+static int                       g_titleRegionHeight = 54;
+static int                       g_titleColliderHeight = 35;
 
 static int                       g_frameOffsetX = 65;
 static int                       g_frameOffsetY = 48;
-static int                       g_controlPanelWidth = 150.0f;
+static int                       g_controlPanelWidth = 150;
 
 static bool                      g_productPopupOpen = false;
 static float                     g_productPopupAnim = 0.0f;
@@ -94,6 +99,19 @@ void DrawControlPanel(ImVec2 avail, float lPw);
 void DrawContentPaneBody(ImVec2 avail, float lPw);
 void DrawProductC(int pos, Product* product);
 
+bool IconizedButton(
+    ImTextureID tex_id, const char* label,
+    const ImVec2& image_size, bool selected = false, ImGuiButtonFlags flags = 0,
+    float spacing = -1.0f, const ImVec2& size_arg = ImVec2(0, 0)
+);
+
+bool IconizedButtonEx(
+    ImTextureID tex_id, const char* label,
+    const ImVec2& image_size, bool selected = false, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1),
+    const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
+    ImGuiButtonFlags flags = 0, float spacing = -1.0f, const ImVec2& size_arg = ImVec2(0, 0)
+);
+
 void DrawLibraryPage();
 void DrawProfilePage();
 
@@ -114,6 +132,9 @@ Product* p_example = nullptr;
 // Хелперы для ImGui
 inline ImVec2  operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
 inline ImVec2  operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+inline ImVec2  operator*(const ImVec2& lhs, const float rhs) { return ImVec2(lhs.x * rhs, lhs.y * rhs); }
+inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs) { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
+inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs) { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
 
 // Хелперы для процессов
 bool KillProcessByName(const wchar_t* name)
@@ -266,8 +287,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     ::RegisterClassExW(&wc);
     
     // Создаем окно без рамки и кнопок (WS_POPUP) размером 685x450
-    const int kWinW = 685;
-    const int kWinH = 450;
+    const int kWinW = 720;
+    const int kWinH = 480;
     
     // Центрирование окна
     int screenW = GetSystemMetrics(SM_CXSCREEN);
@@ -347,7 +368,16 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     }
 
     auto titleIconPath = rootDir / L"Resources" / L"Icons" / L"nemesis.png";
-    LoadTextureFromFile(titleIconPath.c_str(), &g_titleIcon, &g_titleIconWidth, &g_titleIconHeight);
+    LoadTextureFromFile(titleIconPath.c_str(), &g_titleIcon);
+
+    auto libraryIconPath = rootDir / L"Resources" / L"Icons" / L"console.png";
+    LoadTextureFromFile(libraryIconPath.c_str(), &g_libraryIcon);
+
+    auto profileIconPath = rootDir / L"Resources" / L"Icons" / L"user.png";
+    LoadTextureFromFile(profileIconPath.c_str(), &g_profileIcon);
+
+    auto settingsIconPath = rootDir / L"Resources" / L"Icons" / L"gear.png";
+    LoadTextureFromFile(settingsIconPath.c_str(), &g_settingsIcon);
 
     // Цвет фона: 31, 30, 30
     ImVec4 clear_color = ImVec4(31.0f / 255.0f, 30.0f / 255.0f, 30.0f / 255.0f, 1.00f);
@@ -375,17 +405,17 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
         // Отрисовка кастомного окна
         {
             ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(685, 450));
+            ImGui::SetNextWindowSize(ImVec2(kWinW, kWinH));
             
             ImGuiWindowFlags main_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
             if (g_productPopupInputActive) main_flags |= ImGuiWindowFlags_NoInputs; // Отключаем клики по главному окну, чтобы они не перехватывали фокус
             
             ImGui::Begin("Nemesis Loader", nullptr, main_flags);
 
-            // Добавляем иконку и заголовок окна, рисуем кнопки.
-            DrawWindowHeader();
             // Рисует оболочку окна
             DrawWindowBackgroundBody();
+            // Добавляем иконку и заголовок окна, рисуем кнопки.
+            DrawWindowHeader();
 
             ImGui::End();
         }
@@ -737,13 +767,12 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         { 
                             if (!IsProcessRunning(p_currentProduct->GetProcNameW()))
                             {
-                                // Краш?
                                 g_runState = RS_Idle;
                             }
                             else
                             {
                                 g_runState = RS_Finished; 
-                                g_isAppDone = true; // Полностью закрываем лоадер после успешного инжекта
+                                g_isAppDone = true;
                             }
                         }
                         else if (g_runState == RS_Finished) 
@@ -790,30 +819,32 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 void DrawWindowHeader()
 {
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    ImGuiStyle& style = ImGui::GetStyle();
+//    ImDrawList* dl = ImGui::GetWindowDrawList();
+//    ImGuiStyle& style = ImGui::GetStyle();
+//    float lineHeight = ImGui::GetTextLineHeight();
+//    auto padding = lineHeight / 2.0f;
+// 
+//    const ImVec2 tIconPos(padding, padding);
+//    const float tIconSz = 42.0f;
+//    dl->AddImage(
+//        (ImTextureID)g_titleIcon,
+//        tIconPos,
+//        ImVec2(tIconPos.x + tIconSz, tIconPos.y + tIconSz),
+//        ImVec2(0, 0),
+//        ImVec2(1, 1),
+//        IM_COL32_WHITE
+//    );
+//
+//    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.82f, 0.82f, 0.82f, 1.0f)); // светло-серый
+//    ImGui::SetCursorPos(ImVec2(60, (g_titleRegionHeight / 2.0f)));
+//    if (g_titleFont) ImGui::PushFont(g_titleFont, style.FontSizeBase * 1.2f);
+//    ImGui::TextUnformatted("Nemesis Launcher");
+//    if (g_titleFont) ImGui::PopFont();
+//    ImGui::PopStyleColor();
 
-    const ImVec2 tIconPos(12.0f, 10.0f);
-    const float tIconSz = 36.0f;
-    dl->AddImage(
-        (ImTextureID)g_titleIcon,
-        tIconPos,
-        ImVec2(tIconPos.x + tIconSz, tIconPos.y + tIconSz),
-        ImVec2(0, 0),
-        ImVec2(1, 1),
-        IM_COL32_WHITE
-    );
-
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.82f, 0.82f, 0.82f, 1.0f)); // светло-серый
-    ImGui::SetCursorPos(ImVec2(60, 15)); // опускаем ещё на 2 пикселя ниже
-    if (g_titleFont) ImGui::PushFont(g_titleFont, style.FontSizeBase);
-    ImGui::TextUnformatted("Nemesis Launcher");
-    if (g_titleFont) ImGui::PopFont();
-    ImGui::PopStyleColor();
-
-    // Дизайнерские кнопки в правом верхнем углу: _ и X
-    // ЧТО Я ПОМЕНЯЛ: теперь под кнопками не спавнятся чекбоксы, а вместо этого появляются ДЕЙСТВИТЕЛЬНО СЕРЫЕ полоски
-    DrawWindowControls();
+//    Дизайнерские кнопки в правом верхнем углу: _ и X
+//    ЧТО Я ПОМЕНЯЛ: теперь под кнопками не спавнятся чекбоксы, а вместо этого появляются ДЕЙСТВИТЕЛЬНО СЕРЫЕ полоски
+//    DrawWindowControls();
 }
 
 void DrawWindowControls()
@@ -854,7 +885,7 @@ void DrawWindowControls()
                 float w = 14.0f;
                 float h = 2.0f;
 
-                ImVec2 p0(wnd.x + local_pos.x + (btn - w) * 0.5f, wnd.y + local_pos.y + btn + 5.0f);
+                ImVec2 p0(wnd.x + local_pos.x + (btn - w) * 0.5f, wnd.y + local_pos.y + btn + 3.0f);
                 ImVec2 p1(p0.x + w, p0.y + h);
                 dl->AddRectFilled(p0, p1, col_bar, 1.0f);
             }
@@ -863,17 +894,16 @@ void DrawWindowControls()
         };
 
     const ImU32 col_symbol = ImColor(210, 214, 225, 255);
-    const ImU32 col_bar = ImColor(55, 55, 55, 255);
 
     ImVec2 pos_close(ws.x - pad - btn, pad);
     ImVec2 pos_min(ws.x - pad - 2.0f * btn - 6.0f, pad);
 
-    if (draw_icon_button("##btn_close", pos_close, true, col_symbol, col_bar))
+    if (draw_icon_button("##btn_close", pos_close, true, col_symbol, g_accentColor))
     {
         g_isAppDone = true;
     }
 
-    if (draw_icon_button("##btn_min", pos_min, false, col_symbol, col_bar))
+    if (draw_icon_button("##btn_min", pos_min, false, col_symbol, g_accentColor))
     {
         ShowWindow(g_Hwnd, SW_MINIMIZE);
     }
@@ -916,11 +946,13 @@ void DrawWindowBackgroundBody0()
 void DrawWindowBackgroundBody()
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const ImVec2 cursor_pos(0, g_titleRegionHeight);
+    //const ImVec2 cursor_pos(0, g_titleRegionHeight);
+    const ImVec2 cursor_pos(0, 0);
     ImGui::SetCursorPos(cursor_pos);
 
     const ImVec2 window_size = ImGui::GetWindowSize();
-    const ImVec2 avail(window_size.x, window_size.y - g_titleRegionHeight);
+    const ImVec2 avail(window_size.x, window_size.y);
+    const ImVec2 avail_pane(window_size.x, window_size.y - g_titleColliderHeight);
     const ImVec2 child_size(avail.x, avail.y);
 
     ImGui::BeginChild(
@@ -932,8 +964,8 @@ void DrawWindowBackgroundBody()
         const float leftPanelWidth = g_controlPanelWidth;
 
         DrawControlPanel(avail, leftPanelWidth);
-        ImGui::SameLine();
-        DrawContentPaneBody(avail, leftPanelWidth);
+        DrawWindowControls();
+        DrawContentPaneBody(avail_pane, leftPanelWidth);
     }
     ImGui::EndChild();
 }
@@ -941,7 +973,7 @@ void DrawWindowBackgroundBody()
 // Рисует левую панель окна.
 void DrawControlPanel(ImVec2 avail, float lPw)
 {
-    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImDrawList*  dl = ImGui::GetWindowDrawList();
     const ImU32  child_bg = ImColor(23, 23, 23, 255);
     const ImU32  child_border = ImGui::GetColorU32(ImGuiCol_Border);
 
@@ -965,43 +997,85 @@ void DrawControlPanel(ImVec2 avail, float lPw)
         ImDrawFlags_RoundCornersTop
     );
 
-    float padding = 5.0f;
+    float outer_pad = 5.0f;
     ImGui::BeginChild(
         "LeftPanel", child_size, false,
         ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
     );
     {
-        auto padding = ImGui::GetTextLineHeight() / 2.0f;
+        const float icon_size = 42.0f;
+        const float top_margin = icon_size * 0.6f;
+        const float icon_pos_x = (lPw - icon_size) / 2.0f;
+        ImGui::SetCursorPos(ImVec2(icon_pos_x, top_margin));
+
+        ImGui::Image((ImTextureID)g_titleIcon, ImVec2(icon_size, icon_size));
+
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + top_margin);
+
+        const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+        const ImVec2 line_start(cursor_pos.x + outer_pad, cursor_pos.y);
+        const ImVec2 line_end(line_start.x + lPw - outer_pad, line_start.y);
+        dl->AddLine(line_start, line_end, ImGui::GetColorU32(ImGuiCol_Separator), 1.0f);
+
+        // После линии добавляем небольшой отступ (опционально)
+        ImGui::Dummy(ImVec2(0.0f, outer_pad));
+
+        float line_height = ImGui::GetTextLineHeight();
+        float padding = line_height / 2.0f;
+        float button_icon_size = line_height * 1.46f;
+        const ImVec2 isize(button_icon_size, button_icon_size);
 
         ImGui::Dummy(ImVec2(0.0f, padding * 2.0f));
+        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.15f);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, cr);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(padding, padding));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(35.0f / 255.0f, 35.0f / 255.0f, 35.0f / 255.0f, 1.00f));
 
-        if (CustomButtonEx("Library", ImVec2(lPw - 10.0f, 0.0f), ImGuiButtonFlags_None))
         {
-            g_currentPage = 0;
-        }
+            float button_pad = padding + 10.0f;
+            float button_width = lPw - 2.0f * button_pad;
+            ImGui::SetCursorPosX(button_pad);
 
-        ImGui::Dummy(ImVec2(0.0f, padding));
+            if (IconizedButton((ImTextureID)g_libraryIcon, "Library", isize, (g_currentPage == 0), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, 0.0f)))
+            {
+                g_currentPage = 0;
+            }
 
-        if (CustomButtonEx("Profile", ImVec2(lPw - 10.0f, 0.0f), ImGuiButtonFlags_None)) {
-            g_currentPage = 1;
+            ImGui::Dummy(ImVec2(0.0f, padding));
+
+            ImGui::SetCursorPosX(button_pad);
+            if (IconizedButton((ImTextureID)g_profileIcon, "Profile", isize, (g_currentPage == 1), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, 0.0f))) {
+                g_currentPage = 1;
+            }
+
+            float settings_icon_size = line_height * 1.0f;
+            const ImVec2 settings_isize(settings_icon_size, settings_icon_size);
+
+            const char* settings_label = "Settings";
+            const char* settings_label_end = ImGui::FindRenderedTextEnd(settings_label);
+            ImVec2 settings_text_size = ImGui::CalcTextSize(settings_label, settings_label_end, false);
+
+            float settings_content_h = ImMax(settings_icon_size, settings_text_size.y);
+            float settings_button_height = settings_content_h + 2.0f * padding;
+
+            float cursor_y_after_second = ImGui::GetCursorPosY();
+            float window_height = ImGui::GetWindowHeight();
+            float bottom_pad = button_pad;
+
+            float available_space = window_height - cursor_y_after_second - settings_button_height - bottom_pad;
+            if (available_space > 0.0f)
+                ImGui::Dummy(ImVec2(0.0f, available_space));
+
+            ImGui::SetCursorPosX(button_pad);
+            if (IconizedButton((ImTextureID)g_settingsIcon, "Settings", settings_isize, (g_currentPage == 2), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, settings_button_height)))
+            {
+                g_currentPage = 2;
+            }
         }
 
         ImGui::PopStyleColor(1);
         ImGui::PopStyleVar(2);
-
-        float cursorY = ImGui::GetCursorPosY();
-        float windowHeight = ImGui::GetWindowHeight();
-        float textHeight = ImGui::CalcTextSize("v1.0.0").y + ImGui::GetStyle().ItemSpacing.y; // высота текста плюс отступ
-        float remaining = windowHeight - cursorY - textHeight - padding;
-
-        if (remaining > 0.0f) ImGui::Dummy(ImVec2(0.0f, remaining));
-
-        ImGui::Separator();
-        ImGui::Text("v1.0.0");
-
+        ImGui::PopFont();
         ImGui::EndChild();
     }
 }
@@ -1009,13 +1083,12 @@ void DrawControlPanel(ImVec2 avail, float lPw)
 // Рисует рабочую область окна, правую часть.
 void DrawContentPaneBody(ImVec2 avail, float lPw)
 {
-    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImDrawList*  dl = ImGui::GetWindowDrawList();
     const ImU32  child_bg = ImColor(31, 30, 30, 255);
     const ImU32  child_border = ImGui::GetColorU32(ImGuiCol_Border);
     const ImVec2 child_size(avail.x - lPw, avail.y);
 
-    const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
-    const ImVec2 child_pos = ImVec2(g_controlPanelWidth, cursor_pos.y);
+    const ImVec2 child_pos = ImVec2(lPw, g_titleColliderHeight);
     const float  cr = ImGui::GetStyle().ChildRounding;
 
     dl->AddRectFilled(
@@ -1034,6 +1107,7 @@ void DrawContentPaneBody(ImVec2 avail, float lPw)
         ImDrawFlags_RoundCornersTop
     );
 
+    ImGui::SetCursorPos(child_pos);
     ImGui::BeginChild("Content", child_size, false);
     {
         switch (g_currentPage)
@@ -1045,7 +1119,11 @@ void DrawContentPaneBody(ImVec2 avail, float lPw)
             break;
         }
         case 1: { // Profile
-            ImGui::Text("Username");
+            ImGui::Text("g_page:profile");
+            break;
+        }
+        case 2: { // Settings
+            ImGui::Text("g_page:settings");
             break;
         }
         default: break;
@@ -1054,60 +1132,73 @@ void DrawContentPaneBody(ImVec2 avail, float lPw)
     ImGui::EndChild();
 }
 
-void DrawProductC(int pos, Product* product) 
+void DrawProductC(int pos, Product* product)
 {
     const char* title = product->GetTitle();
     ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImVec2 shell = ImGui::GetWindowPos();
 
     const ImVec2 card_size(155.0f, 210.0f);
-    const float spacing = 20.0f;
+    const float spacing = 32.0f;
+    const float rounding = 10.0f;
+    const float expand = 1.0f;
 
     float x = shell.x + (spacing / 2.0f) + pos * (card_size.x + spacing);
-    const ImVec2 card_pos(x, shell.y + spacing);
-    const float rounding = 10.0f;
+    ImVec2 base_card_pos(x, shell.y + (spacing / 2.0f));
 
-    const ImU32 bg = ImColor(34, 34, 34, 255);
-    const ImU32 border = ImColor(48, 48, 48, 255);
+    std::string btn_id = "##" + std::string(product->GetProcName());
+    ImGui::SetCursorScreenPos(base_card_pos);
+    ImGui::InvisibleButton(btn_id.c_str(), card_size);
 
-    // Подложка
-    dl->AddRectFilled(
-        card_pos,
-        ImVec2(card_pos.x + card_size.x, card_pos.y + card_size.y),
-        bg,
-        rounding
-    );
+    bool hovered = ImGui::IsItemHovered();
+    bool clicked = ImGui::IsItemClicked();
+    bool available = product->Available();
 
-    dl->AddRect(
-        card_pos,
-        ImVec2(card_pos.x + card_size.x, card_pos.y + card_size.y),
-        border,
-        rounding,
-        0,
-        1.0f
-    );
+    if (hovered && available)
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+    ImVec2 final_pos = base_card_pos;
+    ImVec2 final_size = card_size;
+    if (hovered && available)
+    {
+        final_pos.x -= expand;
+        final_pos.y -= expand;
+        final_size.x += expand * 2.0f;
+        final_size.y += expand * 2.0f;
+    }
+
+    ImU32 bg = IM_COL32(34, 34, 34, 255);
+    ImU32 border = IM_COL32(48, 48, 48, 255);
+    if (hovered && available)
+    {
+        bg = IM_COL32(60, 60, 60, 255);
+        border = IM_COL32(80, 80, 80, 255);
+    }
+    if (!available)
+    {
+        bg = IM_COL32(34, 34, 34, 200);
+        border = IM_COL32(40, 40, 40, 200);
+    }
+
+    dl->AddRectFilled(final_pos, final_pos + final_size, bg, rounding);
+    dl->AddRect(final_pos, final_pos + final_size, border, rounding, 0, 1.0f);
 
     const float padding = 2.0f;
+    ImVec2 poster_pos = final_pos + ImVec2(padding, padding);
+    ImVec2 poster_size = ImVec2(final_size.x - padding * 2.0f, 170.0f);
 
-    const ImVec2 poster_pos(
-        card_pos.x + padding,
-        card_pos.y + padding
-    );
-
-    const ImVec2 poster_size(
-        card_size.x - padding * 2.0f,
-        170.0f
-    );
+    ImU32 poster_col = IM_COL32_WHITE;
+    if (!available)
+        poster_col = IM_COL32(120, 120, 120, 255);
 
     if (product->GetProductPicture())
     {
         dl->AddImageRounded(
             (ImTextureID)product->GetProductPicture(),
             poster_pos,
-            ImVec2(poster_pos.x + poster_size.x, poster_pos.y + poster_size.y),
-            ImVec2(0, 0),
-            ImVec2(1, 1),
-            IM_COL32_WHITE,
+            poster_pos + poster_size,
+            ImVec2(0, 0), ImVec2(1, 1),
+            poster_col,
             8.0f,
             ImDrawFlags_RoundCornersTop
         );
@@ -1116,8 +1207,8 @@ void DrawProductC(int pos, Product* product)
     {
         dl->AddRectFilled(
             poster_pos,
-            ImVec2(poster_pos.x + poster_size.x, poster_pos.y + poster_size.y),
-            ImColor(45, 45, 45),
+            poster_pos + poster_size,
+            IM_COL32(45, 45, 45, 255),
             8.0f,
             ImDrawFlags_RoundCornersTop
         );
@@ -1128,25 +1219,23 @@ void DrawProductC(int pos, Product* product)
     const float leftMargin = 10.0f;
     const float textGap = 4.0f;
 
-    const ImVec2 iconPos(
-        card_pos.x + leftMargin,
+    ImVec2 iconPos(
+        final_pos.x + leftMargin,
         poster_pos.y + poster_size.y + verticalOffset
     );
 
-    const ImVec2 textPos(
-        iconPos.x + iconSize + textGap,
-        iconPos.y + (iconSize - ImGui::GetFontSize()) * 0.5f
-    );
+    ImU32 icon_col = IM_COL32_WHITE;
+    if (!available)
+        icon_col = IM_COL32(120, 120, 120, 255);
 
     if (product->GetProductIcon())
     {
         dl->AddImageRounded(
             (ImTextureID)product->GetProductIcon(),
             iconPos,
-            ImVec2(iconPos.x + iconSize, iconPos.y + iconSize),
-            ImVec2(0, 0),
-            ImVec2(1, 1),
-            IM_COL32_WHITE,
+            iconPos + ImVec2(iconSize, iconSize),
+            ImVec2(0, 0), ImVec2(1, 1),
+            icon_col,
             5.0f
         );
     }
@@ -1154,69 +1243,148 @@ void DrawProductC(int pos, Product* product)
     {
         dl->AddRectFilled(
             iconPos,
-            ImVec2(iconPos.x + iconSize, iconPos.y + iconSize),
-            ImColor(55, 55, 55),
+            iconPos + ImVec2(iconSize, iconSize),
+            IM_COL32(55, 55, 55, 255),
             5.0f
         );
     }
 
-    dl->AddText(
-        textPos,
-        ImColor(230, 230, 230),
-        title
+    ImVec2 textPos(
+        iconPos.x + iconSize + textGap,
+        iconPos.y + (iconSize - ImGui::GetFontSize()) * 0.5f
     );
+    ImColor text_color = available ? ImColor(230, 230, 230) : ImColor(150, 150, 150);
+    dl->AddText(textPos, text_color, title);
 
-    std::string btn_id = "##";
-    btn_id += product->GetProcName();
-
-    ImGui::SetCursorScreenPos(card_pos);
-    ImGui::InvisibleButton(btn_id.c_str(), card_size);
-
-    if (product->Available())
+    if (clicked && available)
     {
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-        }
-
-        if (ImGui::IsItemClicked()) {
-            g_productPopupOpen = true;
-            p_currentProduct = product;
-        }
+        g_productPopupOpen = true;
+        p_currentProduct = product;
     }
 }
 
-bool CustomButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags)
+bool IconizedButton(
+    ImTextureID tex_id, const char* label,
+    const ImVec2& image_size, bool selected, ImGuiButtonFlags flags,
+    float spacing, const ImVec2& size_arg
+)
 {
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
-    if (window->SkipItems)
-        return false;
+    return IconizedButtonEx(tex_id, label, image_size, selected, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1), flags, spacing, size_arg);
+}
 
+bool IconizedButtonEx(
+    ImTextureID tex_id, const char* label,
+    const ImVec2& image_size, bool selected, const ImVec2& uv0, const ImVec2& uv1,
+    const ImVec4& bg_col, const ImVec4& tint_col,
+    ImGuiButtonFlags flags, float spacing, const ImVec2& size_arg
+)
+{
     ImGuiContext& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems) return false;
+
     const ImGuiID id = window->GetID(label);
+    const ImGuiStyle& style = g.Style;
+    if (spacing < 0.0f)
+        spacing = style.ItemSpacing.x;
+
     const char* label_end = ImGui::FindRenderedTextEnd(label);
-    const ImVec2 label_size = ImGui::CalcTextSize(label, label_end, false);
+    const ImVec2 text_size = ImGui::CalcTextSize(label, label_end, false);
+    const bool has_text = (text_size.x > 0.0f && label[0] != '\0');
 
-    ImVec2 pos = window->DC.CursorPos;
-    if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
-        pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
-    ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+    float content_w = image_size.x;
+    float content_h = image_size.y;
 
-    const ImRect bb(pos, pos + size);
-    ImGui::ItemSize(size, style.FramePadding.y);
-    if (!ImGui::ItemAdd(bb, id)) return false;
+    if (has_text)
+    {
+        content_w += spacing + text_size.x;
+        content_h = ImMax(content_h, text_size.y);
+    }
+
+    const ImVec2 padding = style.FramePadding;
+    ImVec2 size = ImGui::CalcItemSize(size_arg,
+        content_w + padding.x * 2.0f,
+        content_h + padding.y * 2.0f);
+
+    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
+    ImGui::ItemSize(bb, style.FramePadding.y);
+    if (!ImGui::ItemAdd(bb, id))
+        return false;
 
     bool hovered, held;
     bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, flags);
 
-    // Render
-    const ImU32 col = ImGui::GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+    if (hovered)
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+    const ImU32 col = ImGui::GetColorU32((held && hovered) ? ImGuiCol_ButtonActive
+        : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
     ImGui::RenderNavCursor(bb, id);
     ImGui::RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
 
-    if (g.LogEnabled)
-        ImGui::LogSetNextTextDecoration("[", "]");
-    ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, label_end, &label_size, style.ButtonTextAlign, &bb);
+    if (bg_col.w > 0.0f)
+        window->DrawList->AddRectFilled(bb.Min + padding, bb.Max - padding,
+            ImGui::GetColorU32(bg_col));
+
+    ImRect content_rect = bb;
+    content_rect.Min += padding;
+    content_rect.Max -= padding;
+
+    float left_offset = padding.x / 2.0f;
+    ImVec2 content_start;
+    content_start.x = content_rect.Min.x + left_offset;
+    content_start.y = content_rect.Min.y + (content_rect.GetHeight() - content_h) * 0.5f;
+
+    float icon_y = content_start.y + ((content_h - image_size.y) / 2.0f);
+    ImRect icon_rect(
+        ImVec2(content_start.x, icon_y),
+        ImVec2(content_start.x + image_size.x, icon_y + image_size.y)
+    );
+
+    float image_rounding = ImMax(style.FrameRounding - ImMax(padding.x, padding.y),
+        style.ImageRounding);
+
+    if (image_rounding > 0.0f)
+        window->DrawList->AddImageRounded(tex_id, icon_rect.Min, icon_rect.Max,
+            uv0, uv1, ImGui::GetColorU32(tint_col),
+            image_rounding);
+    else
+        window->DrawList->AddImage(tex_id, icon_rect.Min, icon_rect.Max,
+            uv0, uv1, ImGui::GetColorU32(tint_col));
+
+    if (has_text)
+    {
+        float text_x = content_start.x + image_size.x + spacing;
+        float text_y = content_start.y + (content_h - text_size.y) * 0.5f;
+        ImRect text_rect(ImVec2(text_x, text_y),
+            ImVec2(text_x + text_size.x, text_y + text_size.y));
+
+        ImGui::RenderTextClipped(text_rect.Min, text_rect.Max,
+            label, label_end, &text_size,
+            ImVec2(0.0f, 0.5f), &content_rect);
+    }
+
+    if (held || selected)
+    {
+        const float indicator_width = 6.0f;
+        const float indicator_height = bb.GetHeight() * 0.75f;
+        const float offset = 6.0f;
+
+        float x = bb.Min.x - offset - indicator_width;
+        float y = bb.Min.y + (bb.GetHeight() - indicator_height) * 0.5f;
+
+        window->DrawList->AddRectFilled(
+            ImVec2(x, y),
+            ImVec2(x + indicator_width, y + indicator_height),
+            g_accentColor,
+            2.0f
+        );
+    }
+
+    if (hovered || held || selected)
+    {
+        window->DrawList->AddRect(bb.Min, bb.Max, g_accentColor, style.FrameRounding, 0, 2.0f);
+    }
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
     return pressed;

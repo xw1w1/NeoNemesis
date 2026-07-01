@@ -6,3 +6,4 @@ D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_widgets.cpp;D:\Nem
 D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_tables.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_tables.obj
 D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_win32.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_win32.obj
 D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_dx11.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_dx11.obj
+D:\Nemesis\Loader\product.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\product.obj
