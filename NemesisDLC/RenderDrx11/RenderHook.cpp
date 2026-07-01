@@ -1,5 +1,7 @@
 #include "RenderHook.hpp"
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
+#include "Miscellaneous Functions/L functions/Esp/Esp.hpp"
+#include "Miscellaneous Functions/L functions/LegitBot/LegitBot.hpp"
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -30,6 +32,7 @@ namespace Nemesis::RenderHook
         void*                   g_present = nullptr;
         bool                    g_initialized = false;
         bool                    g_menuOpen = false;
+        ImFont*                 g_espFont = nullptr;
 
         LRESULT __stdcall WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
@@ -78,6 +81,12 @@ namespace Nemesis::RenderHook
 
             ImGui::CreateContext();
             ImGui::StyleColorsDark();
+
+            ImGuiIO& io = ImGui::GetIO();
+            io.Fonts->AddFontDefault();
+            g_espFont = io.Fonts->AddFontFromFileTTF(
+                "D:/Nemesis/NemesisDLC/RequiredDependencies/google Fronst/static/Roboto-Medium.ttf", 15.0f);
+
             ImGui_ImplWin32_Init(g_window);
             ImGui_ImplDX11_Init(g_device, g_context);
 
@@ -97,14 +106,20 @@ namespace Nemesis::RenderHook
                 g_initialized = true;
             }
 
-            if (g_menuOpen && g_rtv)
+            if (g_rtv)
             {
                 ImGui_ImplDX11_NewFrame();
                 ImGui_ImplWin32_NewFrame();
                 ImGui::NewFrame();
 
-                ImGui::GetIO().MouseDrawCursor = true;
-                DrawMenu();
+                Nemesis::Esp::Render();
+                Nemesis::LegitBot::Render();
+
+                if (g_menuOpen)
+                {
+                    ImGui::GetIO().MouseDrawCursor = true;
+                    DrawMenu();
+                }
 
                 ImGui::Render();
                 g_context->OMSetRenderTargets(1, &g_rtv, nullptr);
@@ -139,6 +154,11 @@ namespace Nemesis::RenderHook
             MH_EnableHook(g_present);
             NLOG("RenderHook: Present hooked");
         }
+    }
+
+    ImFont* GetEspFont()
+    {
+        return g_espFont;
     }
 
     void Stop()

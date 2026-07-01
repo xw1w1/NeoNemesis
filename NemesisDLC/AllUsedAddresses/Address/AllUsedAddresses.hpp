@@ -13,11 +13,11 @@ namespace Nemesis::Addresses
 
     namespace Client
     {
-        inline constexpr std::uintptr_t dwLocalPlayerPawn       = 0x2341698;
-        inline constexpr std::uintptr_t dwLocalPlayerController = 0x2320720;
-        inline constexpr std::uintptr_t dwViewAngles            = 0x23568C8;
-        inline constexpr std::uintptr_t dwViewMatrix            = 0x2346B30;
-        inline constexpr std::uintptr_t dwEntityList            = 0x24E76A0;
+        inline constexpr std::uintptr_t dwLocalPlayerPawn       = 0x2341528;
+        inline constexpr std::uintptr_t dwLocalPlayerController = 0x2320570;
+        inline constexpr std::uintptr_t dwViewAngles            = 0x2356748;
+        inline constexpr std::uintptr_t dwViewMatrix            = 0x23469C0;
+        inline constexpr std::uintptr_t dwEntityList            = 0x24E7680;
         inline constexpr std::uintptr_t dwCameraManager         = 0x2079860;
         inline constexpr std::uintptr_t fnGetModelName          = 0x10BD860;
         inline constexpr std::uintptr_t fnSetModelString        = 0xC19940;
@@ -37,6 +37,7 @@ namespace Nemesis::Addresses
     namespace Schema
     {
         inline constexpr std::ptrdiff_t m_iHealth         = 0x34C;
+        inline constexpr std::ptrdiff_t m_iIDEntIndex     = 0x33FC;
         inline constexpr std::ptrdiff_t m_iTeamNum        = 0x3EB;
         inline constexpr std::ptrdiff_t m_pCameraServices = 0x1218;
         inline constexpr std::ptrdiff_t m_hPlayerPawn     = 0x90C;
@@ -45,6 +46,7 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_pWeaponServices       = 0x11E0;
         inline constexpr std::ptrdiff_t m_hMyWeapons            = 0x48;
         inline constexpr std::ptrdiff_t m_hActiveWeapon         = 0x60;
+        inline constexpr std::ptrdiff_t m_hOwnerEntity          = 0x520;
         inline constexpr std::ptrdiff_t m_AttributeManager      = 0x1180;
         inline constexpr std::ptrdiff_t m_Item                  = 0x50;
         inline constexpr std::ptrdiff_t m_iItemDefinitionIndex  = 0x1BA;
@@ -61,6 +63,8 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_nSubclassID           = 0x380;
         inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
         inline constexpr std::ptrdiff_t m_pGameSceneNode        = 0x330;
+        inline constexpr std::ptrdiff_t m_vecAbsOrigin          = 0xC8;
+        inline constexpr std::ptrdiff_t m_vecViewOffset         = 0xE70;
         inline constexpr std::ptrdiff_t m_bModelDirty           = 0x11E2;
         inline constexpr std::ptrdiff_t m_bVisualsDataSet = 0x18B9;
     }

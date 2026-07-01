@@ -90,17 +90,26 @@ namespace Nemesis::InventoryGive
             std::this_thread::sleep_for(std::chrono::seconds(5));
             NLOG("[inv] worker start (after 5s)");
 
-            for (int t = 0; t < 10 && g_running.load(); ++t)
-            {
-                const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-                if (base) DumpLoadout(base);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-            }
-
+            int lastCount = -1;
             while (g_running.load())
             {
                 const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-                if (base) GiveKnife(base, kSlotStrideA);
+                if (base)
+                {
+                    const std::uintptr_t controller = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
+                    const std::uintptr_t inv = controller ? Mem::Read<std::uintptr_t>(controller + kInvServices) : 0;
+                    if (inv)
+                    {
+                        const int count = Mem::Read<int>(inv + kLoadoutVec + 0x0);
+                        if (count != lastCount)
+                        {
+                            lastCount = count;
+                            NLOG("[inv] loadout count -> %d", count);
+                            if (count > 0) DumpLoadout(base);
+                        }
+                        if (count > 0) GiveKnife(base, kSlotStrideA);
+                    }
+                }
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         }

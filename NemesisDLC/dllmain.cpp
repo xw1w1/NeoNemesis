@@ -37,8 +37,8 @@ static DWORD WINAPI Bootstrap(LPVOID)
 
     Nemesis::SvCheats::Start();
     Nemesis::CameraPositionChange::Start();
-    // Nemesis::CustomSkins::Start();   // старая логика отключена на время теста inventory
-    Nemesis::InventoryGive::Start();
+    // Nemesis::CustomSkins::Start();   // система скинов отключена по запросу
+    // Nemesis::InventoryGive::Start();   // путь инвентаря-меню отложен (тупик для ножа в руке)
     Nemesis::RenderHook::Start();
     return 0;
 }

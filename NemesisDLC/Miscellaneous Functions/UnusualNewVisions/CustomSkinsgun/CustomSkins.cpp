@@ -17,9 +17,18 @@ namespace Nemesis::CustomSkins
     namespace
     {
         using ReloadSubclassFn = void(__fastcall*)(void* entity);
+        using SetModelStringFn = void(__fastcall*)(void* entity, const char* model);
 
         std::atomic<bool> g_running{ false };
         std::thread       g_worker;
+
+        static const char kButterflyModel[] = "weapons/models/knife/knife_butterfly/weapon_knife_butterfly.vmdl";
+
+        bool SafeSetModel(SetModelStringFn fn, void* entity, const char* model)
+        {
+            __try { fn(entity, model); return true; }
+            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+        }
 
         bool SafeReloadSubclass(ReloadSubclassFn fn, void* entity)
         {
@@ -128,7 +137,10 @@ namespace Nemesis::CustomSkins
             Mem::Write<int>(weapon + Schema::m_nFallbackStatTrak, -1);
 
             if (fresh)
+            {
                 Mem::Write<std::uint8_t>(weapon + Schema::m_bVisualsDataSet, 0);
+                NLOG("[skin] knife def %u -> 515, paint=%d, visuals reset", curDef, Addresses::CustomSkins::kPaintKit);
+            }
 
             const std::uint32_t want = MakeTokenU(Addresses::CustomSkins::kKnifeDefIndex);
             const std::uint32_t cur = Mem::Read<std::uint32_t>(weapon + Schema::m_nSubclassID);
@@ -150,6 +162,76 @@ namespace Nemesis::CustomSkins
                     Mem::Write<std::uint32_t>(weapon + Schema::m_nSubclassID, cur);
                     SafeReloadSubclass(reloadSubclass, reinterpret_cast<void*>(weapon));
                     subclassDisabled = true;
+                    NWARN("[skin] subclass 0x%08X not loaded, reverted to 0x%08X", want, cur);
+                }
+            }
+        }
+
+        std::uintptr_t GetEntityByIndex(std::uintptr_t base, std::uint32_t index)
+        {
+            const std::uintptr_t list = Mem::Read<std::uintptr_t>(base + Client::dwEntityList);
+            if (!list)
+                return 0;
+            const std::uintptr_t chunk = Mem::Read<std::uintptr_t>(
+                list + EntityList::kChunkStep * (index >> EntityList::kChunkShift) + EntityList::kChunkBase);
+            if (!chunk)
+                return 0;
+            return Mem::Read<std::uintptr_t>(chunk + EntityList::kEntryStride * (index & EntityList::kSlotMask));
+        }
+
+        void ApplyViewModels(std::uintptr_t base, std::uintptr_t pawn, const std::uintptr_t* weapons, int wc)
+        {
+            static std::ptrdiff_t s_off = 0;
+            static std::ptrdiff_t s_inner = 0;
+
+            if (s_off == 0)
+            {
+                int logged = 0;
+                for (std::ptrdiff_t off = 0x1000; off < 0x2500; off += 8)
+                {
+                    const std::uintptr_t svc = Mem::Read<std::uintptr_t>(pawn + off);
+                    if (svc < 0x10000)
+                        continue;
+                    const std::uintptr_t vt = Mem::Read<std::uintptr_t>(svc);
+                    if (vt < base || vt > base + 0x8000000)
+                        continue;
+
+                    for (std::ptrdiff_t in = 0; in <= 0x80; in += 4)
+                    {
+                        const std::uint32_t h = Mem::Read<std::uint32_t>(svc + in);
+                        if (h == 0 || h == 0xFFFFFFFF || (h >> 15) == 0 || (h & 0x7FFF) <= 64)
+                            continue;
+                        const std::uintptr_t ent = EntityFromHandle(base, h);
+                        if (!ent || ent == pawn)
+                            continue;
+                        if (!Mem::Read<std::uintptr_t>(ent + Schema::m_pGameSceneNode))
+                            continue;
+                        bool isWeapon = false;
+                        for (int i = 0; i < wc; ++i)
+                            if (weapons[i] == ent) { isWeapon = true; break; }
+                        if (isWeapon)
+                            continue;
+
+                        if (logged < 6)
+                        {
+                            NLOG("[vm] cand off=0x%llX in=0x%llX h=%08X ent=%p",
+                                 static_cast<unsigned long long>(off), static_cast<unsigned long long>(in),
+                                 h, reinterpret_cast<void*>(ent));
+                            ++logged;
+                        }
+                        if (s_off == 0) { s_off = off; s_inner = in; }
+                    }
+                }
+            }
+
+            if (s_off)
+            {
+                const std::uintptr_t svc = Mem::Read<std::uintptr_t>(pawn + s_off);
+                const std::uintptr_t vm = EntityFromHandle(base, Mem::Read<std::uint32_t>(svc + s_inner));
+                if (vm)
+                {
+                    const auto setModel = reinterpret_cast<SetModelStringFn>(base + Client::fnSetModelString);
+                    SafeSetModel(setModel, reinterpret_cast<void*>(vm), kButterflyModel);
                 }
             }
         }
@@ -173,12 +255,27 @@ namespace Nemesis::CustomSkins
 
                             if (data && count > 0 && count <= 64)
                             {
+                                std::uintptr_t weapons[64];
+                                int wc = 0;
                                 for (int i = 0; i < count; ++i)
                                 {
                                     const std::uint32_t handle = Mem::Read<std::uint32_t>(data + 4 * i);
                                     const std::uintptr_t weapon = EntityFromHandle(base, handle);
                                     if (weapon)
+                                    {
                                         ApplyToWeapon(base, weapon);
+                                        weapons[wc++] = weapon;
+                                    }
+                                }
+
+                                const std::uint32_t activeHandle = Mem::Read<std::uint32_t>(ws + Schema::m_hActiveWeapon);
+                                const std::uintptr_t active = EntityFromHandle(base, activeHandle);
+                                if (active)
+                                {
+                                    const std::uint16_t adef = Mem::Read<std::uint16_t>(
+                                        active + Schema::m_AttributeManager + Schema::m_Item + Schema::m_iItemDefinitionIndex);
+                                    if (adef == Addresses::CustomSkins::kKnifeDefIndex)
+                                        ApplyViewModels(base, pawn, weapons, wc);
                                 }
                             }
                         }

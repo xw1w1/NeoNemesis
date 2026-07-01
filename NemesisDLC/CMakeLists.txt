@@ -33,11 +33,15 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Utilities/LogsSystem/LogsSystem.cpp"
     "Miscellaneous Utilities/sc_cheat/SvCheats.cpp"
     "RenderDrx11/RenderHook.cpp"
+    "Miscellaneous Functions/L functions/Esp/Esp.cpp"
+    "Miscellaneous Functions/L functions/LegitBot/LegitBot.cpp"
     "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
 )
+
+target_compile_options(NemesisDLC PRIVATE /arch:AVX)
 
 target_include_directories(NemesisDLC PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -47,6 +51,7 @@ target_include_directories(NemesisDLC PRIVATE
     "${NEM_DEPS}/asmjit-master"
     "${NEM_DEPS}/Detours-main/src"
     "${NEM_DEPS}/DirectXShaderCompiler-main/include"
+    "${NEM_DEPS}/DirectXMath-main/Inc"
     "${NEM_DEPS}/google Fronst"
     "${NEM_DEPS}/ensia-main"
     "${NEM_DEPS}/HImGuiAnimation-main"
