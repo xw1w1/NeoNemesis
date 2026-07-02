@@ -7,3 +7,10 @@ D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\imgui_tables.cpp;D:\Neme
 D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_win32.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_win32.obj
 D:\Nemesis\NemesisDLC\RequiredDependencies\imgui-master\backends\imgui_impl_dx11.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_impl_dx11.obj
 D:\Nemesis\Loader\product.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\product.obj
+D:\Nemesis\Loader\imgui_extensions.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\imgui_extensions.obj
+D:\Nemesis\Loader\layout_utils.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\layout_utils.obj
+D:\Nemesis\Loader\file_utils.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\file_utils.obj
+D:\Nemesis\Loader\steam\steamacc.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\steamacc.obj
+D:\Nemesis\Loader\steam\steam_helper.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\steam_helper.obj
+D:\Nemesis\Loader\steam\avatar_loader.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\avatar_loader.obj
+D:\Nemesis\Loader\system_info.cpp;D:\Nemesis\build\Loader\Loader.dir\Release\system_info.obj
