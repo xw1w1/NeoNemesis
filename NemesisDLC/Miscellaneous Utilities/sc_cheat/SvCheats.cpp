@@ -42,18 +42,6 @@ namespace Nemesis::SvCheats
 
         std::uintptr_t ResolveValue(std::uintptr_t base)
         {
-            const auto resolve = reinterpret_cast<ResolveConVarFn>(base + Client::fnResolveConVarValue);
-
-            std::uintptr_t v = reinterpret_cast<std::uintptr_t>(
-                SafeResolve(resolve, reinterpret_cast<void*>(base + Client::dwSvCheatsRef2)));
-            if (v)
-                return v;
-
-            v = reinterpret_cast<std::uintptr_t>(
-                SafeResolve(resolve, reinterpret_cast<void*>(base + Client::dwSvCheatsRef)));
-            if (v)
-                return v;
-
             const std::uintptr_t convar = Mem::Read<std::uintptr_t>(base + Client::dwSvCheatsConVar);
             if (!convar)
                 return 0;

@@ -17,8 +17,8 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t dwLocalPlayerController = 0x2320570;
         inline constexpr std::uintptr_t dwViewAngles            = 0x2356748;
         inline constexpr std::uintptr_t dwViewMatrix            = 0x23469C0;
-        inline constexpr std::uintptr_t dwEntityList            = 0x24E7680;
-        inline constexpr std::uintptr_t dwCameraManager         = 0x2079860;
+        inline constexpr std::uintptr_t dwEntityList            = 0x21D95E8;
+        inline constexpr std::uintptr_t dwCameraManager         = 0x2079870;
         inline constexpr std::uintptr_t fnGetModelName          = 0x10BD860;
         inline constexpr std::uintptr_t fnSetModelString        = 0xC19940;
         inline constexpr std::uintptr_t fnReloadSubclass        = 0x1FAE80;
@@ -28,10 +28,11 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t fnGetPaintKitId         = 0x105F9B0;
         inline constexpr std::uintptr_t dwButterflySubclass     = 0x22AB2F0;
         inline constexpr std::uintptr_t dwSubclassManager       = 0x21D9720;
-        inline constexpr std::uintptr_t dwSvCheatsRef           = 0x232ED38;
-        inline constexpr std::uintptr_t dwSvCheatsConVar        = 0x232ED40;
+        inline constexpr std::uintptr_t dwSvCheatsRef           = 0x233BEC0;
+        inline constexpr std::uintptr_t dwSvCheatsConVar        = 0x233BEC8;
         inline constexpr std::uintptr_t dwSvCheatsRef2          = 0x2355FE0;
         inline constexpr std::uintptr_t fnResolveConVarValue    = 0x1826BA0;
+        inline constexpr std::uintptr_t dwForceJump             = 0x2065FA0;
     }
 
     namespace Schema
@@ -67,6 +68,11 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_vecViewOffset         = 0xE70;
         inline constexpr std::ptrdiff_t m_bModelDirty           = 0x11E2;
         inline constexpr std::ptrdiff_t m_bVisualsDataSet = 0x18B9;
+        inline constexpr std::ptrdiff_t m_fFlags                = 0x3F8;
+        inline constexpr std::ptrdiff_t m_vecAbsVelocity        = 0x3FC;
+        inline constexpr std::ptrdiff_t m_vecVelocity           = 0x430;
+        inline constexpr std::ptrdiff_t m_entitySpottedState    = 0x1C38;
+        inline constexpr std::ptrdiff_t m_bSpotted              = 0x8;
     }
 
     namespace EconView
@@ -110,6 +116,20 @@ namespace Nemesis::Addresses
         inline constexpr std::uint32_t kTokenSeed     = 0x31415926;
     }
 
+    namespace JumpBoost
+    {
+        inline constexpr int           kHoldKey      = 0x45;
+        inline constexpr std::uint32_t kOnGroundFlag = 0x1;
+        inline constexpr std::uint32_t kPress        = 65537;
+        inline constexpr std::uint32_t kRelease      = 256;
+        inline constexpr float         kBoost        = 1.08f;
+        inline constexpr float         kMinSpeed     = 10.0f;
+        inline constexpr float         kMaxSpeed     = 3400.0f;
+        inline constexpr float         kBoostAdd     = 30.0f;
+        inline constexpr int           kPollMs       = 1;
+        inline constexpr int           kJumpDelayMs  = 30;
+    }
+
     namespace ThirdpersonCam
     {
         inline constexpr std::ptrdiff_t kEnableFlag = 0x229;
@@ -117,6 +137,8 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t kAngleYaw   = 0x234;
         inline constexpr std::ptrdiff_t kDistance   = 0x238;
     }
+
+ 
 
     namespace CameraView
     {

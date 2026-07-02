@@ -1,11 +1,11 @@
 #include <Windows.h>
 
 #include <asmjit/asmjit.h>
-
 #include "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.hpp"
 #include "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.hpp"
 #include "Miscellaneous Functions/UnusualNewVisions/InventoryGive/InventoryGive.hpp"
 #include "Miscellaneous Utilities/sc_cheat/SvCheats.hpp"
+#include "Miscellaneous Functions/R Functions/JumpSystem/JumpSystem.hpp"
 #include "RenderDrx11/RenderHook.hpp"
 #include "RenderDrx11/UsedHook.hpp"
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
@@ -37,6 +37,8 @@ static DWORD WINAPI Bootstrap(LPVOID)
 
     Nemesis::SvCheats::Start();
     Nemesis::CameraPositionChange::Start();
+    Nemesis::JumpSystem::Start();
+
     // Nemesis::CustomSkins::Start();   // система скинов отключена по запросу
     // Nemesis::InventoryGive::Start();   // путь инвентаря-меню отложен (тупик для ножа в руке)
     Nemesis::RenderHook::Start();

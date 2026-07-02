@@ -1,5 +1,6 @@
 #include "LegitBot.hpp"
 #include "LegitBotConfig.hpp"
+#include "../../../Miscellaneous Utilities/Visibility Check System/Visibility.hpp"
 #include "../../UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
 
@@ -194,15 +195,25 @@ namespace Nemesis::LegitBot
             }
         }
 
+        bool seen = false;
         if (haveBest)
         {
-            dl->AddCircleFilled(bestScreen, 3.5f, IM_COL32(255, 0, 0, 255));
+            const std::uintptr_t bestPawn = EntByIndex(base, static_cast<std::uint32_t>(bestPawnIndex));
+            if (bestPawn)
+                seen = Mem::Read<bool>(bestPawn + Schema::m_entitySpottedState + Schema::m_bSpotted);
+        }
+
+        if (haveBest)
+        {
+            const ImU32 col = seen ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255);
+            dl->AddCircleFilled(bestScreen, 3.5f, col);
             dl->AddCircle(bestScreen, 5.0f, IM_COL32(255, 255, 0, 255), 16, 1.5f);
         }
 
         static bool s_firing = false;
 
-        if (haveBest)
+        // FOV / автоприцел: тянем мышь только когда врага реально видно
+        if (seen)
         {
             const int mx = static_cast<int>((bestScreen.x - center.x) * Config::aimSpeed);
             const int my = static_cast<int>((bestScreen.y - center.y) * Config::aimSpeed);
@@ -210,8 +221,9 @@ namespace Nemesis::LegitBot
                 mouse_event(MOUSEEVENTF_MOVE, mx, my, 0, 0);
         }
 
-        const int idIndex = Mem::Read<int>(localPawn + Schema::m_iIDEntIndex, -1);
-        const bool onTarget = haveBest && bestDist < Config::fireDist && idIndex == bestPawnIndex;
+        // Стрельба: только когда прицел реально наведён на врага (crosshair-ID)
+        const int crosshairId = Mem::Read<int>(localPawn + Schema::m_iIDEntIndex, -1);
+        const bool onTarget = haveBest && crosshairId == bestPawnIndex;
         if (onTarget && !s_firing)
         {
             mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
@@ -222,5 +234,6 @@ namespace Nemesis::LegitBot
             mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
             s_firing = false;
         }
+      
     }
 }
