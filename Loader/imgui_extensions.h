@@ -2,8 +2,14 @@
 
 #include "imgui.h"
 
-
 namespace ImGuiExt {
+    bool Button(
+        const char* label,
+        ImU32 accent_color,
+        ImU32 highlight_color,
+        const ImVec2& size_arg = ImVec2(0.0f, 0.0f),
+        ImGuiButtonFlags flags = ImGuiButtonFlags_None
+    );
 
     bool IconizedButton(
         ImTextureID tex_id,
@@ -67,21 +73,7 @@ namespace ImGuiExt {
         ImDrawFlags flags
     );
 
-    void ShadowBoxInner(
-        const ImVec2& p_min,
-        const ImVec2& p_max,
-        ImU32 col,
-        float dist,
-        float rounding = 0.0f,
-        ImDrawFlags flags = ImDrawFlags_RoundCornersAll
-    );
+    void ShadowBoxInner(const ImVec2& p_min, const ImVec2& p_max, ImU32 col, float dist, float rounding, ImDrawFlags flags = 0);
 
-    void ShadowBoxOuter(
-        const ImVec2& p_min,
-        const ImVec2& p_max,
-        ImU32 col,
-        float dist,
-        float rounding = 0.0f,
-        ImDrawFlags flags = ImDrawFlags_RoundCornersAll
-    );
+    void ShadowBoxOuter(const ImVec2& p_min, const ImVec2& p_max, ImU32 col, float dist, float rounding, ImDrawFlags flags = 0);
 }

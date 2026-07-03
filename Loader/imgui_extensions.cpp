@@ -11,6 +11,86 @@ namespace ImGuiExt {
     static const int   shadow_hover_alpha = 80;
     static const float shadow_offset_y = 2.0f;
 
+    bool Button(
+        const char* label,
+        ImU32 accent_color,
+        ImU32 highlight_color,
+        const ImVec2& size_arg,
+        ImGuiButtonFlags flags)
+    {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems)
+            return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label);
+
+        const char* label_end = ImGui::FindRenderedTextEnd(label);
+        const ImVec2 label_size = ImGui::CalcTextSize(label, label_end, false);
+
+        ImVec2 pos = window->DC.CursorPos;
+        if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset)
+            pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
+
+        const ImVec2 content_size = label_size;
+        const ImVec2 frame_size = ImVec2(
+            content_size.x + style.FramePadding.x * 2.0f,
+            content_size.y + style.FramePadding.y * 2.0f
+        );
+
+        const ImVec2 size = ImGui::CalcItemSize(size_arg, frame_size.x, frame_size.y);
+        const ImRect bb(pos, pos + size);
+
+        ImGui::ItemSize(size, style.FramePadding.y);
+        if (!ImGui::ItemAdd(bb, id))
+            return false;
+
+        bool hovered = false;
+        bool held = false;
+        const bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, flags);
+
+        ImU32 frame_col;
+        if (held && hovered) frame_col = (accent_color != 0) ? accent_color : ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+        else if (hovered) frame_col = (highlight_color != 0) ? highlight_color : ImGui::GetColorU32(ImGuiCol_ButtonActive);
+        else frame_col = ImGui::GetColorU32(ImGuiCol_Button);
+
+        ImGui::RenderNavCursor(bb, id);
+        ShadowBoxOuter(
+            pos, pos + size,
+            IM_COL32(0, 0, 0, 30),
+            12.0f,
+            style.FrameRounding
+        );
+        ImGui::RenderFrame(bb.Min, bb.Max, frame_col, true, style.FrameRounding);
+
+        const ImVec2 align = style.ButtonTextAlign;
+        const float avail_x = bb.GetWidth() - style.FramePadding.x * 2.0f;
+        const float avail_y = bb.GetHeight() - style.FramePadding.y * 2.0f;
+
+        const float text_x = bb.Min.x + style.FramePadding.x + ImMax(0.0f, (avail_x - label_size.x) * align.x);
+        const float text_y = bb.Min.y + style.FramePadding.y + ImMax(0.0f, (avail_y - label_size.y) * align.y);
+
+        const ImRect text_bb(ImVec2(text_x, text_y), ImVec2(text_x + label_size.x, text_y + label_size.y));
+
+        if (g.LogEnabled)
+            ImGui::LogSetNextTextDecoration("[", "]");
+
+        ImGui::RenderTextClipped(text_bb.Min, text_bb.Max, label, label_end, &label_size, ImVec2(0.0f, 0.0f), &bb);
+
+        if (!held && accent_color != 0)
+        {
+            window->DrawList->AddRect(bb.Min, bb.Max, accent_color, style.FrameRounding, 0, 1.5f);
+        }
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+        return pressed;
+    }
+
+    // IndicatorButton
+
+    // IndicatorSwitch
+
     bool IconizedButton(
         ImTextureID tex_id,
         const char* label,
@@ -103,6 +183,12 @@ namespace ImGuiExt {
         else frame_col = ImGui::GetColorU32(ImGuiCol_Button);
 
         ImGui::RenderNavCursor(bb, id);
+        ShadowBoxOuter(
+            pos, pos + size,
+            IM_COL32(0, 0, 0, 30),
+            12.0f,
+            style.FrameRounding
+        );
         ImGui::RenderFrame(bb.Min, bb.Max, frame_col, true, style.FrameRounding);
 
         const ImVec2 align = style.ButtonTextAlign;
@@ -269,17 +355,21 @@ namespace ImGuiExt {
 
     static float SdfRoundedBox(const ImVec2& p, const ImVec2& box_min, const ImVec2& box_max, float rounding)
     {
-        ImVec2 center = ImVec2((box_min.x + box_max.x) * 0.5f, (box_min.y + box_max.y) * 0.5f);
-        ImVec2 half = ImVec2((box_max.x - box_min.x) * 0.5f, (box_max.y - box_min.y) * 0.5f);
+        ImVec2 center((box_min.x + box_max.x) * 0.5f, (box_min.y + box_max.y) * 0.5f);
+        ImVec2 half((box_max.x - box_min.x) * 0.5f, (box_max.y - box_min.y) * 0.5f);
+        ImVec2 local(ImFabs(p.x - center.x), ImFabs(p.y - center.y));
+        ImVec2 d(local.x - (half.x - rounding), local.y - (half.y - rounding));
 
-        ImVec2 local = ImVec2(ImFabs(p.x - center.x), ImFabs(p.y - center.y));
-
-        ImVec2 d = ImVec2(local.x - (half.x - rounding), local.y - (half.y - rounding));
-
-        float outside = ImSqrt(ImMax(d.x, 0.0f) * ImMax(d.x, 0.0f) + ImMax(d.y, 0.0f) * ImMax(d.y, 0.0f));
+        float outside = ImSqrt(ImMax(d.x, 0.0f) * ImMax(d.x, 0.0f) +
+            ImMax(d.y, 0.0f) * ImMax(d.y, 0.0f));
         float inside = ImMin(ImMax(d.x, d.y), 0.0f);
-
         return outside + inside - rounding;
+    }
+
+    static float ShadowFalloff(float t)
+    {
+        float x = 1.0f - t;
+        return x * x * x;
     }
 
     void ShadowBoxInner(const ImVec2& p_min, const ImVec2& p_max, ImU32 col, float dist, float rounding, ImDrawFlags flags)
@@ -289,34 +379,82 @@ namespace ImGuiExt {
 
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
-        const int base_r = (col >> IM_COL32_R_SHIFT) & 0xFF;
-        const int base_g = (col >> IM_COL32_G_SHIFT) & 0xFF;
-        const int base_b = (col >> IM_COL32_B_SHIFT) & 0xFF;
-        const int base_a = (col >> IM_COL32_A_SHIFT) & 0xFF;
+        ImU32 col_opaque = col;
+        ImU32 col_transparent = col & ~IM_COL32_A_MASK;
 
-        const int vtx_before = dl->VtxBuffer.Size;
-        dl->AddRectFilled(p_min, p_max, IM_COL32_WHITE, rounding, flags);
-        const int vtx_after = dl->VtxBuffer.Size;
+        float box_w = p_max.x - p_min.x;
+        float box_h = p_max.y - p_min.y;
+        float r = ImMin(rounding, ImMin(box_w, box_h) * 0.5f);
+        r = ImMax(r, 0.0f);
 
-        for (int i = vtx_before; i < vtx_after; i++)
-        {
-            ImDrawVert* vert = dl->VtxBuffer.Data + i;
+        float d = ImMin(dist, ImMin(box_w, box_h) * 0.5f);
 
-            float d = -SdfRoundedBox(vert->pos, p_min, p_max, rounding);
-            d = ImMax(d, 0.0f);
+        const int corner_segments = 16;
 
-            float t = ImClamp(d / dist, 0.0f, 1.0f);
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x + r, p_min.y),
+            ImVec2(p_max.x - r, p_min.y + d),
+            col_opaque, col_opaque, col_transparent, col_transparent
+        );
 
-            float alpha_factor = 1.0f - t;
-            alpha_factor = alpha_factor * alpha_factor;
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x + r, p_max.y - d),
+            ImVec2(p_max.x - r, p_max.y),
+            col_transparent, col_transparent, col_opaque, col_opaque
+        );
 
-            int a = (int)(base_a * alpha_factor);
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x, p_min.y + r),
+            ImVec2(p_min.x + d, p_max.y - r),
+            col_opaque, col_transparent, col_transparent, col_opaque
+        );
 
-            ImVec4 orig = ImGui::ColorConvertU32ToFloat4(vert->col);
-            a = (int)(a * orig.w);
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_max.x - d, p_min.y + r),
+            ImVec2(p_max.x, p_max.y - r),
+            col_transparent, col_opaque, col_opaque, col_transparent
+        );
 
-            vert->col = IM_COL32(base_r, base_g, base_b, a);
-        }
+        auto DrawInnerCorner = [&](ImVec2 corner_center, float angle_start, float angle_end)
+            {
+                float outer_r = r;
+                float inner_r = ImMax(0.0f, r - d);
+
+                for (int i = 0; i < corner_segments; i++)
+                {
+                    float t0 = (float)i / corner_segments;
+                    float t1 = (float)(i + 1) / corner_segments;
+                    float a0 = angle_start + (angle_end - angle_start) * t0;
+                    float a1 = angle_start + (angle_end - angle_start) * t1;
+
+                    ImVec2 outer0(corner_center.x + cosf(a0) * outer_r, corner_center.y + sinf(a0) * outer_r);
+                    ImVec2 outer1(corner_center.x + cosf(a1) * outer_r, corner_center.y + sinf(a1) * outer_r);
+
+                    ImVec2 inner0(corner_center.x + cosf(a0) * inner_r, corner_center.y + sinf(a0) * inner_r);
+                    ImVec2 inner1(corner_center.x + cosf(a1) * inner_r, corner_center.y + sinf(a1) * inner_r);
+
+                    dl->PrimReserve(6, 4);
+                    ImVec2 uv = dl->_Data->TexUvWhitePixel;
+
+                    dl->PrimWriteVtx(outer0, uv, col_opaque);
+                    dl->PrimWriteVtx(outer1, uv, col_opaque);
+                    dl->PrimWriteVtx(inner1, uv, col_transparent);
+                    dl->PrimWriteVtx(inner0, uv, col_transparent);
+
+                    ImDrawIdx idx = (ImDrawIdx)(dl->_VtxCurrentIdx - 4);
+                    dl->PrimWriteIdx(idx);
+                    dl->PrimWriteIdx(idx + 1);
+                    dl->PrimWriteIdx(idx + 2);
+                    dl->PrimWriteIdx(idx);
+                    dl->PrimWriteIdx(idx + 2);
+                    dl->PrimWriteIdx(idx + 3);
+                }
+            };
+
+        DrawInnerCorner(ImVec2(p_min.x + r, p_min.y + r), IM_PI, IM_PI * 1.5f);
+        DrawInnerCorner(ImVec2(p_max.x - r, p_min.y + r), IM_PI * 1.5f, IM_PI * 2.0f);
+        DrawInnerCorner(ImVec2(p_max.x - r, p_max.y - r), 0.0f, IM_PI * 0.5f);
+        DrawInnerCorner(ImVec2(p_min.x + r, p_max.y - r), IM_PI * 0.5f, IM_PI);
     }
 
     void ShadowBoxOuter(const ImVec2& p_min, const ImVec2& p_max, ImU32 col, float dist, float rounding, ImDrawFlags flags)
@@ -326,31 +464,83 @@ namespace ImGuiExt {
 
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
-        ImVec2 outer_min = ImVec2(p_min.x - dist, p_min.y - dist);
-        ImVec2 outer_max = ImVec2(p_max.x + dist, p_max.y + dist);
+        ImU32 col_opaque = col;
+        ImU32 col_transparent = col & ~IM_COL32_A_MASK;
 
-        float outer_rounding = rounding + dist;
+        float box_w = p_max.x - p_min.x;
+        float box_h = p_max.y - p_min.y;
+        float r = ImMin(rounding, ImMin(box_w, box_h) * 0.5f);
+        r = ImMax(r, 0.0f);
 
-        const int base_r = (col >> IM_COL32_R_SHIFT) & 0xFF;
-        const int base_g = (col >> IM_COL32_G_SHIFT) & 0xFF;
-        const int base_b = (col >> IM_COL32_B_SHIFT) & 0xFF;
-        const int base_a = (col >> IM_COL32_A_SHIFT) & 0xFF;
+        const int corner_segments = 16;
 
-        const int vtx_before = dl->VtxBuffer.Size;
-        dl->AddRectFilled(outer_min, outer_max, IM_COL32_WHITE, outer_rounding, flags);
-        const int vtx_after = dl->VtxBuffer.Size;
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x + r, p_min.y - dist),
+            ImVec2(p_max.x - r, p_min.y),
+            col_transparent, col_transparent, col_opaque, col_opaque
+        );
 
-        for (int i = vtx_before; i < vtx_after; i++)
-        {
-            ImDrawVert* vert = dl->VtxBuffer.Data + i;
-            float d = SdfRoundedBox(vert->pos, p_min, p_max, rounding);
-            float t = ImClamp(d / dist, 0.0f, 1.0f);
-            float alpha_factor = 1.0f - t;
-            alpha_factor = alpha_factor * alpha_factor;
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x + r, p_max.y),
+            ImVec2(p_max.x - r, p_max.y + dist),
+            col_opaque, col_opaque, col_transparent, col_transparent
+        );
 
-            int a = (int)(base_a * alpha_factor);
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_min.x - dist, p_min.y + r),
+            ImVec2(p_min.x, p_max.y - r),
+            col_transparent, col_opaque, col_opaque, col_transparent
+        );
 
-            vert->col = IM_COL32(base_r, base_g, base_b, a);
-        }
+        dl->AddRectFilledMultiColor(
+            ImVec2(p_max.x, p_min.y + r),
+            ImVec2(p_max.x + dist, p_max.y - r),
+            col_opaque, col_transparent, col_transparent, col_opaque
+        );
+
+        auto DrawCorner = [&](ImVec2 corner_center, float angle_start, float angle_end)
+            {
+
+                float outer_r = r + dist;
+
+                for (int i = 0; i < corner_segments; i++)
+                {
+                    float t0 = (float)i / corner_segments;
+                    float t1 = (float)(i + 1) / corner_segments;
+                    float a0 = angle_start + (angle_end - angle_start) * t0;
+                    float a1 = angle_start + (angle_end - angle_start) * t1;
+
+                    ImVec2 inner0(corner_center.x + cosf(a0) * r, corner_center.y + sinf(a0) * r);
+                    ImVec2 inner1(corner_center.x + cosf(a1) * r, corner_center.y + sinf(a1) * r);
+
+                    ImVec2 outer0(corner_center.x + cosf(a0) * outer_r, corner_center.y + sinf(a0) * outer_r);
+                    ImVec2 outer1(corner_center.x + cosf(a1) * outer_r, corner_center.y + sinf(a1) * outer_r);
+
+                    dl->PrimReserve(6, 4);
+
+                    ImVec2 uv = dl->_Data->TexUvWhitePixel;
+
+                    dl->PrimWriteVtx(inner0, uv, col_opaque);
+                    dl->PrimWriteVtx(inner1, uv, col_opaque);
+                    dl->PrimWriteVtx(outer1, uv, col_transparent);
+                    dl->PrimWriteVtx(outer0, uv, col_transparent);
+
+                    ImDrawIdx idx = (ImDrawIdx)(dl->_VtxCurrentIdx - 4);
+                    dl->PrimWriteIdx(idx);
+                    dl->PrimWriteIdx(idx + 1);
+                    dl->PrimWriteIdx(idx + 2);
+                    dl->PrimWriteIdx(idx);
+                    dl->PrimWriteIdx(idx + 2);
+                    dl->PrimWriteIdx(idx + 3);
+                }
+            };
+
+        DrawCorner(ImVec2(p_min.x + r, p_min.y + r), IM_PI, IM_PI * 1.5f);
+
+        DrawCorner(ImVec2(p_max.x - r, p_min.y + r), IM_PI * 1.5f, IM_PI * 2.0f);
+
+        DrawCorner(ImVec2(p_max.x - r, p_max.y - r), 0.0f, IM_PI * 0.5f);
+
+        DrawCorner(ImVec2(p_min.x + r, p_max.y - r), IM_PI * 0.5f, IM_PI);
     }
 }

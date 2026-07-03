@@ -1,4 +1,5 @@
 #include "layout_utils.h"
+#include "imgui_extensions.h"
 #include <string>
 #include <functional>
 
@@ -112,8 +113,8 @@ void LabelValueRowCopyable(const char* label, const char* value, bool copyable, 
     if (copyable)
     {
         value_x -= 20.0f;
-        float ico_x = pos.x + width - 16.0f;
-        float ico_y = pos.y + row_height * 0.5f - 6.0f;
+        float ico_x = pos.x + width - 20.0f;
+        float ico_y = pos.y + row_height * 0.5f - 4.0f;
         ImU32 ico_col = hovered ? IM_COL32(200, 200, 210, 255) : IM_COL32(120, 125, 135, 255);
         dl->AddRect(ImVec2(ico_x, ico_y), ImVec2(ico_x + 8, ico_y + 10), ico_col, 1.5f, 0, 1.0f);
         dl->AddRect(ImVec2(ico_x + 3, ico_y - 3), ImVec2(ico_x + 11, ico_y + 7), ico_col, 1.5f, 0, 1.0f);
@@ -131,6 +132,76 @@ void LabelValueRowCopyable(const char* label, const char* value, bool copyable, 
     }
 }
 
+void DrawCard(ImU32 col, float height, std::function<void()> content)
+{
+    DrawCard(nullptr, col, height, content);
+}
+
+void DrawCard(ImU32 col_top, ImU32 col_bot, float height, std::function<void()> content)
+{
+    DrawCard(nullptr, col_top, col_bot, height, content);
+}
+
+void DrawCard(const char* title, ImU32 col, float height, std::function<void()> content)
+{
+    DrawCard(title, col, col, height, content);
+}
+
+void DrawCard(const char* title, ImU32 col_top, ImU32 col_bot, float height, std::function<void()> content)
+{
+    const bool has_title = (title && title[0]);
+
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float  width = ImGui::GetContentRegionAvail().x;
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+
+    ImU32 bg_col_top = col_top ? col_top : IM_COL32(28, 28, 32, 255);
+    ImU32 bg_col_bot = col_bot ? col_bot : IM_COL32(28, 28, 32, 255);
+    ImU32 border_col = ImGui::GetColorU32(ImGuiCol_Border);
+
+    ImGuiExt::ShadowBoxOuter(pos, ImVec2(pos.x + width, pos.y + height), IM_COL32(0, 0, 0, 30), 15.0f, 10.0f);
+    ImGuiExt::AddRectFilledMultiColor(pos, ImVec2(pos.x + width, pos.y + height), bg_col_top, bg_col_bot, 10.0f, 0);
+    dl->AddRect(pos, ImVec2(pos.x + width, pos.y + height), border_col, 10.0f, 0, 1.0f);
+
+    float header_h = 0.0f;
+
+    if (has_title)
+    {
+        ImFont* font = ImGui::GetFont();
+        float title_font_size = ImGui::GetFontSize() * 1.1f;
+
+        dl->AddText(font, title_font_size, ImVec2(pos.x + 16.0f, pos.y + 12.0f), IM_COL32(255, 255, 255, 255), title);
+
+        float line_y = pos.y + 12.0f + title_font_size + 8.0f;
+        dl->AddLine(ImVec2(pos.x + 16.0f, line_y), ImVec2(pos.x + width - 16.0f, line_y), IM_COL32(60, 60, 65, 255), 1.0f);
+
+        ImGui::SetCursorScreenPos(ImVec2(pos.x + 8.0f, line_y + 8.0f));
+
+        header_h = (line_y + 8.0f) - pos.y;
+    }
+    else
+    {
+        ImGui::SetCursorScreenPos(ImVec2(pos.x + 8.0f, pos.y + 8.0f));
+        header_h = 8.0f;
+    }
+
+    const float inner_pad = 8.0f;
+    float child_h = height - header_h - inner_pad;
+    if (child_h < 1.0f) child_h = 1.0f;
+
+    const char* safe_title = has_title ? title : "notitle";
+    std::string child_id = std::string("##card_") + safe_title;
+
+    ImGui::BeginChild(child_id.c_str(), ImVec2(width - 16.0f, child_h), ImGuiChildFlags_None);
+    {
+        content();
+    }
+    ImGui::EndChild();
+
+    ImGui::SetCursorScreenPos(pos);
+    ImGui::Dummy(ImVec2(width, height + 12.0f));
+}
+
 void DrawCardSimple(const char* title, float height, std::function<void()> content)
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -140,6 +211,13 @@ void DrawCardSimple(const char* title, float height, std::function<void()> conte
     ImU32 bg_col = IM_COL32(28, 28, 32, 255);
     ImU32 border_col = ImGui::GetColorU32(ImGuiCol_Border);
 
+    ImGuiExt::ShadowBoxOuter(
+        pos,
+        ImVec2(pos.x + width, pos.y + height),
+        IM_COL32(0, 0, 0, 30),
+        15.0f,
+        10.0f
+    );
     dl->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + height), bg_col, 10.0f);
     dl->AddRect(pos, ImVec2(pos.x + width, pos.y + height), border_col, 10.0f, 0, 1.0f);
 

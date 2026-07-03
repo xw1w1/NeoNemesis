@@ -31,19 +31,22 @@
 #include "steam\avatar_loader.h"
 #include "system_info.h"
 
-#include "product.cpp"
+#include "api\loader_api.h"
+#include "subscription\product.h"
+
+#include "product_registry.h"
 
 static HWND                      g_Hwnd = nullptr;
 static SystemInfo                g_systemInfo;
 static bool                      g_systemInfoLoaded = false;
 // Данные для DirectX 11
-static ID3D11Device*             g_pd3dDevice = nullptr;
-static ID3D11DeviceContext*      g_pd3dDeviceContext = nullptr;
-static IDXGISwapChain*           g_pSwapChain = nullptr;
-static ID3D11RenderTargetView*   g_mainRenderTargetView = nullptr;
+static ID3D11Device* g_pd3dDevice = nullptr;
+static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
+static IDXGISwapChain* g_pSwapChain = nullptr;
+static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
 // Пользовательский шрифт для заголовка
-static ImFont*                   g_titleFont = nullptr;
+static ImFont* g_titleFont = nullptr;
 static ID3D11ShaderResourceView* g_titleIcon = nullptr;
 
 static ImU32                     g_accentColor = ImColor(230, 25, 52, 255);
@@ -136,11 +139,6 @@ void RefreshSteamAccounts();
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-// Обертки над играми
-Product* p_counterStrike2 = nullptr;
-Product* p_dota2 = nullptr;
-Product* p_rust = nullptr;
-
 // Хелперы для ImGui
 inline ImVec2  operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
 inline ImVec2  operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
@@ -188,24 +186,24 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"Nemesis Loader", nullptr };
     ::RegisterClassExW(&wc);
-    
+
     // Создаем окно без рамки и кнопок (WS_POPUP) размером 685x450
     const int kWinW = 720;
     const int kWinH = 480;
-    
+
     // Центрирование окна
     int screenW = GetSystemMetrics(SM_CXSCREEN);
     int screenH = GetSystemMetrics(SM_CYSCREEN);
     int winX = (screenW - kWinW) / 2;
     int winY = (screenH - kWinH) / 2;
     float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
-    
+
     g_Hwnd = ::CreateWindowW(wc.lpszClassName, L"Nemesis Loader", WS_POPUP, winX, winY, (int)(kWinW * main_scale), (int)(kWinH * main_scale), nullptr, nullptr, wc.hInstance, nullptr);
 
     // Формируем регион окна: 4 скругленных угла (TL/TR/BL/BR)
     // Радиус делаем немного меньше (10px), чтобы углы были поменьше и визуально мягче
     const int kRadius = 10;          // радиус скругления в пикселях
-    const int kDiam   = kRadius * 2; // диаметр для CreateRoundRectRgn
+    const int kDiam = kRadius * 2; // диаметр для CreateRoundRectRgn
 
     HRGN rRoundAll = CreateRoundRectRgn(0, 0, kWinW + 1, kWinH + 1, kDiam, kDiam);
     SetWindowRgn(g_Hwnd, rRoundAll, TRUE); // система возьмёт владение rRoundAll
@@ -226,16 +224,16 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    
+
     // Настройка стиля
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
     // Углы делаем немного меньше и «гладкими»
     style.WindowRounding = 10.0f;
-    style.ChildRounding  = 10.0f;
+    style.ChildRounding = 10.0f;
     style.WindowBorderSize = 1.0f; // 1px обводка вокруг GUI
-    style.ChildBorderSize  = 0.0f;
-    style.AntiAliasedFill  = true;
+    style.ChildBorderSize = 0.0f;
+    style.AntiAliasedFill = true;
     style.AntiAliasedLines = true;
 
     style.ScaleAllSizes(main_scale);
@@ -274,6 +272,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
         // Запуск кадра ImGui
         // обработка стейта аватарок
         AvatarLoader::ProcessCompletedTasks();
+        ProductRegistry::ProcessCompletedTasks();
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
@@ -438,10 +437,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                     1.0f
                 );
 
-                if (p_currentProduct->GetProductIcon())
+                if (p_currentProduct->GetCurrentIcon())
                 {
                     popup_dl->AddImageRounded(
-                        (ImTextureID)p_currentProduct->GetProductIcon(),
+                        (ImTextureID)p_currentProduct->GetCurrentIcon(),
                         sp(16.0f, 16.0f),
                         sp(34.0f, 34.0f),
                         ImVec2(0.0f, 0.0f),
@@ -458,7 +457,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 popup_dl->AddText(
                     sp(46.0f, 16.0f),
                     ImColor(234, 234, 234, static_cast<int>(255.0f * eased)),
-                    p_currentProduct->GetTitle()
+                    p_currentProduct->GetTitle().c_str()
                 );
 
                 const ImVec2 close_btn_pos = sp(392.0f, 14.0f);
@@ -633,7 +632,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                             bool hasDll = (GetFileAttributesW(dllPath.c_str()) != INVALID_FILE_ATTRIBUTES) ||
                                 (GetFileAttributesW(L"NemesisLoader.dll") != INVALID_FILE_ATTRIBUTES);
 
-                            // Если Steam уже запущен под нужным аккаунтом — пропускаем запуск
                             if (SteamHelper::IsSteamReady())
                             {
                                 g_runState = RS_LaunchingSteamGame;
@@ -646,14 +644,12 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         }
                         else if (g_runState == RS_LaunchingSteam)
                         {
-                            // Просто запускаем Steam под нужным аккаунтом (без игры!)
                             if (g_currentAccount)
                             {
                                 SteamHelper::LaunchSteamAs(*g_currentAccount);
                             }
                             else
                             {
-                                // Fallback — запуск без указания аккаунта
                                 std::string steamPath = SteamHelper::GetSteamInstallPath();
                                 if (!steamPath.empty())
                                 {
@@ -662,29 +658,27 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                                 }
                             }
                             g_runState = RS_WaitingForSteam;
-                            g_runTimer = 3.0f; // Steam обычно запускается за 3-15 секунд
+                            g_runTimer = 3.0f;
                         }
                         else if (g_runState == RS_WaitingForSteam)
                         {
-                            // Ждём пока Steam полностью загрузится (появится webhelper)
                             static float total_wait = 0.0f;
                             total_wait += 1.0f;
 
                             if (SteamHelper::IsSteamReady())
                             {
                                 g_runState = RS_LaunchingSteamGame;
-                                g_runTimer = 1.5f; // небольшая пауза перед URL - чтобы Steam точно принял команду
+                                g_runTimer = 1.5f;
                                 total_wait = 0.0f;
                             }
                             else if (total_wait > 60.0f)
                             {
-                                // Timeout: 60 секунд достаточно даже для медленного диска
                                 g_runState = RS_Idle;
                                 total_wait = 0.0f;
                             }
                             else
                             {
-                                g_runTimer = 1.0f; // проверяем каждую секунду
+                                g_runTimer = 1.0f;
                             }
                         }
                         else if (g_runState == RS_LaunchingSteamGame)
@@ -697,7 +691,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         }
                         else if (g_runState == RS_WaitingForGame)
                         {
-                            if (IsProcessWindowVisible(p_currentProduct->GetProcNameW()))
+                            if (IsProcessWindowVisible(p_currentProduct->GetProcNameW().c_str()))
                             {
                                 g_runState = RS_Countdown;
                                 g_runTimer = g_rsCountdownTime;
@@ -716,7 +710,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         {
                             // Реальная инъекция
                             nemesis::Process proc;
-                            if (NT_SUCCESS(proc.Attach(p_currentProduct->GetProcNameW())))
+                            if (NT_SUCCESS(proc.Attach(p_currentProduct->GetProcNameW().c_str())))
                             {
                                 auto res = proc.mmap().MapImage(L"NemesisLoader.dll", nemesis::NoThreads);
                                 // Независимо от результата маппинга, продолжаем, чтобы GUI не прерывался
@@ -732,7 +726,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         }
                         else if (g_runState == RS_CheckingCrash)
                         {
-                            if (!IsProcessRunning(p_currentProduct->GetProcNameW()))
+                            if (!IsProcessRunning(p_currentProduct->GetProcNameW().c_str()))
                             {
                                 g_runState = RS_Idle;
                             }
@@ -881,7 +875,6 @@ void DrawControlPanel(ImVec2 avail, float lPw)
     ImDrawList*  dl = ImGui::GetWindowDrawList();
     const ImVec2 child_size(lPw, avail.y);
     const float  cr = ImGui::GetStyle().ChildRounding;
-    const float  outer_padding = 5.0f;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::BeginChild(
@@ -892,72 +885,80 @@ void DrawControlPanel(ImVec2 avail, float lPw)
         ImGui::PopStyleVar();
 
         const float edge_padding = 12.0f;
-        const float top_padding = 24.0f;        
+        const float top_padding = 24.0f;
         const float icon_to_buttons_gap = 28.0f;
         const float button_gap = 6.0f;
 
         const float icon_size = 56;
         const float icon_pos_x = (lPw - icon_size) / 2.0f;
         ImGui::SetCursorPos(ImVec2(icon_pos_x, top_padding));
-
         ImGui::Image((ImTextureID)g_titleIcon, ImVec2(icon_size, icon_size));
 
         ImGui::Dummy(ImVec2(0.0f, icon_to_buttons_gap));
 
         float line_height = ImGui::GetTextLineHeight();
         float frame_padding = line_height / 2.0f;
-        float button_icon_size = line_height * 1.25f;
-        const ImVec2 isize(button_icon_size, button_icon_size);
+        float top_icon_size = line_height * 1.25f;
+        float bottom_icon_size = line_height;
+
+        const ImVec2 top_isize(top_icon_size, top_icon_size);
+        const ImVec2 bottom_isize(bottom_icon_size, bottom_icon_size);
 
         ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, cr);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(frame_padding, frame_padding));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(35.0f / 255.0f, 35.0f / 255.0f, 35.0f / 255.0f, 1.00f));
 
+        const float button_width = lPw - 2.0f * edge_padding;
+
+        ImGui::SetCursorPosX(edge_padding);
+        if (ImGuiExt::IconizedButton((ImTextureID)g_libraryIcon, "Library", top_isize,
+            g_accentColor, g_accentColorSub, (g_currentPage == 0), ImGuiButtonFlags_None, 6.0f,
+            ImVec2(button_width, 0.0f)))
         {
-            const float button_width = lPw - 2.0f * edge_padding;
-            ImGui::SetCursorPosX(edge_padding);
-            if (ImGuiExt::IconizedButton((ImTextureID)g_libraryIcon, "Library", isize, g_accentColor, g_accentColorSub, (g_currentPage == 0), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, 0.0f)))
-            {
-                g_currentPage = 0;
-            }
+            g_currentPage = 0;
+        }
 
-            ImGui::Dummy(ImVec2(0.0f, button_gap));
+        ImGui::Dummy(ImVec2(0.0f, button_gap));
 
-            ImGui::SetCursorPosX(edge_padding);
-            if (ImGuiExt::IconizedButton((ImTextureID)g_profileIcon, "Profile", isize, g_accentColor, g_accentColorSub, (g_currentPage == 1), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, 0.0f))) {
-                g_currentPage = 1;
-            }
+        ImGui::SetCursorPosX(edge_padding);
+        if (ImGuiExt::IconizedButton((ImTextureID)g_accountsIcon, "Steam", top_isize,
+            g_accentColor, g_accentColorSub, (g_currentPage == 3), ImGuiButtonFlags_None, 6.0f,
+            ImVec2(button_width, 0.0f)))
+        {
+            g_currentPage = 3;
+        }
 
-            ImGui::Dummy(ImVec2(0.0f, button_gap));
+        float compact_content_h = ImMax(bottom_icon_size, ImGui::CalcTextSize("Settings").y);
+        float compact_button_height = compact_content_h + 2.0f * frame_padding;
 
-            ImGui::SetCursorPosX(edge_padding);
-            if (ImGuiExt::IconizedButton((ImTextureID)g_accountsIcon, "Steam", isize, g_accentColor, g_accentColorSub, (g_currentPage == 3), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, 0.0f))) {
-                g_currentPage = 3;
-            }
+        float bottom_block_height = compact_button_height * 2.0f + button_gap;
 
-            const float settings_icon_size = line_height;
-            const ImVec2 settings_isize(settings_icon_size, settings_icon_size);
+        float cursor_y_current = ImGui::GetCursorPosY();
+        float window_height = ImGui::GetWindowHeight();
 
-            const char* settings_label = "Settings";
-            ImVec2 settings_text_size = ImGui::CalcTextSize(settings_label);
+        float bottom_padding = edge_padding * 2.0f;
 
-            float settings_content_h = ImMax(settings_icon_size, settings_text_size.y);
-            float settings_button_height = settings_content_h + 2.0f * frame_padding;
+        float bottom_block_y = window_height - bottom_padding - bottom_block_height;
 
-            float cursor_y_current = ImGui::GetCursorPosY();
-            float window_height = ImGui::GetWindowHeight();
-            float bottom_padding = edge_padding;
+        ImGui::SetCursorPosY(ImMax(cursor_y_current, bottom_block_y));
 
-            float available_space = window_height - cursor_y_current - settings_button_height - bottom_padding;
-            if (available_space > 0.0f)
-                ImGui::Dummy(ImVec2(0.0f, available_space));
+        ImGui::SetCursorPosX(edge_padding);
+        if (ImGuiExt::IconizedButton((ImTextureID)g_profileIcon, "Profile", bottom_isize,
+            g_accentColor, g_accentColorSub, (g_currentPage == 1), ImGuiButtonFlags_None, 6.0f,
+            ImVec2(button_width, compact_button_height)))
+        {
+            g_currentPage = 1;
+        }
 
-            ImGui::SetCursorPosX(edge_padding);
-            if (ImGuiExt::IconizedButton((ImTextureID)g_settingsIcon, "Settings", settings_isize, g_accentColor, g_accentColorSub, (g_currentPage == 2), ImGuiButtonFlags_None, 6.0f, ImVec2(button_width, settings_button_height)))
-            {
-                g_currentPage = 2;
-            }
+        ImGui::Dummy(ImVec2(0.0f, button_gap));
+
+        ImGui::SetCursorPosX(edge_padding);
+        if (ImGuiExt::IconizedButton((ImTextureID)g_settingsIcon, "Settings", bottom_isize,
+            g_accentColor, g_accentColorSub, (g_currentPage == 2), ImGuiButtonFlags_None, 6.0f,
+            ImVec2(button_width, compact_button_height)))
+        {
+            g_currentPage = 2;
         }
 
         ImGui::PopStyleColor(1);
@@ -970,7 +971,7 @@ void DrawControlPanel(ImVec2 avail, float lPw)
 // Рисует рабочую область окна, правую часть
 void DrawContentPaneBody(ImVec2 avail, float lPw)
 {
-    ImDrawList*  dl = ImGui::GetWindowDrawList();
+    ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImU32  child_bg = ImGui::GetColorU32(g_fillColorSub);
     const ImU32  child_border = ImGui::GetColorU32(ImGuiCol_Border);
     const ImVec2 child_size(avail.x - lPw, avail.y);
@@ -979,19 +980,27 @@ void DrawContentPaneBody(ImVec2 avail, float lPw)
     const float  cr = ImGui::GetStyle().ChildRounding;
 
     dl->AddRectFilled(
-        child_pos, 
-        ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y), 
+        child_pos,
+        ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y),
         child_bg,
         cr,
         ImDrawFlags_RoundCornersTop
     );
     dl->AddRect(
-        child_pos, 
-        ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y), 
+        child_pos,
+        ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y),
         child_border,
         cr,
         1.0f,
         ImDrawFlags_RoundCornersTop
+    );
+
+    ImGuiExt::ShadowBoxInner(
+        child_pos,
+        ImVec2(child_pos.x + child_size.x, child_pos.y + child_size.y),
+        IM_COL32(0, 0, 0, 30),
+        16.0f,
+        cr
     );
 
     ImGui::SetCursorPos(child_pos);
@@ -1023,63 +1032,65 @@ void DrawContentPaneBody(ImVec2 avail, float lPw)
 
 // Рисует карточку игры или же внутреннего Product
 void DrawProductCard(Product* product, const ImVec2& card_size)
-{   
+{
     const float padding = 2.0f;
     const float rounding = g_productCardRounding;
     const float aspect_ratio = 900.0f / 600.0f;
 
     const float icon_size = 28.0f;
     const float vertical_offs = 6.0f;
-    const float left_margin = 10.0f;
     const float text_gap = 5.0f;
     const float font_scale = 1.15f;
 
     ImVec2 base_card_pos = ImGui::GetCursorScreenPos();
 
-    std::string btn_id = "##" + std::string(product->GetProcName());
+    std::string btn_id = "##card_" + product->GetHash();
     ImGui::InvisibleButton(btn_id.c_str(), card_size);
 
     bool hovered = ImGui::IsItemHovered();
     bool clicked = ImGui::IsItemClicked();
-    bool available = product->Available();
-    bool focused = hovered && available && clicked;
+    bool ready = product->IsReady();
+    bool focused = hovered && ready;
 
-    if (hovered && available) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    if (focused) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
     ImVec2 final_pos = base_card_pos;
     ImVec2 final_size = card_size;
 
-    ImU32 background = IM_COL32(36, 36, 36, 255);
-    ImU32 border = ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Border]);
-   
-    if (hovered && available)
-    {
-        background = IM_COL32(60, 60, 60, 255);
-        background = IM_COL32(80, 80, 80, 255);
-    }
-    if (!available)
+    ImU32 background = focused ? IM_COL32(60, 60, 60, 255) : IM_COL32(36, 36, 36, 255);
+    ImU32 border = focused ? g_accentColor : ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Border]);
+
+    if (!ready)
     {
         background = IM_COL32(34, 34, 34, 200);
         border = IM_COL32(40, 40, 40, 200);
     }
 
-
     ImDrawList* dl = ImGui::GetWindowDrawList();
+
+    ImGuiExt::ShadowBoxOuter(
+        final_pos, final_pos + final_size,
+        IM_COL32(0, 0, 0, focused ? 35 : 30),
+        focused ? 20.0f : 12.5f,
+        g_productCardRounding
+    );
+
     dl->AddRectFilled(final_pos, final_pos + final_size, background, rounding);
-    dl->AddRect(final_pos, final_pos + final_size, border, rounding, 0, 1.0f);
+    dl->AddRect(final_pos, final_pos + final_size, border, rounding, 0, focused ? 1.8f : 1.0f);
 
     ImVec2 poster_pos = final_pos + ImVec2(padding, padding);
     ImVec2 poster_size(
-        final_size.x - padding,
-        (final_size.x - padding) * aspect_ratio
+        final_size.x - padding * 2.0f,
+        (final_size.x - padding * 2.0f) * aspect_ratio
     );
 
-    ImU32 poster_col = available ? IM_COL32_WHITE : IM_COL32(120, 120, 120, 255);
+    ID3D11ShaderResourceView* poster_tex = product->GetCurrentPoster();
+    ImU32 poster_col = ready ? IM_COL32_WHITE : IM_COL32(180, 180, 180, 200);
 
-    if (product->GetProductPicture())
+    if (poster_tex)
     {
         dl->AddImageRounded(
-            (ImTextureID)product->GetProductPicture(),
+            (ImTextureID)poster_tex,
             poster_pos,
             poster_pos + poster_size,
             ImVec2(0, 0), ImVec2(1, 1),
@@ -1099,23 +1110,106 @@ void DrawProductCard(Product* product, const ImVec2& card_size)
         );
     }
 
-    const char* title = product->GetTitle();
+    if (!product->IsMetaLoaded())
+    {
+        dl->AddRectFilled(
+            poster_pos, poster_pos + poster_size,
+            IM_COL32(0, 0, 0, 120), 8.0f,
+            ImDrawFlags_RoundCornersTop
+        );
+
+        float time = (float)ImGui::GetTime();
+        float angle = time * 4.0f;
+        ImVec2 center(
+            poster_pos.x + poster_size.x * 0.5f,
+            poster_pos.y + poster_size.y * 0.5f
+        );
+        float radius = 12.0f;
+
+        for (int i = 0; i < 8; i++)
+        {
+            float a = angle + i * 0.785f;
+            float alpha = (float)i / 8.0f;
+            ImVec2 dot_pos(
+                center.x + cosf(a) * radius,
+                center.y + sinf(a) * radius
+            );
+            dl->AddCircleFilled(dot_pos, 2.5f,
+                IM_COL32(220, 220, 230, (int)(80 + 150 * alpha)));
+        }
+    }
+    else
+    {
+        ServerStatus status = product->GetStatus();
+        const char* badge_text = nullptr;
+        ImU32 badge_bg = 0;
+
+        if (status == SS_ComingSoon)
+        {
+            badge_text = "COMING SOON";
+            badge_bg = IM_COL32(220, 120, 40, 230);
+        }
+        else if (status == SS_InMaintenance)
+        {
+            badge_text = "MAINTENANCE";
+            badge_bg = IM_COL32(200, 180, 40, 230);
+        }
+        else if (status == SS_Offline)
+        {
+            badge_text = "OFFLINE";
+            badge_bg = IM_COL32(180, 60, 60, 230);
+        }
+        else if (status == SS_Ready && !product->IsAvailable())
+        {
+            badge_text = "LOCKED";
+            badge_bg = IM_COL32(80, 80, 90, 230);
+        }
+
+        if (badge_text)
+        {
+            ImFont* font = ImGui::GetFont();
+            float badge_font_size = ImGui::GetFontSize() * 0.85f;
+            ImVec2 badge_text_size = font->CalcTextSizeA(badge_font_size, FLT_MAX, 0.0f, badge_text);
+
+            float badge_pad_x = 10.0f;
+            float badge_pad_y = 4.0f;
+            ImVec2 badge_size(
+                badge_text_size.x + badge_pad_x * 2.0f,
+                badge_text_size.y + badge_pad_y * 2.0f
+            );
+
+            ImVec2 badge_pos(
+                poster_pos.x + poster_size.x - badge_size.x - 8.0f,
+                poster_pos.y + 8.0f
+            );
+
+            dl->AddRectFilled(badge_pos, badge_pos + badge_size, badge_bg, 6.0f);
+
+            dl->AddText(font, badge_font_size,
+                ImVec2(badge_pos.x + badge_pad_x, badge_pos.y + badge_pad_y),
+                IM_COL32(255, 255, 255, 255), badge_text);
+        }
+    }
+
+    const std::string& title = product->GetTitle();
 
     ImFont* font = ImGui::GetFont();
     const float font_size = ImGui::GetFontSize() * font_scale;
-    ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, title);
+    ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, title.c_str());
 
     const float block_width = icon_size + text_gap + text_size.x;
     const float block_offset_x = (final_size.x - block_width) * 0.5f;
     const float block_y = poster_pos.y + poster_size.y + vertical_offs;
 
     ImVec2 icon_pos(final_pos.x + block_offset_x, block_y);
-    ImU32 icon_col = available ? IM_COL32_WHITE : IM_COL32(120, 120, 120, 255);
 
-    if (product->GetProductIcon())
+    ID3D11ShaderResourceView* icon_tex = product->GetCurrentIcon();
+    ImU32 icon_col = ready ? IM_COL32_WHITE : IM_COL32(180, 180, 180, 200);
+
+    if (icon_tex)
     {
         dl->AddImageRounded(
-            (ImTextureID)product->GetProductIcon(),
+            (ImTextureID)icon_tex,
             icon_pos,
             icon_pos + ImVec2(icon_size, icon_size),
             ImVec2(0, 0), ImVec2(1, 1),
@@ -1131,17 +1225,30 @@ void DrawProductCard(Product* product, const ImVec2& card_size)
             IM_COL32(55, 55, 55, 255),
             5.0f
         );
+
+        if (!title.empty())
+        {
+            char letter[2] = { (char)std::toupper((unsigned char)title[0]), 0 };
+            float letter_font_size = icon_size * 0.55f;
+            ImVec2 letter_size = font->CalcTextSizeA(letter_font_size, FLT_MAX, 0.0f, letter);
+            ImVec2 letter_pos(
+                icon_pos.x + (icon_size - letter_size.x) * 0.5f,
+                icon_pos.y + (icon_size - letter_size.y) * 0.5f
+            );
+            dl->AddText(font, letter_font_size, letter_pos,
+                IM_COL32(180, 180, 190, 255), letter);
+        }
     }
 
     ImVec2 text_pos(
         icon_pos.x + icon_size + text_gap,
         block_y + (icon_size - text_size.y) * 0.5f
     );
-    ImU32 text_color = available ? IM_COL32(230, 230, 230, 255) : IM_COL32(150, 150, 150, 255);
+    ImU32 text_color = ready ? IM_COL32(230, 230, 230, 255) : IM_COL32(150, 150, 150, 255);
 
-    dl->AddText(font, font_size, text_pos, text_color, title);
+    dl->AddText(font, font_size, text_pos, text_color, title.c_str());
 
-    if (clicked && available)
+    if (clicked && ready)
     {
         g_productPopupOpen = true;
         p_currentProduct = product;
@@ -1151,14 +1258,14 @@ void DrawProductCard(Product* product, const ImVec2& card_size)
 // Рисует карточку аккаунта стима
 bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
 {
-    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImDrawList*  dl = ImGui::GetWindowDrawList();
     const ImVec2 pos = ImGui::GetCursorScreenPos();
-
-    const float height = is_current ? 80.0f : 60.0f;
-    const float rounding = 10.0f;
+    const float  height = 56.0f;
+    const float  rounding = 10.0f;
+    const float  icon_size = 40.0f;
     const ImVec2 size(width, height);
 
-    std::string id = "##acc_" + std::to_string(acc.GetSteamID64());
+    std::string  id = "##acc_" + std::to_string(acc.GetSteamID64());
     ImGui::InvisibleButton(id.c_str(), size);
 
     bool hovered = ImGui::IsItemHovered();
@@ -1166,25 +1273,38 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
 
     if (hovered) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
-    ImU32 col_top = IM_COL32(21, 28, 49, 255);
-    ImU32 col_bottom = IM_COL32(20, 83, 134, 255);
-    ImU32 text_color;
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+    {
+        uint64_t id64 = acc.GetSteamID64();
+        ImGui::SetDragDropPayload("STEAM_ACCOUNT", &id64, sizeof(uint64_t));
+
+        ImGui::Text("%s", acc.GetPersonaName().c_str());
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "@%s", acc.GetAccountName().c_str());
+
+        ImGui::EndDragDropSource();
+    }
+
+    ImU32 col_top = IM_COL32(6, 20, 48, 255);
+    ImU32 col_bottom = IM_COL32(23, 60, 97, 255);
 
     if (hovered)
     {
-        col_top = IM_COL32(25, 23, 53, 255);
-        col_bottom = IM_COL32(23, 88, 138, 255);
+        col_top = IM_COL32(9, 23, 51, 255);
+        col_bottom = IM_COL32(26, 63, 100, 255);
     }
 
-    if (is_current) {
-        text_color = IM_COL32(40, 45, 55, 255);
+    if (is_current)
+    {
+        col_top = IM_COL32(10, 30, 68, 255);
+        col_bottom = IM_COL32(33, 82, 128, 255);
     }
-    else if (acc.CanAutoLogin()) {
-        text_color = IM_COL32(80, 180, 90, 255); // зеленый означает что в аккаунт зайти можно
-    }
-    else {
-        text_color = IM_COL32(230, 40, 7, 255); // оранжевый значит что нужно ввести пароль
-    }
+    
+    ImGuiExt::ShadowBoxOuter(
+        pos, ImVec2(pos.x + size.x, pos.y + size.y),
+        IM_COL32(0, 0, 0, 30),
+        12.5f,
+        rounding
+    );
 
     ImGuiExt::AddRectFilledMultiColor(
         pos, ImVec2(pos.x + size.x, pos.y + size.y),
@@ -1192,20 +1312,22 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
     );
 
     ImU32 border_col;
+    float border_thickness;
+
     if (!acc.CanAutoLogin())
     {
-        border_col = IM_COL32(230, 40, 7, 255);
+        border_col = IM_COL32(230, 40, 7, 200);
+        border_thickness = 1.5f;
     }
     else
     {
-        border_col = ImGui::GetColorU32(ImGuiCol_Border);
+        border_col = IM_COL32(36, 36, 35, 255);
+        border_thickness = 1.25f;
     }
 
-    float border_thickness = is_current ? 2.5f : 1.75f;
     dl->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y),
         border_col, rounding, 0, border_thickness);
 
-    const float icon_size = is_current ? 64.0f : 48.0f;
     const float icon_pad = (height - icon_size) * 0.5f;
     ImVec2 icon_pos(pos.x + icon_pad, pos.y + icon_pad);
 
@@ -1258,25 +1380,24 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
         IM_COL32(255, 255, 255, 40), 8.0f, 0, 1.0f);
 
     ImFont* font = ImGui::GetFont();
-    const float name_font_size = ImGui::GetFontSize() * (is_current ? 1.35f : 1.15f);
-    const float login_font_size = ImGui::GetFontSize() * 1.05f;
+    const float name_font_size = ImGui::GetFontSize() * 1.15f;
+    const float login_font_size = ImGui::GetFontSize() * 0.95f;
 
-    float text_x = icon_pos.x + icon_size + 14.0f;
-    float text_y = pos.y + icon_pad + 2.0f;
+    float text_x = icon_pos.x + icon_size + 12.0f;
+    float text_y = pos.y + icon_pad;
 
     dl->AddText(font, name_font_size, ImVec2(text_x, text_y),
         IM_COL32(255, 255, 255, 255), acc.GetPersonaName().c_str());
 
     std::string login = "@" + acc.GetAccountName();
     dl->AddText(font, login_font_size,
-        ImVec2(text_x, text_y + name_font_size + 4.0f),
+        ImVec2(text_x, text_y + name_font_size + 2.0f),
         IM_COL32(180, 195, 210, 200), login.c_str());
 
-    const char* status = is_current ? "Current"
-        : (acc.CanAutoLogin() ? "Ready" : "Log-in required");
+    const char* status = (acc.CanAutoLogin() ? "Logged in" : "Log-in required");
 
-    ImU32 status_col = is_current ? IM_COL32(40, 230, 7, 255)
-        : (acc.CanAutoLogin() ? IM_COL32(120, 220, 140, 255) : IM_COL32(230, 40, 7, 255));
+    ImU32 status_col = is_current ? IM_COL32(80, 200, 255, 255)
+        : (acc.CanAutoLogin() ? IM_COL32(30, 240, 60, 255) : IM_COL32(230, 40, 7, 255));
 
     ImVec2 status_size = font->CalcTextSizeA(login_font_size, FLT_MAX, 0.0f, status);
 
@@ -1298,14 +1419,14 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
         40
     );
 
-    dl->AddRectFilled(badge_min, badge_max, badge_bg, 12.0f);
-    dl->AddRect(badge_min, badge_max, status_col, 12.0f, 0, 1.0f);
+    if (!is_current) {
+        dl->AddRectFilled(badge_min, badge_max, badge_bg, 12.0f);
+        dl->AddRect(badge_min, badge_max, status_col, 12.0f, 0, 1.0f);
 
-    ImVec2 status_pos(
-        badge_min.x + badge_padding_x,
-        badge_min.y + badge_padding_y
-    );
-    dl->AddText(font, login_font_size, status_pos, status_col, status);
+        dl->AddText(font, login_font_size,
+            ImVec2(badge_min.x + badge_padding_x, badge_min.y + badge_padding_y),
+            status_col, status);
+    }
 
     return clicked;
 }
@@ -1313,8 +1434,8 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
 // Рисует страницу библиотеки игр
 void DrawLibraryPage()
 {
-    Product* products[] = { p_counterStrike2, p_dota2, p_rust };
-    const int product_count = IM_ARRAYSIZE(products);
+    std::vector<Product*> products = ProductRegistry::GetAllProducts();
+    const int product_count = products.size();
 
     const float aspect_ratio = 900.0f / 600.0f;
     const float padding = 20.0f;
@@ -1515,9 +1636,7 @@ void DrawSettingsPage()
 void DrawAccountsPage()
 {
     if (!g_accountsLoaded)
-    {
         RefreshSteamAccounts();
-    }
 
     const float page_padding = 24.0f;
 
@@ -1531,75 +1650,203 @@ void DrawAccountsPage()
         ImGui::PopFont();
 
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
-        ImGui::TextUnformatted("Select account to use for automatic Steam login");
+        ImGui::TextUnformatted("Drag accounts between sections to change your current login");
         ImGui::PopStyleColor();
 
         ImGui::SameLine();
         float refresh_x = ImGui::GetContentRegionAvail().x - 100.0f;
+        float btn_height = ImGui::GetTextLineHeight() * 2.3f;
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + refresh_x);
-        if (ImGui::Button("Refresh", ImVec2(100.0f, 0)))
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, ImGui::GetStyle().ChildRounding);
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(35.0f / 255.0f, 35.0f / 255.0f, 35.0f / 255.0f, 1.00f));
+        if (ImGuiExt::Button("Refresh", g_accentColor, g_accentColorSub, ImVec2(100.0f, btn_height)))
             RefreshSteamAccounts();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
 
-        ImGui::Dummy(ImVec2(0, 10.0f));
+        ImGui::Dummy(ImVec2(0, 12.0f));
 
         const float content_width = ImGui::GetContentRegionAvail().x;
+        const float card_height = 56.0f;
+        const float container_inner_padding = 12.0f;   // Отступ между картами и рамкой контейнера
+        const ImU32 element_fill_col = IM_COL32(18, 18, 18, 255);
+        const ImU32 element_border_col = ImGui::GetColorU32(ImGuiCol_Border);
+        const float container_rounding = 10.0f;
 
-        if (g_currentAccount)
+        const float current_container_height = card_height + container_inner_padding * 2.0f;
+
+        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.05f);
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 200, 200, 255));
+        ImGui::TextUnformatted("Current:");
+        ImGui::PopStyleColor();
+        ImGui::PopFont();
+
+        ImGui::Dummy(ImVec2(0, 4.0f));
+
+        ImVec2 current_container_pos = ImGui::GetCursorScreenPos();
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+
+        ImGuiExt::ShadowBoxOuter(
+            current_container_pos,
+            ImVec2(current_container_pos.x + content_width,
+                current_container_pos.y + current_container_height),
+            IM_COL32(0, 0, 0, 30),
+            15.0f,
+            container_rounding
+        );
+        dl->AddRectFilled(
+            current_container_pos,
+            ImVec2(current_container_pos.x + content_width,
+                current_container_pos.y + current_container_height),
+            element_fill_col, container_rounding);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
+            ImVec2(container_inner_padding, container_inner_padding));
+        ImGui::BeginChild("CurrentContainer",
+            ImVec2(content_width, current_container_height),
+            ImGuiChildFlags_AlwaysUseWindowPadding);
         {
-            DrawAccountCard(*g_currentAccount, true, content_width);
+            const float inner_width = ImGui::GetContentRegionAvail().x;
+
+            if (g_currentAccount)
+            {
+                if (DrawAccountCard(*g_currentAccount, true, inner_width))
+                {
+                    g_currentAccount = nullptr;
+                    SteamHelper::SetAutoLoginUser("");
+                }
+            }
+            else
+            {
+                const char* msg = "Drop an account here or click one below";
+                ImVec2 text_size = ImGui::CalcTextSize(msg);
+                ImVec2 avail = ImGui::GetContentRegionAvail();
+
+                ImGui::SetCursorPos(ImVec2(
+                    (ImGui::GetWindowWidth() - text_size.x) * 0.5f,
+                    (ImGui::GetWindowHeight() - text_size.y) * 0.5f
+                ));
+                ImGui::TextColored(ImVec4(0.47f, 0.47f, 0.49f, 1.0f), "%s", msg);
+            }
         }
-        else
+        ImGui::EndChild();
+
+        dl->AddRect(
+            current_container_pos,
+            ImVec2(current_container_pos.x + content_width,
+                current_container_pos.y + current_container_height),
+            element_border_col, container_rounding, 0, 1.0f);
+
+        ImGui::PopStyleVar();
+
+        ImGui::SetCursorScreenPos(current_container_pos);
+        ImGui::InvisibleButton("##current_drop_target",
+            ImVec2(content_width, current_container_height));
+
+        if (ImGui::BeginDragDropTarget())
         {
-            ImDrawList* dl = ImGui::GetWindowDrawList();
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 size(content_width, 80.0f);
-            dl->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y),
-                IM_COL32(30, 30, 30, 255), 8.0f);
-            dl->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y),
-                IM_COL32(80, 80, 80, 255), 8.0f, 0, 1.5f);
-
-            const char* msg = "No account selected. Choose one from the list below.";
-            ImVec2 text_size = ImGui::CalcTextSize(msg);
-            dl->AddText(ImVec2(pos.x + (size.x - text_size.x) * 0.5f, pos.y + (size.y - text_size.y) * 0.5f),
-                IM_COL32(140, 140, 140, 255), msg);
-            ImGui::Dummy(size);
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("STEAM_ACCOUNT"))
+            {
+                uint64_t dropped_id = *(const uint64_t*)payload->Data;
+                for (auto& acc : g_steamAccounts)
+                {
+                    if (acc.GetSteamID64() == dropped_id)
+                    {
+                        g_currentAccount = &acc;
+                        SteamHelper::SetAutoLoginUser(acc.GetAccountName());
+                        break;
+                    }
+                }
+            }
+            ImGui::EndDragDropTarget();
         }
 
-        ImGui::Dummy(ImVec2(0, 10.0f));
+        ImGui::Dummy(ImVec2(0, 16.0f));
 
-        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.1f);
+        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.05f);
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 200, 200, 255));
         ImGui::TextUnformatted("Available:");
         ImGui::PopStyleColor();
         ImGui::PopFont();
 
-        ImGui::Dummy(ImVec2(0, 6.0f));
+        ImGui::Dummy(ImVec2(0, 4.0f));
 
-        const float available_height = 195.0f;
-        ImGui::BeginChild("AvailableList", ImVec2(content_width, available_height), true);
+        ImVec2 available_list_pos = ImGui::GetCursorScreenPos();
+        ImVec2 window_content_max = ImGui::GetWindowPos() + ImGui::GetWindowSize();
+        float available_height = window_content_max.y - available_list_pos.y - page_padding;
+        available_height = ImMax(available_height, card_height + container_inner_padding * 2.0f);
+
+        ImGuiExt::ShadowBoxOuter(
+            available_list_pos,
+            ImVec2(available_list_pos.x + content_width, available_list_pos.y + available_height),
+            IM_COL32(0, 0, 0, 30),
+            15.0f,container_rounding);
+        dl->AddRectFilled(
+            available_list_pos,
+            ImVec2(available_list_pos.x + content_width, available_list_pos.y + available_height),
+            element_fill_col, container_rounding);
+        dl->AddRect(
+            available_list_pos,
+            ImVec2(available_list_pos.x + content_width, available_list_pos.y + available_height),
+            element_border_col, container_rounding, 0, 1.0f);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
+            ImVec2(container_inner_padding, container_inner_padding));
+        ImGui::BeginChild("AvailableList",
+            ImVec2(content_width, available_height),
+            ImGuiChildFlags_AlwaysUseWindowPadding);
         {
+            const float inner_width = ImGui::GetContentRegionAvail().x;
+            const float card_gap = 8.0f;
+
             bool any_shown = false;
             for (auto& acc : g_steamAccounts)
             {
                 if (g_currentAccount && acc.GetSteamID64() == g_currentAccount->GetSteamID64())
                     continue;
 
-                if (DrawAccountCard(acc, false, ImGui::GetContentRegionAvail().x))
+                if (DrawAccountCard(acc, false, inner_width))
                 {
                     g_currentAccount = &acc;
                     SteamHelper::SetAutoLoginUser(acc.GetAccountName());
                 }
 
-                ImGui::Dummy(ImVec2(0, 6.0f));
+                ImGui::Dummy(ImVec2(0, card_gap));
                 any_shown = true;
             }
 
             if (!any_shown)
             {
-                ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No other accounts available");
+                const char* msg = "No other accounts available";
+                ImVec2 text_size = ImGui::CalcTextSize(msg);
+
+                ImGui::SetCursorPos(ImVec2(
+                    (ImGui::GetWindowWidth() - text_size.x) * 0.5f,
+                    (ImGui::GetWindowHeight() - text_size.y) * 0.5f
+                ));
+                ImGui::TextColored(ImVec4(0.47f, 0.47f, 0.49f, 1.0f), "%s", msg);
             }
         }
         ImGui::EndChild();
+        ImGui::PopStyleVar();
+
+        ImGui::SetCursorScreenPos(available_list_pos);
+        ImGui::InvisibleButton("##available_drop_target",
+            ImVec2(content_width, available_height));
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("STEAM_ACCOUNT"))
+            {
+                uint64_t dropped_id = *(const uint64_t*)payload->Data;
+                if (g_currentAccount && g_currentAccount->GetSteamID64() == dropped_id)
+                {
+                    g_currentAccount = nullptr;
+                    SteamHelper::SetAutoLoginUser("");
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
     }
     ImGui::EndChild();
     ImGui::PopStyleVar();
@@ -1629,9 +1876,51 @@ void DrawProfilePage()
         ImGui::TextUnformatted("Your account and hardware information");
         ImGui::PopStyleColor();
 
+        ImVec2 current_container_pos = ImGui::GetCursorScreenPos();
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        RemoteProfile* profile = ProductRegistry::s_profile.get();
+
+        DrawCard(IM_COL32(18, 18, 18, 255), 100.0f, [profile]() {
+            if (profile)
+            {
+                ImGui::Text("Hello, ");
+                ImGui::SameLine();
+                ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.3f);
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+                ImGui::TextUnformatted(profile->GetUsername().c_str());
+                ImGui::PopStyleColor();
+                ImGui::PopFont();
+            }
+            else
+            {
+                ImGui::SameLine();
+                ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(160, 160, 160, 255));
+                ImGui::TextUnformatted("You are not logged in.");
+                ImGui::PopStyleColor();
+                ImGui::PopFont();
+            }
+            });
+
         ImGui::Dummy(ImVec2(0, 16.0f));
 
-        DrawCardSimple("HWID", 125.0f, []() {
+        DrawCardSimple("System", 205.0f, []() {
+            LabelValueRowCopyable("Operating System", g_systemInfo.windows_version.c_str());
+            LabelValueRowCopyable("Build", g_systemInfo.windows_build.c_str(),
+                true, g_systemInfo.windows_build.c_str());
+            LabelValueRowCopyable("Architecture", g_systemInfo.os_arch.c_str());
+
+            LabelValueRowCopyable("CPU", g_systemInfo.cpu_name.c_str(),
+                true, g_systemInfo.cpu_name.c_str());
+
+            LabelValueRowCopyable("RAM", g_systemInfo.ram_total.c_str());
+
+            LabelValueRowCopyable("GPU", g_systemInfo.gpu_name.c_str(),
+                true, g_systemInfo.gpu_name.c_str());
+            LabelValueRowCopyable("VRAM", g_systemInfo.gpu_vram.c_str());
+            });
+
+        DrawCardSimple("HWID", 92.5f, []() {
             ImDrawList* dl = ImGui::GetWindowDrawList();
             ImVec2 pos = ImGui::GetCursorScreenPos();
             float width = ImGui::GetContentRegionAvail().x;
@@ -1639,7 +1928,7 @@ void DrawProfilePage()
             ImGui::Dummy(ImVec2(0, 4.0f));
 
             ImFont* font = ImGui::GetFont();
-            float hwid_font_size = ImGui::GetFontSize() * 1.4f;
+            float hwid_font_size = ImGui::GetFontSize() * 1.12f;
             ImVec2 hwid_size = font->CalcTextSizeA(hwid_font_size, FLT_MAX, 0.0f,
                 g_systemInfo.hwid.c_str());
 
@@ -1650,46 +1939,37 @@ void DrawProfilePage()
                 ImVec2(hwid_x, hwid_y),
                 IM_COL32(220, 220, 230, 255), g_systemInfo.hwid.c_str());
 
-            ImGui::Dummy(ImVec2(0, hwid_font_size + 12.0f));
-
-            float btn_w = 140.0f;
+            float btn_w = 125.0f;
             float btn_h = 24.0f;
 
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(45, 45, 55, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(60, 60, 75, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(30, 30, 40, 255));
+            ImGui::Dummy(ImVec2(width - btn_w - 28.0f, 0));
 
-            if (ImGui::Button("Copy Full HWID", ImVec2(btn_w, btn_h)))
+            ImGui::SameLine();
+
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, ImGui::GetStyle().ChildRounding);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(35.0f / 255.0f, 35.0f / 255.0f, 35.0f / 255.0f, 1.00f));
+            if (ImGuiExt::Button("Copy HWID", g_accentColor, g_accentColorSub, ImVec2(btn_w, btn_h)))
             {
                 ImGui::SetClipboardText(g_systemInfo.hwid_full.c_str());
             }
-
-            ImGui::PopStyleColor(3);
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
             });
 
-        DrawCardSimple("System", 160.0f, []() {
-            LabelValueRowCopyable("Operating System", g_systemInfo.windows_version.c_str());
-            LabelValueRowCopyable("Build", g_systemInfo.windows_build.c_str(),
-                true, g_systemInfo.windows_build.c_str());
-            LabelValueRowCopyable("Architecture", g_systemInfo.os_arch.c_str());
-            });
+//        DrawCardSimple("Processor", 125.0f, []() {
+//            LabelValueRowCopyable("Cores", g_systemInfo.cpu_cores.c_str());
+//            });
 
-        DrawCardSimple("Processor", 125.0f, []() {
-            LabelValueRowCopyable("Model", g_systemInfo.cpu_name.c_str(),
-                true, g_systemInfo.cpu_name.c_str());
-            LabelValueRowCopyable("Cores", g_systemInfo.cpu_cores.c_str());
-            });
+//        DrawCardSimple("Memory", 125.0f, []() {
+//            LabelValueRowCopyable("Total RAM", g_systemInfo.ram_total.c_str());
+//            LabelValueRowCopyable("Status", g_systemInfo.ram_available.c_str());
+//            });
 
-        DrawCardSimple("Memory", 125.0f, []() {
-            LabelValueRowCopyable("Total RAM", g_systemInfo.ram_total.c_str());
-            LabelValueRowCopyable("Status", g_systemInfo.ram_available.c_str());
-            });
-
-        DrawCardSimple("Graphics", 125.0f, []() {
-            LabelValueRowCopyable("Adapter", g_systemInfo.gpu_name.c_str(),
-                true, g_systemInfo.gpu_name.c_str());
-            LabelValueRowCopyable("VRAM", g_systemInfo.gpu_vram.c_str());
-            });
+//        DrawCardSimple("Graphics", 125.0f, []() {
+//            LabelValueRowCopyable("Adapter", g_systemInfo.gpu_name.c_str(),
+//                true, g_systemInfo.gpu_name.c_str());
+//            LabelValueRowCopyable("VRAM", g_systemInfo.gpu_vram.c_str());
+//            });
     }
     ImGui::EndChild();
     ImGui::PopStyleVar();
@@ -1736,35 +2016,10 @@ void CreateResources()
     auto accountsIconPath = rootDir / L"Resources" / L"Icons" / L"steam.png";
     LoadTextureFromFile(accountsIconPath.c_str(), g_pd3dDevice, &g_accountsIcon);
 
-    p_counterStrike2 = new Product(
-        g_pd3dDevice,
-        "cs2.exe",
-        730,
-        "Counter-Strike 2",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"CS2" / L"CS2-Poster.jpg",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"CS2" / L"CS2-Icon.jpg",
-        true
-    );
+    NemesisAPI::Initialize("https://raw.githubusercontent.com/xw1w1/Nemesis/main");
 
-    p_dota2 = new Product(
-        g_pd3dDevice,
-        "dota2.exe",
-        570,
-        "Dota 2",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"Dota2" / L"Dota2-Poster-Disabled.jpg",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"Dota2" / L"Dota2-Icon-Disabled.jpg",
-        false
-    );
-
-    p_rust = new Product(
-        g_pd3dDevice,
-        "rust.exe",
-        666,
-        "Rust",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"Rust" / L"Rust-Poster-Disabled.jpg",
-        GetExecutableDirectory() / L"Resources" / L"Icons" / L"Rust" / L"Rust-Icon-Disabled.jpg",
-        false
-    );
+    ProductRegistry::Initialize(g_pd3dDevice);
+    ProductRegistry::Sync();
 
     AvatarLoader::Initialize(g_pd3dDevice, [](uint64_t id) -> SteamAccount* {
         for (auto& acc : g_steamAccounts)
@@ -1953,13 +2208,13 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         // Прямоугольники кнопок и потенциальных чекбоксов (которые появляются при наведении)
         RECT rClose{ W - PAD - BTN, PAD, W - PAD, PAD + BTN };
-        RECT rMin  { W - PAD - 2*BTN - SP, PAD, W - PAD - BTN - SP, PAD + BTN };
+        RECT rMin{ W - PAD - 2 * BTN - SP, PAD, W - PAD - BTN - SP, PAD + BTN };
         RECT rCBClose{ rClose.left + 2, rClose.bottom + 4, rClose.left + 2 + BTN - 4, rClose.bottom + 4 + BTN - 4 };
-        RECT rCBMin  { rMin.left   + 2, rMin.bottom   + 4, rMin.left   + 2 + BTN - 4, rMin.bottom   + 4 + BTN - 4 };
+        RECT rCBMin{ rMin.left + 2, rMin.bottom + 4, rMin.left + 2 + BTN - 4, rMin.bottom + 4 + BTN - 4 };
 
         auto in_rect = [](POINT p, const RECT& r) -> bool {
             return p.x >= r.left && p.x < r.right && p.y >= r.top && p.y < r.bottom;
-        };
+            };
 
         if (in_rect(pt, rClose) || in_rect(pt, rMin) || in_rect(pt, rCBClose) || in_rect(pt, rCBMin))
             return HTCLIENT; // над элементами управления — не двигаем

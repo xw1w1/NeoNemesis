@@ -3,6 +3,11 @@
 #include "imgui.h"
 #include <functional>
 
+void DrawCard(ImU32 col, float height, std::function<void()> content);
+void DrawCard(ImU32 col_top, ImU32 col_bot, float height, std::function<void()> content);
+void DrawCard(const char* title, ImU32 col, float height, std::function<void()> content);
+void DrawCard(const char* title, ImU32 col_top, ImU32 col_bot, float height, std::function<void()> content);
+
 void SettingsSectionHeader(const char* title);
 void SettingsRow(const char* label, const char* tooltip = nullptr);
 void SettingsSliderInt(const char* label, int* value, int min, int max, const char* tooltip = nullptr);

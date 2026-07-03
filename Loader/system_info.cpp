@@ -68,7 +68,7 @@ std::string SystemInfoCollector::GetHardwareID()
     uint64_t hash = FnvHash64(components);
 
     char buf[32];
-    sprintf_s(buf, "%04X-%04X-%04X-%04X",
+    sprintf_s(buf, "%04X%04X%04X%04X",
         (unsigned)((hash >> 48) & 0xFFFF),
         (unsigned)((hash >> 32) & 0xFFFF),
         (unsigned)((hash >> 16) & 0xFFFF),
