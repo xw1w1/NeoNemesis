@@ -1,5 +1,0 @@
-D:\Nemesis\NemesisLoader\src\dllmain.cpp;D:\Nemesis\build\NemesisLoader\NemesisLoader.dir\Release\dllmain.obj
-D:\Nemesis\NemesisLoader\src\config\Config.cpp;D:\Nemesis\build\NemesisLoader\NemesisLoader.dir\Release\Config.obj
-D:\Nemesis\NemesisLoader\src\audio\KillSound.cpp;D:\Nemesis\build\NemesisLoader\NemesisLoader.dir\Release\KillSound.obj
-D:\Nemesis\NemesisLoader\src\kill\KillWatcher.cpp;D:\Nemesis\build\NemesisLoader\NemesisLoader.dir\Release\KillWatcher.obj
-D:\Nemesis\NemesisLoader\src\hook\SoundHook.cpp;D:\Nemesis\build\NemesisLoader\NemesisLoader.dir\Release\SoundHook.obj
