@@ -114,8 +114,8 @@ namespace Nemesis::RenderHook
                 ImGui::NewFrame();
 
                 Nemesis::Esp::Render();
-               // Nemesis::RageBot::Render(); //
-                Nemesis::LegitBot::Render(); 
+                Nemesis::RageBot::Render(); 
+                // Nemesis::LegitBot::Render(); //
 
                 if (g_menuOpen)
                 {
