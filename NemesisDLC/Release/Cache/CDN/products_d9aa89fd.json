@@ -1,0 +1,12 @@
+{
+	"proc": "rust.exe",
+	"name": "Rust",
+	"steam_id": 666,
+	"last_update": 1783014582641,
+	"status": 2,
+	"inject_time": 45,
+	"icon": "2754c4e0e98824502124059a26b4a2d3e5ada5afa35aa757b31f622ee4aff814",
+	"poster": "9677de33b3059f4aab99037e23b123cf62a39bd64aa8c8b89defb8bef644737e",
+	"icon_disabled": "7e47b23daac3e4a2008a73fef658e75e6a3973ee3ce2c1c7c2fe35b2b337cc22",
+	"poster_disabled": "0423610fb31fe645ce33ec9e8ac08c315b91de7c4b188a302ad31346978b9dcc"
+}

@@ -12,29 +12,41 @@
 
 namespace Nemesis::SilentAim
 {
+    namespace Addr = Nemesis::Addresses;
     using namespace Nemesis::Addresses;
 
     namespace
     {
-        constexpr float kRad2Deg = 57.2957795f;
-        constexpr std::uintptr_t kSerGlobal = 0x685910;
-        constexpr std::size_t     kSerVIndex = 0xB8 / 8;
+        constexpr float          kRad2Deg = 57.2957795f;
+        constexpr std::uintptr_t kSeedFn  = 0xC81D80;   // sub_180C81D80: seed = SHA1(qAng, seedBase)
 
         using CreateMoveFn = void(__fastcall*)(void*, int, void*);
-        using SerFn        = void*(__fastcall*)(void*, int, void*, int);
-        CreateMoveFn g_orig = nullptr;
-        SerFn        g_origSer = nullptr;
-        void*        g_serTarget = nullptr;
+        using SeedFn       = int(__fastcall*)(void*, void*, int);
+        CreateMoveFn g_orig     = nullptr;
+        SeedFn       g_origSeed = nullptr;
+        void*        g_seedTarget = nullptr;
 
         std::atomic<bool>  g_valid{ false };
         std::atomic<bool>  g_enabled{ false };
         std::atomic<float> g_hx{ 0.f }, g_hy{ 0.f }, g_hz{ 0.f };
-        bool g_loggedHook = false;
-        bool g_loggedSer  = false;
+        bool  g_loggedHook = false;
+        DWORD g_lastSeedLog = 0;
 
         inline bool HeapPtr(std::uintptr_t p)
         {
             return p >= 0x10000 && p <= 0x7FFFFFFFFFFFull;
+        }
+
+        std::uintptr_t EntFromHandle(std::uintptr_t base, std::uint32_t h)
+        {
+            if (h == 0xFFFFFFFF) return 0;
+            const std::uintptr_t list = Mem::Read<std::uintptr_t>(base + Client::dwEntityList);
+            if (!list) return 0;
+            const std::uint32_t i = h & EntityList::kIndexMask;
+            const std::uintptr_t chunk = Mem::Read<std::uintptr_t>(
+                list + EntityList::kChunkStep * (i >> EntityList::kChunkShift) + EntityList::kChunkBase);
+            if (!chunk) return 0;
+            return Mem::Read<std::uintptr_t>(chunk + EntityList::kEntryStride * (i & EntityList::kSlotMask));
         }
 
         void ComputeAngle(std::uintptr_t pawn, float hx, float hy, float hz,
@@ -53,47 +65,43 @@ namespace Nemesis::SilentAim
             pitch = -std::atan2(dz, d2) * kRad2Deg;
         }
 
-        bool CurrentAim(std::uintptr_t base, float& p, float& y)
+        std::uintptr_t FrameAngle(std::uintptr_t eng)
         {
-            if (!g_enabled.load() || !g_valid.load()) return false;
-            if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000)) return false;
-            const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
-            if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0) return false;
-            ComputeAngle(pawn, g_hx.load(), g_hy.load(), g_hz.load(), p, y);
-            return std::isfinite(p) && std::isfinite(y);
+            if (!eng) return 0;
+            int cnt = Mem::Read<int>(eng + EngineInput::dwFrameCounter, 0);
+            int idx = cnt % EngineInput::kRingSize; if (idx < 0) idx += EngineInput::kRingSize;
+            const std::uintptr_t rec = eng + EngineInput::dwFrameRing + (std::uintptr_t)idx * EngineInput::kRecStride;
+            const std::uintptr_t ptr = Mem::Read<std::uintptr_t>(rec + EngineInput::kRecPtr);
+            return HeapPtr(ptr) ? ptr : 0;
         }
 
-        std::uintptr_t LastSlot(std::uintptr_t self)
-        {
-            if (!HeapPtr(self)) return 0;
-            const int count = Mem::Read<int>(self + Addresses::SilentAim::kCmdCount, 0);
-            if (count <= 0 || count > 64) return 0;
-            const std::uintptr_t data = Mem::Read<std::uintptr_t>(self + Addresses::SilentAim::kCmdData);
-            if (!HeapPtr(data)) return 0;
-            const std::uintptr_t slot = data + (std::uintptr_t)(count - 1) * Addresses::SilentAim::kCmdStride;
-            return HeapPtr(slot) ? slot : 0;
-        }
-
-        void* __fastcall hkSer(void* a, int b, void* c, int d)
+        // ДИАГ: снимаем seedBase (r8d) и кандидатов-входов
+        int __fastcall hkSeed(void* rcx, void* rdx, int seedBase)
         {
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-            if (!g_loggedSer && base) { g_loggedSer = true; NLOG("[silent] ser hook alive"); }
-
-            if (!base) return g_origSer(a, b, c, d);
-
-            const std::uintptr_t va = base + Client::dwViewAngles;
-            float p, y;
-            if (!CurrentAim(base, p, y))
-                return g_origSer(a, b, c, d);
-
-            const float op = Mem::Read<float>(va + 0);
-            const float oy = Mem::Read<float>(va + 4);
-            Mem::Write<float>(va + 0, p);
-            Mem::Write<float>(va + 4, y);
-            void* r = g_origSer(a, b, c, d);
-            Mem::Write<float>(va + 0, op);
-            Mem::Write<float>(va + 4, oy);
-            return r;
+            const DWORD now = GetTickCount();
+            if (base && now - g_lastSeedLog > 250)
+            {
+                g_lastSeedLog = now;
+                const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
+                int shots = 0, entIdx = 0; float recoil = 0.f;
+                if (HeapPtr(pawn))
+                {
+                    shots  = Mem::Read<int>(pawn + PawnCombat::m_iShotsFired, 0);
+                    entIdx = Mem::Read<int>(pawn + Schema::m_iIDEntIndex, 0);
+                    const std::uintptr_t ws = Mem::Read<std::uintptr_t>(pawn + Schema::m_pWeaponServices);
+                    if (HeapPtr(ws))
+                    {
+                        const std::uintptr_t w = EntFromHandle(base, Mem::Read<std::uint32_t>(ws + Schema::m_hActiveWeapon));
+                        if (HeapPtr(w)) recoil = Mem::Read<float>(w + Weapon::m_flRecoilIndex);
+                    }
+                }
+                float qp = 0.f, qy = 0.f;
+                if (HeapPtr((std::uintptr_t)rdx)) { qp = Mem::Read<float>((std::uintptr_t)rdx + 0); qy = Mem::Read<float>((std::uintptr_t)rdx + 4); }
+                NLOG("[seed] seedBase=%d (0x%X) shots=%d ent=%d recoil=%.1f ang(%.2f,%.2f)",
+                     seedBase, (unsigned)seedBase, shots, entIdx, recoil, qp, qy);
+            }
+            return g_origSeed(rcx, rdx, seedBase);
         }
 
         void __fastcall hkCreateMove(void* thisptr, int a2, void* a3)
@@ -109,6 +117,7 @@ namespace Nemesis::SilentAim
             prev = curKey;
 
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+            const std::uintptr_t eng  = Mem::ModuleBase(Modules::kEngine);
             const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(thisptr);
 
             if (!g_loggedHook && base)
@@ -117,25 +126,49 @@ namespace Nemesis::SilentAim
                 NLOG("[silent] hook alive this=%p (F6)", thisptr);
             }
 
+            bool injected = false;
+            std::uintptr_t qa = 0;
+            float op = 0.f, oy = 0.f, np = 0.f, ny = 0.f;
+
+            const std::uintptr_t pawn = base ? Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn) : 0;
+            const bool armed = base && eng && g_enabled.load() && g_valid.load()
+                             && (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+                             && pawn && Mem::Read<int>(pawn + Schema::m_iHealth, 0) > 0;
+
+            if (armed)
+            {
+                ComputeAngle(pawn, g_hx.load(), g_hy.load(), g_hz.load(), np, ny);
+                if (std::isfinite(np) && std::isfinite(ny))
+                {
+                    qa = FrameAngle(eng);
+                    if (qa)
+                    {
+                        op = Mem::Read<float>(qa + 0);
+                        oy = Mem::Read<float>(qa + 4);
+                        Mem::Write<float>(qa + 0, np);
+                        Mem::Write<float>(qa + 4, ny);
+                        injected = true;
+                    }
+                }
+            }
+
             g_orig(thisptr, a2, a3);
 
-            if (!base || !g_enabled.load() || !g_valid.load()) return;
-            if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000)) return;
-
-            const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
-            if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0) return;
-
-            const std::uintptr_t slot = LastSlot(self);
-            if (!slot) return;
-
-            float np = 0.f, ny = 0.f;
-            ComputeAngle(pawn, g_hx.load(), g_hy.load(), g_hz.load(), np, ny);
-            if (!std::isfinite(np) || !std::isfinite(ny)) return;
-
-            Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleA + 0, np);
-            Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleA + 4, ny);
-            Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleB + 0, np);
-            Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleB + 4, ny);
+            if (injected)
+            {
+                Mem::Write<float>(qa + 0, op);
+                Mem::Write<float>(qa + 4, oy);
+                const int count = Mem::Read<int>(self + Addr::SilentAim::kCmdCount, 0);
+                const std::uintptr_t data = Mem::Read<std::uintptr_t>(self + Addr::SilentAim::kCmdData);
+                if (count > 0 && count <= 150 && HeapPtr(data))
+                    for (int i = 0; i < count; ++i)
+                    {
+                        const std::uintptr_t e = data + (std::uintptr_t)i * Addr::SilentAim::kCmdStride;
+                        if (!HeapPtr(e)) break;
+                        Mem::Write<float>(e + Addr::SilentAim::kViewAngle + 0, np);
+                        Mem::Write<float>(e + Addr::SilentAim::kViewAngle + 4, ny);
+                    }
+            }
         }
     }
 
@@ -156,41 +189,27 @@ namespace Nemesis::SilentAim
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
         if (!base) { NERR("[silent] client.dll not found"); return; }
 
-        void* target = reinterpret_cast<void*>(base + Addresses::SilentAim::fnCreateMove);
+        void* target = reinterpret_cast<void*>(base + Addr::SilentAim::fnCreateMove);
         if (MH_CreateHook(target, &hkCreateMove, reinterpret_cast<void**>(&g_orig)) != MH_OK)
         { NERR("[silent] CreateHook failed"); return; }
         if (MH_EnableHook(target) != MH_OK)
         { NERR("[silent] EnableHook failed"); return; }
 
-        const std::uintptr_t eng = Mem::ModuleBase(Modules::kEngine);
-        if (eng)
-        {
-            const std::uintptr_t obj = Mem::Read<std::uintptr_t>(eng + kSerGlobal);
-            if (HeapPtr(obj))
-            {
-                const std::uintptr_t vt = Mem::Read<std::uintptr_t>(obj);
-                if (HeapPtr(vt))
-                {
-                    g_serTarget = reinterpret_cast<void*>(Mem::Read<std::uintptr_t>(vt + kSerVIndex * 8));
-                    if (HeapPtr(reinterpret_cast<std::uintptr_t>(g_serTarget)))
-                    {
-                        if (MH_CreateHook(g_serTarget, &hkSer, reinterpret_cast<void**>(&g_origSer)) == MH_OK)
-                            MH_EnableHook(g_serTarget);
-                        else
-                            NERR("[silent] ser CreateHook failed");
-                    }
-                }
-            }
-        }
-        NLOG("[silent] hooked CreateMove @ client+0x%llX", (unsigned long long)Addresses::SilentAim::fnCreateMove);
+        g_seedTarget = reinterpret_cast<void*>(base + kSeedFn);
+        if (MH_CreateHook(g_seedTarget, &hkSeed, reinterpret_cast<void**>(&g_origSeed)) == MH_OK)
+            MH_EnableHook(g_seedTarget);
+        else
+        { NERR("[silent] seed CreateHook failed"); g_seedTarget = nullptr; }
+
+        NLOG("[silent] hooked CreateMove + seed diag (F6)");
     }
 
     void Shutdown()
     {
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
         if (base)
-            MH_DisableHook(reinterpret_cast<void*>(base + Addresses::SilentAim::fnCreateMove));
-        if (g_serTarget)
-            MH_DisableHook(g_serTarget);
+            MH_DisableHook(reinterpret_cast<void*>(base + Addr::SilentAim::fnCreateMove));
+        if (g_seedTarget)
+            MH_DisableHook(g_seedTarget);
     }
 }

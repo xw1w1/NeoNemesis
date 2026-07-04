@@ -115,7 +115,8 @@ namespace Nemesis::RenderHook
 
                 Nemesis::Esp::Render();
                 Nemesis::RageBot::Render(); 
-                // Nemesis::LegitBot::Render(); //
+             //   Nemesis::LegitBot::Render(); 
+            
 
                 if (g_menuOpen)
                 {

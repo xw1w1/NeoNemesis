@@ -147,18 +147,26 @@ namespace Nemesis::Addresses
         inline constexpr float        kDistance   = 120.0f;
     }
 
-  
-    namespace SilentAim
+        namespace SilentAim
     {
         inline constexpr std::uintptr_t fnCreateMove = 0xC621D0; // CCSGOInput::CreateMove (хук)
-        // Очередь команд в CCSGOInput (thisptr)
-        inline constexpr std::ptrdiff_t kCmdCount   = 0xBC8;  // int  — число команд
-        inline constexpr std::ptrdiff_t kCmdData    = 0xBD0;  // ptr  — база вектора слотов
-        inline constexpr std::ptrdiff_t kCmdStride  = 0x928;  // страйд слота
-        inline constexpr std::ptrdiff_t kCmdAngleA  = 0x10;   // QAngle #1 в слоте (боевой)
-        inline constexpr std::ptrdiff_t kCmdAngleB  = 0x70;   // QAngle #2 в слоте (снимок)
-        inline constexpr std::ptrdiff_t kViewAngles = 0x688;  // this+0x688 — угол камеры (НЕ трогать)
+        inline constexpr std::ptrdiff_t kCmdCount    = 0xBC8;    // int — число команд
+        inline constexpr std::ptrdiff_t kCmdData     = 0xBD0;    // ptr — база вектора команд
+        inline constexpr std::ptrdiff_t kCmdStride   = 0x60;     // РЕАЛЬНЫЙ страйд команды
+        inline constexpr std::ptrdiff_t kViewAngle   = 0x10;     // viewangles QAngle в команде
     }
+
+    namespace EngineInput
+    {
+        // источник eye-угла (engine2, sub_180075800): угол по двойной косвенности
+        inline constexpr std::uintptr_t dwFrameCounter = 0x90B688; // dword счётчик кадра
+        inline constexpr std::uintptr_t dwFrameRing    = 0x90C2B0; // кольцо 10 x 0x28
+        inline constexpr std::ptrdiff_t kRecStride     = 0x28;
+        inline constexpr std::ptrdiff_t kRecPtr        = 0x18;     // -> input-блок, QAngle @ +0
+        inline constexpr int            kRingSize      = 10;
+    }
+
+
     namespace Weapon
     {
         inline constexpr std::ptrdiff_t m_pVData            = 0x388;  // CCSWeaponBaseVData*
