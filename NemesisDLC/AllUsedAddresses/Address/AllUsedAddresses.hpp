@@ -146,4 +146,58 @@ namespace Nemesis::Addresses
         inline constexpr std::uint32_t kToggleScan = 0x2D;
         inline constexpr float        kDistance   = 120.0f;
     }
+
+  
+    namespace SilentAim
+    {
+        inline constexpr std::uintptr_t fnCreateMove = 0xC621D0; // CCSGOInput::CreateMove (хук)
+        // Очередь команд в CCSGOInput (thisptr)
+        inline constexpr std::ptrdiff_t kCmdCount   = 0xBC8;  // int  — число команд
+        inline constexpr std::ptrdiff_t kCmdData    = 0xBD0;  // ptr  — база вектора слотов
+        inline constexpr std::ptrdiff_t kCmdStride  = 0x928;  // страйд слота
+        inline constexpr std::ptrdiff_t kCmdAngleA  = 0x10;   // QAngle #1 в слоте (боевой)
+        inline constexpr std::ptrdiff_t kCmdAngleB  = 0x70;   // QAngle #2 в слоте (снимок)
+        inline constexpr std::ptrdiff_t kViewAngles = 0x688;  // this+0x688 — угол камеры (НЕ трогать)
+    }
+    namespace Weapon
+    {
+        inline constexpr std::ptrdiff_t m_pVData            = 0x388;  // CCSWeaponBaseVData*
+        inline constexpr std::ptrdiff_t m_nFireMode         = 0x17B8; // int 0/1
+        inline constexpr std::ptrdiff_t m_fAccuracyPenalty  = 0x17D0; // float — текущая инаккураси (live!)
+        inline constexpr std::ptrdiff_t m_iRecoilIndex      = 0x17DC; // int
+        inline constexpr std::ptrdiff_t m_flRecoilIndex     = 0x17E0; // float (+1.0/выстрел)
+        inline constexpr std::ptrdiff_t m_flNextClientFire  = 0x1908; // float
+        // Поля внутри CCSWeaponBaseVData. CFiringModeFloat = [prim@0][sec@4], 8 байт.
+        inline constexpr std::ptrdiff_t vd_flSpread           = 0x758;
+        inline constexpr std::ptrdiff_t vd_flInaccuracyCrouch = 0x760;
+        inline constexpr std::ptrdiff_t vd_flInaccuracyStand  = 0x768;
+        inline constexpr std::ptrdiff_t vd_flInaccuracyJump   = 0x770;
+        inline constexpr std::ptrdiff_t vd_flInaccuracyFire   = 0x788;
+        inline constexpr std::ptrdiff_t vd_flInaccuracyMove   = 0x790;
+        inline constexpr std::ptrdiff_t vd_nNumBullets        = 0x738; // int
+    }
+    namespace PawnCombat
+    {
+        inline constexpr std::ptrdiff_t m_iShotsFired                  = 0x1C64;
+        inline constexpr std::ptrdiff_t m_bIsScoped                    = 0x1C50;
+        inline constexpr std::ptrdiff_t m_zoomLevel                    = 0x1CB0;
+        inline constexpr std::ptrdiff_t m_bFireBulletsSeedSynchronized = 0x955;
+        inline constexpr std::ptrdiff_t m_pAimPunchServices            = 0x1490; // CCSPlayer_AimPunchServices*
+        // Внутри AimPunchServices:
+        inline constexpr std::ptrdiff_t ap_predictableBaseAngle        = 0x50;   // QAngle — боевой punch
+        inline constexpr std::ptrdiff_t ap_predictableBaseAngleVel     = 0x5C;   // QAngle
+        // m_fFlags = 0x3F8 уже есть в Schema (FL_ONGROUND = 0x1)
+    }
+    namespace AimFn
+    {
+        inline constexpr std::uintptr_t fnFireBullets      = 0xC81E30; // FX_FireBullets
+        inline constexpr std::uintptr_t fnSpreadGen        = 0xC826A0; // пер-пелетный разброс
+        inline constexpr std::uintptr_t fnSeedSha1         = 0xC81D80; // seed = SHA1(qPitch,qYaw,seedBase)[0]
+        inline constexpr std::uintptr_t fnAngleQuantize    = 0xC7BEB0; // roundf(Norm(a)*2)*0.5
+        inline constexpr std::uintptr_t fnGetAimPunchAngle = 0x7DB260; // GetAimPunchAngle(services,&out)
+        inline constexpr std::uintptr_t fnWeaponFire       = 0x78F9D0; // функция выстрела оружия
+        inline constexpr float          kRecoilScale = 2.0f;  // множитель punch (server default, сверить)
+        inline constexpr std::uint32_t  kFlOnGround  = 0x1;
+        inline constexpr float          kAngleGrid   = 0.5f;  // сетка квантайзера угла
+    }
 }

@@ -2,6 +2,7 @@
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "Miscellaneous Functions/L functions/Esp/Esp.hpp"
 #include "Miscellaneous Functions/L functions/LegitBot/LegitBot.hpp"
+#include "Miscellaneous Functions/R Functions/NemsisProject/RageBot.hpp"
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -100,7 +101,8 @@ namespace Nemesis::RenderHook
                 ImGui::NewFrame();
 
                 Nemesis::Esp::Render();
-                Nemesis::LegitBot::Render();
+                Nemesis::RageBot::Render(); 
+                // Nemesis::LegitBot::Render(); //
 
                 if (g_menuOpen)
                 {
