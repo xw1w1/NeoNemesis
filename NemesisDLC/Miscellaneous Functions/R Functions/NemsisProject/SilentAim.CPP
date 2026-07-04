@@ -1,4 +1,5 @@
 #include "SilentAim.hpp"
+#include "AimMath.hpp"
 #include "../../UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
 #include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
@@ -15,8 +16,8 @@ namespace Nemesis::SilentAim
 
     namespace
     {
-        constexpr std::uintptr_t kCreateMove = 0xC621D0;
         constexpr float kRad2Deg = 57.2957795f;
+        constexpr std::ptrdiff_t kCmdAngleNet = 0x258;  // CBaseUserCmdPB.viewangles (в сеть)
         using CreateMoveFn = void(__fastcall*)(void*, int, void*);
         CreateMoveFn g_orig = nullptr;
 
@@ -24,47 +25,11 @@ namespace Nemesis::SilentAim
         std::atomic<bool>  g_enabled{ false };
         std::atomic<float> g_hx{ 0.f }, g_hy{ 0.f }, g_hz{ 0.f };
         bool g_loggedHook = false;
+        bool g_loggedNet = false;
 
-        bool g_loggedInject = false;
-
-        inline bool SameBits(float a, float b)
+        inline bool HeapPtr(std::uintptr_t p)
         {
-            return *reinterpret_cast<std::uint32_t*>(&a) ==
-                   *reinterpret_cast<std::uint32_t*>(&b);
-        }
-
-        // ищем в блоке два подряд float == (p0,y0) — копию угла команды —
-        // и переписываем их на угол в голову (np,ny). dwViewAngles НЕ трогаем.
-        void OverwriteMatches(std::uintptr_t block, std::size_t size,
-                              float p0, float y0, float np, float ny, int& hits)
-        {
-            if (block < 0x10000) return;
-            for (std::size_t off = 0; off + 8 <= size; off += 4)
-            {
-                if (!SameBits(Mem::Read<float>(block + off), p0)) continue;
-                if (!SameBits(Mem::Read<float>(block + off + 4), y0)) continue;
-                Mem::Write<float>(block + off + 0, np);
-                Mem::Write<float>(block + off + 4, ny);
-                ++hits;
-            }
-        }
-
-        // a3 = команда/контекст: скан самой структуры + один уровень указателей
-        int InjectIntoCommand(void* a3, float p0, float y0, float np, float ny)
-        {
-            const std::uintptr_t cmd = reinterpret_cast<std::uintptr_t>(a3);
-            if (!cmd) return 0;
-
-            int hits = 0;
-            OverwriteMatches(cmd, 0x400, p0, y0, np, ny, hits);
-
-            for (std::size_t off = 0; off < 0x200; off += 8)
-            {
-                const std::uintptr_t p = Mem::Read<std::uintptr_t>(cmd + off);
-                if (p < 0x10000 || p > 0x7FFFFFFFFFFFull) continue;
-                OverwriteMatches(p, 0x200, p0, y0, np, ny, hits);
-            }
-            return hits;
+            return p >= 0x10000 && p <= 0x7FFFFFFFFFFFull;
         }
 
         void ComputeAngle(std::uintptr_t pawn, float hx, float hy, float hz,
@@ -84,7 +49,6 @@ namespace Nemesis::SilentAim
 
         void __fastcall hkCreateMove(void* thisptr, int a2, void* a3)
         {
-            // F6 — тоггл silent
             static bool prev = false;
             const bool curKey = (GetAsyncKeyState(VK_F6) & 0x8000) != 0;
             if (curKey && !prev)
@@ -96,52 +60,71 @@ namespace Nemesis::SilentAim
             prev = curKey;
 
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+            const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(thisptr);
 
             if (!g_loggedHook && base)
             {
                 g_loggedHook = true;
-                NLOG("[silent] CreateMove hook alive, this=%p", thisptr);
+                NLOG("[silent] hook alive this=%p (F6)", thisptr);
             }
 
-            // сначала оригинал строит команду с углом игрока
             g_orig(thisptr, a2, a3);
 
             if (!base || !g_enabled.load() || !g_valid.load())
                 return;
-
-            // только в момент выстрела (зажата ЛКМ)
             if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000))
                 return;
 
             const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
             if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0)
                 return;
-           
+
+            const int count = Mem::Read<int>(self + Addresses::SilentAim::kCmdCount, 0);
+            const std::uintptr_t data = Mem::Read<std::uintptr_t>(self + Addresses::SilentAim::kCmdData);
+            if (count <= 0 || !HeapPtr(data))
+                return;
+
             float np = 0.f, ny = 0.f;
             ComputeAngle(pawn, g_hx.load(), g_hy.load(), g_hz.load(), np, ny);
 
-            // реальный угол = то, что g_orig только что записал (== копии в команде)
-            const std::uintptr_t va = base + Client::dwViewAngles;
-            const float p0 = Mem::Read<float>(va + 0);
-            const float y0 = Mem::Read<float>(va + 4);
-
-            // пишем угол ТОЛЬКО в команду (a3), камеру не трогаем -> silent
-            const int hits = InjectIntoCommand(a3, p0, y0, np, ny);
-            if (!g_loggedInject)
+            float punchP = 0.f, punchY = 0.f;
+            const std::uintptr_t punchSvc = Mem::Read<std::uintptr_t>(pawn + PawnCombat::m_pAimPunchServices);
+            if (HeapPtr(punchSvc))
             {
-                g_loggedInject = true;
-                NLOG("[silent] cmd angle hits=%d", hits);
+                punchP = Mem::Read<float>(punchSvc + PawnCombat::ap_predictableBaseAngle + 0);
+                punchY = Mem::Read<float>(punchSvc + PawnCombat::ap_predictableBaseAngle + 4);
+            }
+            const float wp = AimMath::NormalizeAngle(np - (std::isfinite(punchP) ? punchP : 0.f) * AimFn::kRecoilScale);
+            const float wy = AimMath::NormalizeAngle(ny - (std::isfinite(punchY) ? punchY : 0.f) * AimFn::kRecoilScale);
+
+            const int n = (count > 64) ? 64 : count;
+            for (int i = 0; i < n; ++i)
+            {
+                const std::uintptr_t slot = data + (std::uintptr_t)i * Addresses::SilentAim::kCmdStride;
+                Mem::Write<float>(slot + kCmdAngleNet + 0, wp);   // сетевой viewangles
+                Mem::Write<float>(slot + kCmdAngleNet + 4, wy);
+                Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleA + 0, wp);
+                Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleA + 4, wy);
+                Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleB + 0, wp);
+                Mem::Write<float>(slot + Addresses::SilentAim::kCmdAngleB + 4, wy);
             }
 
+            if (!g_loggedNet)
+            {
+                g_loggedNet = true;
+                const std::uintptr_t last = data + (std::uintptr_t)(count - 1) * Addresses::SilentAim::kCmdStride;
+                NLOG("[silent] wrote net+0x258 count=%d net(p=%.2f y=%.2f) A(p=%.2f y=%.2f)",
+                     count,
+                     Mem::Read<float>(last + kCmdAngleNet + 0), Mem::Read<float>(last + kCmdAngleNet + 4),
+                     Mem::Read<float>(last + Addresses::SilentAim::kCmdAngleA + 0),
+                     Mem::Read<float>(last + Addresses::SilentAim::kCmdAngleA + 4));
+            }
         }
-       
     }
 
     void SetTarget(float x, float y, float z)
     {
-        g_hx.store(x);
-        g_hy.store(y);
-        g_hz.store(z);
+        g_hx.store(x); g_hy.store(y); g_hz.store(z);
         g_valid.store(true);
     }
 
@@ -152,33 +135,23 @@ namespace Nemesis::SilentAim
 
     void Init()
     {
-        MH_Initialize();   // если уже инициализирован другим модулем — вернёт ALREADY_INITIALIZED, ок
-
+        MH_Initialize();
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-        if (!base)
-        {
-            NERR("[silent] client.dll not found");
-            return;
-        }
+        if (!base) { NERR("[silent] client.dll not found"); return; }
 
-        void* target = reinterpret_cast<void*>(base + kCreateMove);
+        void* target = reinterpret_cast<void*>(base + Addresses::SilentAim::fnCreateMove);
         if (MH_CreateHook(target, &hkCreateMove, reinterpret_cast<void**>(&g_orig)) != MH_OK)
-        {
-            NERR("[silent] CreateHook failed");
-            return;
-        }
+        { NERR("[silent] CreateHook failed"); return; }
         if (MH_EnableHook(target) != MH_OK)
-        {
-            NERR("[silent] EnableHook failed");
-            return;
-        }
-        NLOG("[silent] hooked CreateMove @ client+0x%llX (F6 to toggle)", (unsigned long long)kCreateMove);
+        { NERR("[silent] EnableHook failed"); return; }
+        NLOG("[silent] hooked CreateMove @ client+0x%llX (F6)",
+             (unsigned long long)Addresses::SilentAim::fnCreateMove);
     }
 
     void Shutdown()
     {
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
         if (base)
-            MH_DisableHook(reinterpret_cast<void*>(base + kCreateMove));
+            MH_DisableHook(reinterpret_cast<void*>(base + Addresses::SilentAim::fnCreateMove));
     }
 }
