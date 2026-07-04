@@ -147,21 +147,11 @@ namespace Nemesis::Esp
             name[31] = 0;
             if (name[0])
             {
-                ImFont* font = Nemesis::RenderHook::GetEspFont();
-                const float fs = 15.0f;
-                const ImVec2 ts = font ? font->CalcTextSizeA(fs, FLT_MAX, 0.0f, name) : ImGui::CalcTextSize(name);
+                const ImVec2 ts = ImGui::CalcTextSize(name);
                 const float nx = (x + x2) * 0.5f - ts.x * 0.5f;
                 const float ny = top - ts.y - 4.0f;
-                if (font)
-                {
-                    dl->AddText(font, fs, ImVec2(nx + 1.0f, ny + 1.0f), IM_COL32(0, 0, 0, 200), name);
-                    dl->AddText(font, fs, ImVec2(nx, ny), col, name);
-                }
-                else
-                {
-                    dl->AddText(ImVec2(nx + 1.0f, ny + 1.0f), IM_COL32(0, 0, 0, 200), name);
-                    dl->AddText(ImVec2(nx, ny), col, name);
-                }
+                dl->AddText(ImVec2(nx + 1.0f, ny + 1.0f), IM_COL32(0, 0, 0, 200), name);
+                dl->AddText(ImVec2(nx, ny), col, name);
             }
         }
     }

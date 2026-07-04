@@ -15,6 +15,8 @@
 #include "kiero.hpp"
 #include "kiero_d3d11.hpp"
 
+#include "../ImGuiUI/nemesis_ui.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Nemesis::RenderHook
@@ -32,7 +34,6 @@ namespace Nemesis::RenderHook
         void*                   g_present = nullptr;
         bool                    g_initialized = false;
         bool                    g_menuOpen = false;
-        ImFont*                 g_espFont = nullptr;
 
         LRESULT __stdcall WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
@@ -50,15 +51,6 @@ namespace Nemesis::RenderHook
             }
 
             return CallWindowProcW(g_origWndProc, hWnd, msg, wParam, lParam);
-        }
-
-        void DrawMenu()
-        {
-            ImGui::Begin("Nemesis Loader");
-            ImGui::Text("DX11 overlay active.");
-            ImGui::Separator();
-            ImGui::Text("INSERT - toggle menu");
-            ImGui::End();
         }
 
         bool Initialize(IDXGISwapChain* swapChain)
@@ -81,11 +73,6 @@ namespace Nemesis::RenderHook
 
             ImGui::CreateContext();
             ImGui::StyleColorsDark();
-
-            ImGuiIO& io = ImGui::GetIO();
-            io.Fonts->AddFontDefault();
-            g_espFont = io.Fonts->AddFontFromFileTTF(
-                "D:/Nemesis/NemesisDLC/RequiredDependencies/google Fronst/static/Roboto-Medium.ttf", 15.0f);
 
             ImGui_ImplWin32_Init(g_window);
             ImGui_ImplDX11_Init(g_device, g_context);
@@ -118,7 +105,11 @@ namespace Nemesis::RenderHook
                 if (g_menuOpen)
                 {
                     ImGui::GetIO().MouseDrawCursor = true;
-                    DrawMenu();
+                    Nemesis::UI::DrawMenu();
+                } 
+                else
+                {
+                    ImGui::GetIO().MouseDrawCursor = false;
                 }
 
                 ImGui::Render();
@@ -154,11 +145,6 @@ namespace Nemesis::RenderHook
             MH_EnableHook(g_present);
             NLOG("RenderHook: Present hooked");
         }
-    }
-
-    ImFont* GetEspFont()
-    {
-        return g_espFont;
     }
 
     void Stop()
