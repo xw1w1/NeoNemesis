@@ -43,6 +43,9 @@ add_library(NemesisDLC SHARED
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
+    "ImGuiUI/imgui_extensions.cpp"
+    "ImGuiUI/layout_utils.cpp"
+    "ImGuiUI/nemesis_ui.cpp"
 )
 
 target_compile_options(NemesisDLC PRIVATE /arch:AVX)

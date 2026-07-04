@@ -33,6 +33,7 @@
 
 #include "api\loader_api.h"
 #include "subscription\product.h"
+#include "injector\infector.h"
 
 #include "product_registry.h"
 
@@ -103,6 +104,7 @@ enum eRunState {
 
 static eRunState g_runState = RS_Idle;
 static float     g_runTimer = 0.0f;
+static HINFRES   g_injectStatus = HINFRES::EMPTY;
 
 static std::vector<SteamAccount> g_steamAccounts;
 static SteamAccount*             g_currentAccount = nullptr;
@@ -508,27 +510,26 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 ImGui::SetCursorScreenPos(sp(11.0f, 259.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
 
-                const char* btn_text = "Run Product";
+                const char* btn_text = status_message[g_injectStatus];
                 bool btn_disabled = false;
-                float progress = 0.0f;
 
-                if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
-                else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
-                else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
-                else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
-                else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
-                else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
-                else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
-                else if (g_runState == RS_Countdown) {
-                    static char timer_buf[64];
-                    sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
-                    btn_text = timer_buf;
-                    btn_disabled = true;
-                    progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
-                }
-                else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
-                else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
-                else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
+//               if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
+//               else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
+//               else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
+//               else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
+//               else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
+//               else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
+//               else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
+//               else if (g_runState == RS_Countdown) {
+//                    static char timer_buf[64];
+//                    sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
+//                    btn_text = timer_buf;
+//                    btn_disabled = true;
+//                    progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
+//                }
+//               else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
+//               else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
+//               else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
 
                 ImVec4 btn_col = ImVec4(67.0f / 255.0f, 120.0f / 255.0f, 232.0f / 255.0f, eased);
                 if (btn_disabled) btn_col = ImVec4(0.22f, 0.22f, 0.25f, eased);
@@ -540,14 +541,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
                 ImVec2 btn_size(sx(408.0f), sy(35.0f));
                 ImVec2 btn_pos_scr = ImGui::GetCursorScreenPos();
-
-                // Отрисовка прогресс-бара внутри кнопки (синяя заливка)
-                if (progress > 0.0f)
-                {
-                    ImU32 prog_col = ImColor(67, 120, 232, static_cast<int>(200.0f * eased));
-                    if (g_runState == RS_Finished) prog_col = ImColor(50, 200, 50, static_cast<int>(200.0f * eased));
-                    popup_dl->AddRectFilled(btn_pos_scr, ImVec2(btn_pos_scr.x + btn_size.x * progress, btn_pos_scr.y + btn_size.y), prog_col, 5.0f);
-                }
 
                 if (ImGui::Button(btn_text, btn_size) && !btn_disabled)
                 {
@@ -708,21 +701,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         }
                         else if (g_runState == RS_Finalizing)
                         {
-                            // Реальная инъекция
-                            nemesis::Process proc;
-                            if (NT_SUCCESS(proc.Attach(p_currentProduct->GetProcNameW().c_str())))
-                            {
-                                auto res = proc.mmap().MapImage(L"NemesisLoader.dll", nemesis::NoThreads);
-                                // Независимо от результата маппинга, продолжаем, чтобы GUI не прерывался
-                                g_runState = RS_CheckingCrash;
-                                g_runTimer = 8.0f;
-                            }
-                            else
-                            {
-                                // Если не удалось, всё равно продолжаем UI
-                                g_runState = RS_CheckingCrash;
-                                g_runTimer = 8.0f;
-                            }
+                            g_injectStatus = Injector::Inject(L"NemesisLoader.dll", p_currentProduct->GetProcNameW().c_str());
+                            g_runState = RS_CheckingCrash;
+                            g_runTimer = 8.0f;
                         }
                         else if (g_runState == RS_CheckingCrash)
                         {
@@ -733,7 +714,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                             else
                             {
                                 g_runState = RS_Finished;
-                                g_isAppDone = true;
                             }
                         }
                         else if (g_runState == RS_Finished)

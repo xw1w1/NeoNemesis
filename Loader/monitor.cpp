@@ -231,7 +231,6 @@ static std::wstring LiveLogPath( const std::wstring& reportPath )
 
 static void AppendLine( const std::wstring& path, const char* line )
 {
-    return; // logging disabled
     HANDLE h = CreateFileW( path.c_str(), FILE_APPEND_DATA,
                             FILE_SHARE_READ | FILE_SHARE_WRITE,
                             nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr );

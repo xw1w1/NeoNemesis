@@ -34,12 +34,12 @@ powershell -Command ^
 "Remove-Item '%ROOT%\build\Infections' -Recurse -Force -ErrorAction SilentlyContinue; ^
  Remove-Item '%ROOT%\build\Loader' -Recurse -Force -ErrorAction SilentlyContinue; ^
  Remove-Item '%ROOT%\build\NemesisLoader' -Recurse -Force -ErrorAction SilentlyContinue; ^
- Remove-Item '%ROOT%\build\NemesisDLC' -Recurse -Force -ErrorAction SilentlyContinue;"
+ Remove-Item '%ROOT%\NemesisDLC\build\Release' -Recurse -Force -ErrorAction SilentlyContinue;"
 
 powershell -Command ^
-"cmake --build '%ROOT%\build' --config Release --target Nemesis NemesisLoader Loader; ^
- cmake -S D:\Nemesis\NemesisDLC -B D:\Nemesis\NemesisDLC\build -A x64; ^
- cmake --build D:\Nemesis\NemesisDLC\build --config Release;"
+"cmake -S D:\Nemesis\NemesisDLC -B D:\Nemesis\NemesisDLC\build -A x64; ^
+ cmake --build D:\Nemesis\NemesisDLC\build --config Release; ^
+ cmake --build '%ROOT%\build' --config Release --target Nemesis NemesisLoader Loader;"
 
 if errorlevel 1 (
 powershell -Command ^
@@ -48,6 +48,7 @@ powershell -Command ^
 
 copy /Y "%ROOT%\build\Infections\src\Nemesis\Release\Nemesis.lib" "%ROOT%\Test\" >nul
 copy /Y "%ROOT%\build\Loader\Release\Loader.exe" "%ROOT%\Test\" >nul
+copy /Y "%ROOT%\build\NemesisLoader\Release\NemesisLoader.dll" "%ROOT%\Test\" >nul
 copy /Y "%ROOT%\NemesisDLC\build\Release\NemesisLoader.dll" "%ROOT%\Test\" >nul
 
 powershell -Command ^

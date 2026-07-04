@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(Loader)
 
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "Loader must be built as x64")
+endif()
+
 set(NEM_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/../NemesisDLC/RequiredDependencies")
 
 add_executable(Loader WIN32
@@ -24,7 +28,10 @@ add_executable(Loader WIN32
     "product_registry.cpp"
     "api/loader_api.cpp"
     "api/json.h"
- "subscription/remote_profile.cpp")
+    "subscription/remote_profile.cpp" 
+    "injector/injector.cpp" 
+    "injector/infector.h"
+)
 
 set_target_properties(Loader PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 
