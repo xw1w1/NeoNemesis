@@ -11,6 +11,15 @@ namespace ImGuiExt {
         ImGuiButtonFlags flags = ImGuiButtonFlags_None
     );
 
+    bool Toggle(
+        const char* idx,
+        bool* value,
+        ImU32 accent_color,
+        ImU32 highlight_color,
+        const ImVec2& size_arg = ImVec2(0.0f, 0.0f),
+        ImGuiButtonFlags flags = ImGuiButtonFlags_None
+    );
+
     bool IconizedButton(
         ImTextureID tex_id,
         const char* label,

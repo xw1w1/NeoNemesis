@@ -87,7 +87,103 @@ namespace ImGuiExt {
         return pressed;
     }
 
-    // IndicatorButton
+    bool Toggle(
+        const char* idx,
+        bool* value,
+        ImU32 accent_color,
+        ImU32 highlight_color,
+        const ImVec2& size_arg,
+        ImGuiButtonFlags flags)
+    {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems)
+            return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(idx);
+
+        const float default_height = ImGui::GetFrameHeight();
+        const float default_width = default_height * 2.0f;
+
+        ImVec2 pos = window->DC.CursorPos;
+        const ImVec2 size = ImGui::CalcItemSize(size_arg, default_width, default_height);
+        const ImRect bb(pos, pos + size);
+
+        ImGui::ItemSize(size, style.FramePadding.y);
+        if (!ImGui::ItemAdd(bb, id))
+            return false;
+
+        bool hovered = false;
+        bool held = false;
+        const bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, flags);
+
+        if (pressed && value)
+            *value = !(*value);
+
+        const bool on = value ? *value : false;
+
+        ImGuiStorage* storage = window->DC.StateStorage;
+        const ImGuiID anim_id = id + 1;
+
+        float anim = storage->GetFloat(anim_id, on ? 1.0f : 0.0f);
+        const float target = on ? 1.0f : 0.0f;
+        const float anim_speed = 12.0f;
+
+        if (anim != target)
+        {
+            float delta = g.IO.DeltaTime * anim_speed;
+            if (anim < target)
+                anim = ImMin(anim + delta, target);
+            else
+                anim = ImMax(anim - delta, target);
+            storage->SetFloat(anim_id, anim);
+        }
+
+        ImU32 bg_col;
+        if (on)
+        {
+            bg_col = (highlight_color != 0) ? highlight_color : ImGui::GetColorU32(ImGuiCol_ButtonActive);
+        }
+        else
+        {
+            bg_col = ImGui::GetColorU32(ImGuiCol_Button);
+        }
+
+        if (hovered)
+        {
+            ImVec4 bg_vec = ImGui::ColorConvertU32ToFloat4(bg_col);
+            bg_vec.x = ImMin(bg_vec.x + 0.05f, 1.0f);
+            bg_vec.y = ImMin(bg_vec.y + 0.05f, 1.0f);
+            bg_vec.z = ImMin(bg_vec.z + 0.05f, 1.0f);
+            bg_col = ImGui::ColorConvertFloat4ToU32(bg_vec);
+        }
+
+        ImGui::RenderNavCursor(bb, id);
+
+        const float rounding = size.y * 0.5f;
+
+        window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col, rounding);
+
+        const ImU32 border_col = (accent_color != 0) ? accent_color : ImGui::GetColorU32(ImGuiCol_Border);
+        window->DrawList->AddRect(bb.Min, bb.Max, border_col, rounding, 0, 1.5f);
+
+        const float knob_padding = 3.0f;
+        const float knob_radius = (size.y - knob_padding * 2.0f) * 0.5f;
+
+        const float knob_x_left = bb.Min.x + knob_padding + knob_radius;
+        const float knob_x_right = bb.Max.x - knob_padding - knob_radius;
+
+        const float knob_x = ImLerp(knob_x_right, knob_x_left, anim);
+        const float knob_y = bb.Min.y + size.y * 0.5f;
+
+        const ImU32 knob_col = (accent_color != 0) ? accent_color : ImGui::GetColorU32(ImGuiCol_Text);
+
+        window->DrawList->AddCircleFilled(ImVec2(knob_x, knob_y), knob_radius, knob_col);
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+        return pressed;
+    }
 
     // IndicatorSwitch
 

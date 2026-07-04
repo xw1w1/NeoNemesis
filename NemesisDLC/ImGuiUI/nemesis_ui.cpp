@@ -11,9 +11,9 @@ namespace Nemesis::UI
 
 	ImU32		 ElementFillColor = ImColor(35, 35, 35, 255);
 
-	int			 TotalWidth = 750;
-	int			 PanelWidth = 75;
-	int			 SubPanelWidth = 160;
+	float		 TotalWidth = 750.0f;
+	float		 PanelWidth = 75.0f;
+	float		 SubPanelWidth = 160.0f;
 	const char*  UpperTitleStr = nullptr;
 
 	float		 WidgetPadding = 4.0f;
@@ -26,10 +26,15 @@ namespace Nemesis::UI
 
 	int			 CurrentPage = 0;
 
+	ImVec2		 LastRegionSize = ImVec2(0.0f, 0.0f);
+
+	bool		 TEx = false;
+
 	void DrawMenu()
 	{
 		ImGuiStyle& g = ImGui::GetStyle();
 		g.WindowRounding = WindowRounding;
+		LastRegionSize = ImGui::GetContentRegionAvail();
 		ImGuiWindowFlags main_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGui::Begin("##Nemesis", nullptr, main_flags);
 		DrawBoxShaded(ImGui::GetWindowPos(), ImGui::GetWindowSize(), BgFillColor, WindowRounding);
@@ -41,7 +46,13 @@ namespace Nemesis::UI
 	{
 		ImVec2 size(PanelWidth, ImGui::GetContentRegionAvail().y);
 		ImGui::BeginChild("##NemesisControlPanel", size);
-		DrawBoxShaded(ImGui::GetWindowPos(), size, BgFillColorSub, WindowRounding);
+		DrawBoxShaded(ImVec2(0.0f, 0.0f), size, BgFillColorSub, WindowRounding);
+
+		PushButtonStyle();
+		ImGuiExt::Toggle("##toggle", &TEx, AccentColor, AccentColorSub);
+
+		ImGuiExt::Button("Button", AccentColor, AccentColorSub);
+		PopButtonStyle();
 		ImGui::EndChild();
 	}
 
@@ -55,7 +66,16 @@ namespace Nemesis::UI
 	void DrawDeveloperPage();
 	void DrawSettingsPage();
 
-	void PushButtonStyle();
-	void PopButtonStyle();
+	void PushButtonStyle()
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, Rounding);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(WidgetPadding, WidgetPadding));
+		ImGui::PushStyleColor(ImGuiCol_Button, ElementFillColor);
+	}
 
+	void PopButtonStyle()
+	{
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(2);
+	}
 }
