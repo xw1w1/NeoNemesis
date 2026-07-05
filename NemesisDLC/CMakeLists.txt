@@ -39,13 +39,11 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Utilities/Visibility Check System/Visibility.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/RageBot.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/SilentAim.cpp"
+    "Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.cpp"
     "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
-    "ImGuiUI/imgui_extensions.cpp"
-    "ImGuiUI/layout_utils.cpp"
-    "ImGuiUI/nemesis_ui.cpp"
 )
 
 target_compile_options(NemesisDLC PRIVATE /arch:AVX)

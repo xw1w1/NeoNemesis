@@ -1,5 +1,6 @@
 #include "RageBot.hpp"
 #include "SilentAim.hpp"
+#include "../../../Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.hpp"
 #include "../../../Miscellaneous Utilities/Visibility Check System/Visibility.hpp"
 #include "../../UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
@@ -130,6 +131,7 @@ namespace Nemesis::RageBot
         ImVec2 bestScreen(0, 0);
         int    bestPawnIndex = -1;
         Vec3   bestHead{};
+        Vec3   bestAbs{};
         bool   haveBest = false;
 
         for (std::uint32_t i = 1; i <= 64; ++i)
@@ -147,6 +149,15 @@ namespace Nemesis::RageBot
             Vec3 head;
             if (!HeadBone(pawn, head)) continue;
 
+            Vec3 origin{};
+            const std::uintptr_t sc = Mem::Read<std::uintptr_t>(pawn + Schema::m_pGameSceneNode);
+            if (sc)
+            {
+                origin.x = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 0);
+                origin.y = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 4);
+                origin.z = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 8);
+            }
+
             for (const Vec3& o : g_cloud)
             {
                 float sx, sy;
@@ -159,6 +170,7 @@ namespace Nemesis::RageBot
                     bestScreen = ImVec2(sx, sy);
                     bestPawnIndex = static_cast<int>(pawnHandle & EntityList::kIndexMask);
                     bestHead = head;
+                    bestAbs = origin;
                     haveBest = true;
                 }
             }
@@ -175,8 +187,14 @@ namespace Nemesis::RageBot
         }
 
                 if (visible)
+        {
             Nemesis::SilentAim::SetTarget(bestHead.x, bestHead.y, bestHead.z);
+            Nemesis::PacketGuard::SetTarget(bestHead.x, bestHead.y, bestHead.z, bestAbs.x, bestAbs.y, bestAbs.z);
+        }
         else
+        {
             Nemesis::SilentAim::ClearTarget();
+            Nemesis::PacketGuard::ClearTarget();
+        }
     }
 }

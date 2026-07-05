@@ -154,6 +154,9 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t kCmdData     = 0xBD0;    // ptr — база вектора команд
         inline constexpr std::ptrdiff_t kCmdStride   = 0x60;     // РЕАЛЬНЫЙ страйд команды
         inline constexpr std::ptrdiff_t kViewAngle   = 0x10;     // viewangles QAngle в команде
+        inline constexpr std::ptrdiff_t kCmdShootPos   = 0x1C;   // shoot_position (не трогаем)
+        inline constexpr std::ptrdiff_t kCmdTargetHead = 0x28;   // target_head_position_check
+        inline constexpr std::ptrdiff_t kCmdTargetAbs  = 0x34;   // target_abs_position_check
     }
 
     namespace EngineInput

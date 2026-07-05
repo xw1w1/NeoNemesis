@@ -2,6 +2,7 @@
 #include "../../UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
 #include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
+#include "../../../Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.hpp"
 
 #include "MinHook.h"
 
@@ -75,7 +76,7 @@ namespace Nemesis::SilentAim
             return HeapPtr(ptr) ? ptr : 0;
         }
 
-        // ДИАГ: снимаем seedBase (r8d) и кандидатов-входов
+        // пїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ seedBase (r8d) пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ
         int __fastcall hkSeed(void* rcx, void* rdx, int seedBase)
         {
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
@@ -158,16 +159,7 @@ namespace Nemesis::SilentAim
             {
                 Mem::Write<float>(qa + 0, op);
                 Mem::Write<float>(qa + 4, oy);
-                const int count = Mem::Read<int>(self + Addr::SilentAim::kCmdCount, 0);
-                const std::uintptr_t data = Mem::Read<std::uintptr_t>(self + Addr::SilentAim::kCmdData);
-                if (count > 0 && count <= 150 && HeapPtr(data))
-                    for (int i = 0; i < count; ++i)
-                    {
-                        const std::uintptr_t e = data + (std::uintptr_t)i * Addr::SilentAim::kCmdStride;
-                        if (!HeapPtr(e)) break;
-                        Mem::Write<float>(e + Addr::SilentAim::kViewAngle + 0, np);
-                        Mem::Write<float>(e + Addr::SilentAim::kViewAngle + 4, ny);
-                    }
+                Nemesis::PacketGuard::SanitizeCommands(self, np, ny);
             }
         }
     }
