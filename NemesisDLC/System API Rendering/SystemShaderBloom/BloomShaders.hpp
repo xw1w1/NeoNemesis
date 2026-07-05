@@ -28,7 +28,8 @@ SamplerState sampLinear : register(s0);
 cbuffer BloomParams : register(b0)
 {
 	float threshold;
-	float3 padding;
+	float knee;
+	float2 padding;
 };
 
 struct PS_INPUT
@@ -41,11 +42,13 @@ float4 main(PS_INPUT input) : SV_TARGET
 {
 	float4 color = txInput.Sample(sampLinear, input.tex);
 	float lum = dot(color.rgb, float3(0.299f, 0.587f, 0.114f));
+	float soft = max(knee, 0.0001f);
+	float contribution = saturate((lum - threshold + soft) / soft);
+	contribution *= contribution;
+	float scale = max(lum - threshold, 0.0f) / max(lum, 0.0001f);
+	scale = max(scale, contribution * 0.25f);
 
-	if (lum > threshold)
-		return float4(color.rgb, 1.0f);
-	else
-		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	return float4(color.rgb * scale, color.a * scale);
 }
 )hlsl";
 
@@ -55,8 +58,9 @@ SamplerState sampLinear : register(s0);
 
 cbuffer BloomParams : register(b0)
 {
-	float intensity;
-	float3 padding;
+	float2 texelSize;
+	float radius;
+	float padding;
 };
 
 struct PS_INPUT
@@ -75,19 +79,17 @@ static const float weights[4] =
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-	uint width, height;
-	txInput.GetDimensions(width, height);
-	float texelWidth = 1.0f / width;
+	float stepWidth = max(radius, 0.25f) * texelSize.x;
 
 	float4 result = txInput.Sample(sampLinear, input.tex) * weights[0];
-	result += txInput.Sample(sampLinear, input.tex + float2(texelWidth, 0.0f)) * weights[1];
-	result += txInput.Sample(sampLinear, input.tex - float2(texelWidth, 0.0f)) * weights[1];
-	result += txInput.Sample(sampLinear, input.tex + float2(texelWidth * 2.0f, 0.0f)) * weights[2];
-	result += txInput.Sample(sampLinear, input.tex - float2(texelWidth * 2.0f, 0.0f)) * weights[2];
-	result += txInput.Sample(sampLinear, input.tex + float2(texelWidth * 3.0f, 0.0f)) * weights[3];
-	result += txInput.Sample(sampLinear, input.tex - float2(texelWidth * 3.0f, 0.0f)) * weights[3];
+	result += txInput.Sample(sampLinear, input.tex + float2(stepWidth, 0.0f)) * weights[1];
+	result += txInput.Sample(sampLinear, input.tex - float2(stepWidth, 0.0f)) * weights[1];
+	result += txInput.Sample(sampLinear, input.tex + float2(stepWidth * 2.0f, 0.0f)) * weights[2];
+	result += txInput.Sample(sampLinear, input.tex - float2(stepWidth * 2.0f, 0.0f)) * weights[2];
+	result += txInput.Sample(sampLinear, input.tex + float2(stepWidth * 3.0f, 0.0f)) * weights[3];
+	result += txInput.Sample(sampLinear, input.tex - float2(stepWidth * 3.0f, 0.0f)) * weights[3];
 
-	return result * intensity;
+	return result;
 }
 )hlsl";
 
@@ -97,8 +99,9 @@ SamplerState sampLinear : register(s0);
 
 cbuffer BloomParams : register(b0)
 {
-	float intensity;
-	float3 padding;
+	float2 texelSize;
+	float radius;
+	float padding;
 };
 
 struct PS_INPUT
@@ -117,29 +120,30 @@ static const float weights[4] =
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-	uint width, height;
-	txInput.GetDimensions(width, height);
-	float texelHeight = 1.0f / height;
+	float stepHeight = max(radius, 0.25f) * texelSize.y;
 
 	float4 result = txInput.Sample(sampLinear, input.tex) * weights[0];
-	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, texelHeight)) * weights[1];
-	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, texelHeight)) * weights[1];
-	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, texelHeight * 2.0f)) * weights[2];
-	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, texelHeight * 2.0f)) * weights[2];
-	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, texelHeight * 3.0f)) * weights[3];
-	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, texelHeight * 3.0f)) * weights[3];
+	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, stepHeight)) * weights[1];
+	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, stepHeight)) * weights[1];
+	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, stepHeight * 2.0f)) * weights[2];
+	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, stepHeight * 2.0f)) * weights[2];
+	result += txInput.Sample(sampLinear, input.tex + float2(0.0f, stepHeight * 3.0f)) * weights[3];
+	result += txInput.Sample(sampLinear, input.tex - float2(0.0f, stepHeight * 3.0f)) * weights[3];
 
-	return result * intensity;
+	return result;
 }
 )hlsl";
 
 	constexpr std::string_view ComposePS = R"hlsl(
-Texture2D txBlurred : register(t0);
+Texture2D txSource : register(t0);
+Texture2D txBlurred : register(t1);
 SamplerState sampLinear : register(s0);
 
 cbuffer BloomColor : register(b0)
 {
 	float4 colorTint;
+	float intensity;
+	float3 padding;
 };
 
 struct PS_INPUT
@@ -150,9 +154,10 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
+	float4 source = txSource.Sample(sampLinear, input.tex);
 	float4 blurred = txBlurred.Sample(sampLinear, input.tex);
-	float3 result = blurred.rgb * colorTint.rgb;
-	return float4(result, blurred.a);
+	float3 bloom = blurred.rgb * colorTint.rgb * intensity * colorTint.a;
+	return float4(source.rgb + bloom, source.a);
 }
 )hlsl";
 
