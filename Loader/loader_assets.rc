@@ -1,0 +1,13 @@
+#include "LoaderResources.h"
+
+IDR_FONT_ROBOTO_REGULAR RCDATA "..\\Resources\\Fonts\\Roboto-Regular.ttf"
+IDR_IMG_NEMESIS RCDATA "..\\Resources\\Icons\\nemesis.png"
+IDR_IMG_CONSOLE RCDATA "..\\Resources\\Icons\\console.png"
+IDR_IMG_USER RCDATA "..\\Resources\\Icons\\user.png"
+IDR_IMG_GEAR RCDATA "..\\Resources\\Icons\\gear.png"
+IDR_IMG_CS2_BIG RCDATA "..\\Resources\\Icons\\CS2\\Bigs.jpg"
+IDR_IMG_CS2_MINI RCDATA "..\\Resources\\Icons\\CS2\\mini.png"
+IDR_IMG_DOTA2_POSTER RCDATA "..\\Resources\\Icons\\Dota2\\Poster.png"
+IDR_IMG_DOTA2_ICON RCDATA "..\\Resources\\Icons\\Dota2\\ico.png"
+IDR_IMG_RUST_POSTER RCDATA "..\\Resources\\Icons\\Rust\\Poster.png"
+IDR_IMG_RUST_ICON RCDATA "..\\Resources\\Icons\\Rust\\icon.png"
