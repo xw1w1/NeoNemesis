@@ -16,5 +16,5 @@ void SettingsColorEditU32(const char* label, ImU32* col, const char* tooltip = n
 void SettingsColorEditVec4(const char* label, ImVec4* col, const char* tooltip = nullptr);
 void LabelValueRowCopyable(const char* label, const char* value, bool copyable = false, const char* copy_value = nullptr);
 void DrawCardSimple(const char* title, float height, std::function<void()> content);
-void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool shaded = false, ImGuiChildFlags flags = 0);
-void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, float rounding, bool shaded = false, ImGuiChildFlags flags = 0);
+void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool shaded = false, ImDrawFlags flags = 0);
+void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, float rounding, bool shaded = false, ImDrawFlags flags = 0);

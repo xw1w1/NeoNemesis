@@ -246,7 +246,7 @@ void DrawCardSimple(const char* title, float height, std::function<void()> conte
     ImGui::Dummy(ImVec2(width, height + 12.0f));
 }
 
-void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool shaded, ImGuiChildFlags flags)
+void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool shaded, ImDrawFlags flags)
 {
     const ImU32  bg_col = col ? col : ImGui::GetColorU32(ImGuiCol_ChildBg);
 
@@ -268,7 +268,7 @@ void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool 
     dl->AddRect(p_pos, ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y), border_col, rounding, 0, 1.0f);
 }
 
-void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, float rounding, bool shaded, ImGuiChildFlags flags)
+void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, float rounding, bool shaded, ImDrawFlags flags)
 {
     if (!col_top && !col_bot)
     {

@@ -128,7 +128,7 @@ namespace ImGuiExt {
 
         float anim = storage->GetFloat(anim_id, on ? 1.0f : 0.0f);
         const float target = on ? 1.0f : 0.0f;
-        const float anim_speed = 12.0f;
+        const float anim_speed = 0.1f;
 
         if (anim != target)
         {

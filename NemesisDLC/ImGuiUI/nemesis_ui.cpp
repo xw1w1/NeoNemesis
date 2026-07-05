@@ -46,13 +46,19 @@ namespace Nemesis::UI
 	{
 		ImVec2 size(PanelWidth, ImGui::GetContentRegionAvail().y);
 		ImGui::BeginChild("##NemesisControlPanel", size);
-		DrawBoxShaded(ImVec2(0.0f, 0.0f), size, BgFillColorSub, WindowRounding);
+
+		ImVec2 pos = ImGui::GetWindowPos();
+
+		ImDrawFlags rounding_flags = ImDrawFlags_RoundCornersLeft;
+
+		DrawBoxShaded(pos, size, BgFillColorSub, WindowRounding, rounding_flags);
 
 		PushButtonStyle();
 		ImGuiExt::Toggle("##toggle", &TEx, AccentColor, AccentColorSub);
 
 		ImGuiExt::Button("Button", AccentColor, AccentColorSub);
 		PopButtonStyle();
+
 		ImGui::EndChild();
 	}
 
