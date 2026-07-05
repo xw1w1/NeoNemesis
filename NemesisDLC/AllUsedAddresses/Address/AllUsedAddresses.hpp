@@ -44,6 +44,10 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_hPlayerPawn     = 0x90C;
         inline constexpr std::ptrdiff_t m_bPawnIsAlive    = 0x914;
 
+        inline constexpr std::ptrdiff_t m_pObserverServices = 0x11F8;
+        inline constexpr std::ptrdiff_t obs_iObserverMode   = 0x48;
+        inline constexpr std::ptrdiff_t obs_hObserverTarget = 0x4C;
+
         inline constexpr std::ptrdiff_t m_pWeaponServices       = 0x11E0;
         inline constexpr std::ptrdiff_t m_hMyWeapons            = 0x48;
         inline constexpr std::ptrdiff_t m_hActiveWeapon         = 0x60;
@@ -157,6 +161,9 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t kCmdShootPos   = 0x1C;   // shoot_position (не трогаем)
         inline constexpr std::ptrdiff_t kCmdTargetHead = 0x28;   // target_head_position_check
         inline constexpr std::ptrdiff_t kCmdTargetAbs  = 0x34;   // target_abs_position_check
+        inline constexpr std::ptrdiff_t kBaseAngleA    = 0x2A0;  // eye/base viewangles (sub_180225A10)
+        inline constexpr std::ptrdiff_t kBaseAngleB    = 0x758;  // вторая копия текущего угла
+        inline constexpr std::ptrdiff_t kCameraAngle   = 0x688;  // камера — НЕ трогать
     }
 
     namespace EngineInput

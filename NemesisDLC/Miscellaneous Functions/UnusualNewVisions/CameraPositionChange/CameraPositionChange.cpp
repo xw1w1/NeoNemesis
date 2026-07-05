@@ -29,6 +29,37 @@ namespace Nemesis::CameraPositionChange
             return Mem::Read<std::uintptr_t>(base + Client::dwCameraManager);
         }
 
+        std::uintptr_t EntFromHandle(std::uintptr_t base, std::uint32_t h)
+        {
+            if (h == 0xFFFFFFFF)
+                return 0;
+            const std::uintptr_t list = Mem::Read<std::uintptr_t>(base + Client::dwEntityList);
+            if (!list)
+                return 0;
+            const std::uint32_t i = h & EntityList::kIndexMask;
+            const std::uintptr_t chunk = Mem::Read<std::uintptr_t>(
+                list + EntityList::kChunkStep * (i >> EntityList::kChunkShift) + EntityList::kChunkBase);
+            if (!chunk)
+                return 0;
+            return Mem::Read<std::uintptr_t>(chunk + EntityList::kEntryStride * (i & EntityList::kSlotMask));
+        }
+
+        std::uintptr_t ObservedPawn()
+        {
+            const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+            if (!base)
+                return 0;
+            const std::uintptr_t localPawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
+            if (!localPawn)
+                return 0;
+            const std::uintptr_t obs = Mem::Read<std::uintptr_t>(localPawn + Schema::m_pObserverServices);
+            if (obs < 0x10000)
+                return 0;
+            const std::uint32_t h = Mem::Read<std::uint32_t>(obs + Schema::obs_hObserverTarget);
+            const std::uintptr_t target = EntFromHandle(base, h);
+            return (target && target != localPawn) ? target : 0;
+        }
+
         void EnableThirdperson(std::uintptr_t mgr)
         {
             Mem::Write<float>(mgr + ThirdpersonCam::kDistance, CameraView::kDistance);

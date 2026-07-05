@@ -1,10 +1,12 @@
 #include "PacketGuard.hpp"
 #include "../../Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
+#include "../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 
 #include <atomic>
 #include <cstdint>
 #include <cmath>
+#include <Windows.h>
 
 namespace Nemesis::PacketGuard
 {
@@ -72,5 +74,37 @@ namespace Nemesis::PacketGuard
             Mem::Write<float>(e + SilentAim::kCmdTargetAbs + 4, ay);
             Mem::Write<float>(e + SilentAim::kCmdTargetAbs + 8, az);
         }
+    }
+
+    void SanitizeBaseAngle(std::uintptr_t self, float pitch, float yaw)
+    {
+        if (!g_have.load()) return;
+        if (!std::isfinite(pitch) || !std::isfinite(yaw)) return;
+
+        Mem::Write<float>(self + SilentAim::kBaseAngleA + 0, pitch);
+        Mem::Write<float>(self + SilentAim::kBaseAngleA + 4, yaw);
+        Mem::Write<float>(self + SilentAim::kBaseAngleB + 0, pitch);
+        Mem::Write<float>(self + SilentAim::kBaseAngleB + 4, yaw);
+    }
+
+    void DiagBaseAngle(std::uintptr_t self, float realPitch, float realYaw)
+    {
+        static DWORD last = 0;
+        const DWORD now = GetTickCount();
+        if (now - last < 400) return;
+        if (std::fabs(realPitch) < 0.05f && std::fabs(realYaw) < 0.05f) return;
+
+        int hits = 0;
+        for (std::ptrdiff_t off = 0; off <= 0x1200 && hits < 24; off += 4)
+        {
+            const float p = Mem::Read<float>(self + off);
+            const float y = Mem::Read<float>(self + off + 4);
+            if (std::fabs(p - realPitch) < 0.3f && std::fabs(y - realYaw) < 0.3f)
+            {
+                NLOG("[diag] base? off=0x%llX  p=%.2f y=%.2f", (unsigned long long)off, p, y);
+                ++hits;
+            }
+        }
+        last = now;
     }
 }

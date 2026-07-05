@@ -160,6 +160,7 @@ namespace Nemesis::SilentAim
                 Mem::Write<float>(qa + 0, op);
                 Mem::Write<float>(qa + 4, oy);
                 Nemesis::PacketGuard::SanitizeCommands(self, np, ny);
+                Nemesis::PacketGuard::SanitizeBaseAngle(self, np, ny);
             }
         }
     }

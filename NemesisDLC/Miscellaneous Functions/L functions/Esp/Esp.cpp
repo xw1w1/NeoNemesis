@@ -80,10 +80,6 @@ namespace Nemesis::Esp
         if (!localPawn)
             return;
 
-        const int localHp = Mem::Read<int>(localPawn + Schema::m_iHealth, 0);
-        if (localHp <= 0)
-            return;
-
         const std::uint8_t localTeam = Mem::Read<std::uint8_t>(localPawn + Schema::m_iTeamNum);
         const std::uintptr_t mat = base + Client::dwViewMatrix;
         const ImVec2 ds = ImGui::GetIO().DisplaySize;
