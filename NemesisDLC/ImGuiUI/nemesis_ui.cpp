@@ -90,7 +90,7 @@ namespace Nemesis::UI
 	        dl->PopClipRect();
 
 	        const float line_height = ImGui::GetTextLineHeight();
-	        const float icon_side = line_height * 1.5f;
+	        const float icon_side = line_height * 1.25f;
 	        const ImVec2 icon_size = ImVec2(icon_side, icon_side);
 
 	        const float button_width = PanelWidth - (WidgetPadding * 2.0f);
