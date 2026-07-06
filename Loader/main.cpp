@@ -510,26 +510,27 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 ImGui::SetCursorScreenPos(sp(11.0f, 259.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
 
-                const char* btn_text = status_message[g_injectStatus];
+                float progress = 0.0f;
+                const char* btn_text;
                 bool btn_disabled = false;
 
-//               if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
-//               else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
-//               else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
-//               else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
-//               else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
-//               else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
-//               else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
-//               else if (g_runState == RS_Countdown) {
-//                    static char timer_buf[64];
-//                    sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
-//                    btn_text = timer_buf;
-//                    btn_disabled = true;
-//                    progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
-//                }
-//               else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
-//               else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
-//               else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
+               if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
+               else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
+               else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
+               else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
+               else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
+               else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
+               else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
+               else if (g_runState == RS_Countdown) {
+                    static char timer_buf[64];
+                    sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
+                    btn_text = timer_buf;
+                    btn_disabled = true;
+                    progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
+                }
+               else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
+               else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
+               else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
 
                 ImVec4 btn_col = ImVec4(67.0f / 255.0f, 120.0f / 255.0f, 232.0f / 255.0f, eased);
                 if (btn_disabled) btn_col = ImVec4(0.22f, 0.22f, 0.25f, eased);
