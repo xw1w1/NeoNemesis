@@ -17,7 +17,7 @@ namespace Nemesis::RageBot
 
     namespace
     {
-        constexpr float          kRageFov    = 120.0f;  // радиус красного FOV (px)
+        constexpr float          kRageFov    = 45.0f;  // радиус красного FOV (px)
         constexpr std::ptrdiff_t kBoneArray  = 0x1D0;
         constexpr std::ptrdiff_t kBoneStride = 0x20;
         constexpr int            kHeadBone   = 6;

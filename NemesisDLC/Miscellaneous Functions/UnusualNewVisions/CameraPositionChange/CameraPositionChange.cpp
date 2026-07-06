@@ -126,6 +126,7 @@ namespace Nemesis::CameraPositionChange
         void Worker()
         {
             bool lastEnabled = false;
+            std::uintptr_t lastObserved = 0;
 
             while (g_running.load())
             {
@@ -149,6 +150,20 @@ namespace Nemesis::CameraPositionChange
                     }
 
                     lastEnabled = want;
+                }
+
+                if (want)
+                {
+                    const std::uintptr_t observed = ObservedPawn();
+                    if (observed && observed != lastObserved)
+                    {
+                        lastObserved = observed;
+                        NLOG("thirdperson spectating pawn %p", reinterpret_cast<void*>(observed));
+                    }
+                    else if (!observed)
+                    {
+                        lastObserved = 0;
+                    }
                 }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));

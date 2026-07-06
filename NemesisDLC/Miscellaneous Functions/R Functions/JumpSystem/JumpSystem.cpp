@@ -18,6 +18,11 @@ namespace Nemesis::JumpSystem
         std::atomic<bool> g_running{ false };
         std::thread       g_worker;
 
+        bool HeapPtr(std::uintptr_t p)
+        {
+            return p >= 0x10000 && p <= 0x7FFFFFFFFFFFull;
+        }
+
         bool GameInForeground()
         {
             HWND hwnd = GetForegroundWindow();
@@ -33,32 +38,28 @@ namespace Nemesis::JumpSystem
             Mem::Write<std::uint32_t>(base + Client::dwForceJump, state);
         }
 
-        void BoostTakeoff(std::uintptr_t pawn, float& targetSpeed, std::uint64_t n)
+        float HorizSpeed(std::uintptr_t vel)
         {
-            const std::uintptr_t vel = pawn + Schema::m_vecVelocity;
-            const float vx = Mem::Read<float>(vel);
+            const float vx = Mem::Read<float>(vel + 0x0);
             const float vy = Mem::Read<float>(vel + 0x4);
+            return std::sqrt(vx * vx + vy * vy);
+        }
 
-            const float speed = std::sqrt(vx * vx + vy * vy);
-            if (speed < JumpBoost::kMinSpeed)
-            {
-                NLOG("[jump] #%llu speed=%.1f (slow, no dir)", (unsigned long long)n, speed);
-                return;
-            }
+        // Руление: боковой ввод в сторону поворота мыши — движок сам air-accelerate'ит.
+        void AutoStrafe(std::uintptr_t ms, float viewYaw, float prevYaw)
+        {
+            float dy = viewYaw - prevYaw;
+            while (dy >  180.0f) dy -= 360.0f;
+            while (dy < -180.0f) dy += 360.0f;
 
-            if (targetSpeed < speed)
-                targetSpeed = speed;              // разогнался сам - подхватываем
+            float side = 0.0f;
+            if (dy > JumpBoost::kYawDeadzone)
+                side = JumpBoost::kStrafeMove;      // поворот влево -> стрейф влево
+            else if (dy < -JumpBoost::kYawDeadzone)
+                side = -JumpBoost::kStrafeMove;     // поворот вправо -> стрейф вправо
 
-            targetSpeed += JumpBoost::kBoostAdd;  // +30 накопительно
-            if (targetSpeed > JumpBoost::kMaxSpeed)
-                targetSpeed = JumpBoost::kMaxSpeed;
-
-            const float scale = targetSpeed / speed;
-            Mem::Write<float>(vel, vx * scale);
-            Mem::Write<float>(vel + 0x4, vy * scale);
-
-            NLOG("[jump] #%llu %.1f -> %.1f (+%.0f)",
-                 (unsigned long long)n, speed, targetSpeed, JumpBoost::kBoostAdd);
+            Mem::Write<float>(ms + Schema::ms_flForwardMove, 0.0f);
+            Mem::Write<float>(ms + Schema::ms_flLeftMove, side);
         }
 
         void Worker()
@@ -68,9 +69,9 @@ namespace Nemesis::JumpSystem
             bool  wasHeld    = false;
             bool  prevGround = true;
             bool  jumped     = false;
+            float prevYaw    = 0.0f;
             float targetSpeed = 0.0f;
             auto  landedAt   = clock::now();
-            std::uint64_t jumpCount = 0;
 
             while (g_running.load())
             {
@@ -86,7 +87,7 @@ namespace Nemesis::JumpSystem
                     wasHeld     = false;
                     jumped      = false;
                     prevGround  = true;
-                    targetSpeed = 0.0f;           // сброс накопления
+                    targetSpeed = 0.0f;
                     std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
                     continue;
                 }
@@ -99,42 +100,70 @@ namespace Nemesis::JumpSystem
                     continue;
                 }
 
+                const std::uintptr_t vel = pawn + Schema::m_vecVelocity;
+                const std::uintptr_t ms  = Mem::Read<std::uintptr_t>(pawn + Schema::m_pMovementServices);
                 const std::uint32_t flags = Mem::Read<std::uint32_t>(pawn + Schema::m_fFlags);
                 const bool onGround = (flags & JumpBoost::kOnGroundFlag) != 0;
                 const auto now = clock::now();
+                const float viewYaw = Mem::Read<float>(base + Client::dwViewAngles + JumpBoost::kViewYawOff);
+                const float cur = HorizSpeed(vel);
 
                 if (!wasHeld)
                 {
-                    landedAt   = now;
-                    jumped     = false;
-                    prevGround = onGround;
+                    landedAt    = now;
+                    jumped      = false;
+                    prevGround  = onGround;
+                    prevYaw     = viewYaw;
+                    targetSpeed = cur;
                 }
 
-                if (onGround && !prevGround)
+                if (HeapPtr(ms))
+                    Mem::Write<float>(ms + Schema::ms_flMaxspeed, JumpBoost::kForceMaxspeed);
+
+                if (!onGround && prevGround)
+                {
+                    if (targetSpeed < cur)
+                        targetSpeed = cur;
+                    targetSpeed += JumpBoost::kBoostAdd;
+                    if (targetSpeed > JumpBoost::kMaxSpeed)
+                        targetSpeed = JumpBoost::kMaxSpeed;
+                }
+                else if (onGround && !prevGround)
                 {
                     landedAt = now;
                     jumped   = false;
                 }
-                else if (!onGround && prevGround)
+
+                if (!onGround && HeapPtr(ms))
+                    AutoStrafe(ms, viewYaw, prevYaw);
+
+                // Пол скорости: подхватываем магнитуду, когда просела (лестницы/приземление/тейкофф),
+                // сохраняя направление (руление остаётся за движком).
+                if (cur > targetSpeed)
+                    targetSpeed = cur;
+                if (cur < targetSpeed && cur > JumpBoost::kMinSpeed)
                 {
-                    if (jumped)
-                        BoostTakeoff(pawn, targetSpeed, ++jumpCount);
+                    const float scale = targetSpeed / cur;
+                    Mem::Write<float>(vel + 0x0, Mem::Read<float>(vel + 0x0) * scale);
+                    Mem::Write<float>(vel + 0x4, Mem::Read<float>(vel + 0x4) * scale);
                 }
+
+                prevYaw = viewYaw;
 
                 if (onGround)
                 {
                     const auto waited = std::chrono::duration_cast<std::chrono::milliseconds>(
                         now - landedAt).count();
 
-                    if (!jumped && waited >= JumpBoost::kJumpDelayMs)
+                    if (jumped)
+                        WriteJump(base, JumpBoost::kPress);
+                    else if (waited >= JumpBoost::kJumpDelayMs)
                     {
                         WriteJump(base, JumpBoost::kPress);
                         jumped = true;
                     }
-                    else if (!jumped)
-                        WriteJump(base, JumpBoost::kRelease);
                     else
-                        WriteJump(base, JumpBoost::kPress);
+                        WriteJump(base, JumpBoost::kRelease);
                 }
                 else
                 {
@@ -146,6 +175,10 @@ namespace Nemesis::JumpSystem
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
             }
+
+            const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
+            if (base)
+                WriteJump(base, JumpBoost::kRelease);
         }
     }
 

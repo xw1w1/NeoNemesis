@@ -37,6 +37,8 @@ add_library(NemesisDLC SHARED
     "RenderDrx11/RenderHook.cpp"
     "Miscellaneous Functions/L functions/Esp/Esp.cpp"
     "Miscellaneous Functions/L functions/LegitBot/LegitBot.cpp"
+    "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.cpp"
+    "Miscellaneous Functions/L functions/WallHackV2/ModelChams.cpp"
     "Miscellaneous Utilities/Visibility Check System/Visibility.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/RageBot.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/SilentAim.cpp"

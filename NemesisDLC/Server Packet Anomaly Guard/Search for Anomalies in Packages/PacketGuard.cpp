@@ -10,7 +10,8 @@
 
 namespace Nemesis::PacketGuard
 {
-    using namespace Nemesis::Addresses;
+    namespace Cfg = Nemesis::Addresses::PacketGuard;
+    namespace SilentAim = Nemesis::Addresses::SilentAim;
 
     namespace
     {
@@ -20,12 +21,12 @@ namespace Nemesis::PacketGuard
 
         inline bool HeapPtr(std::uintptr_t p)
         {
-            return p >= 0x10000 && p <= 0x7FFFFFFFFFFFull;
+            return p >= Cfg::kHeapMin && p <= Cfg::kHeapMax;
         }
 
         inline bool NonZeroVec(float x, float y, float z)
         {
-            return (x * x + y * y + z * z) > 1.0f;
+            return (x * x + y * y + z * z) > Cfg::kNonZeroVecSq;
         }
     }
 
@@ -48,7 +49,7 @@ namespace Nemesis::PacketGuard
 
         const int count = Mem::Read<int>(self + SilentAim::kCmdCount, 0);
         const std::uintptr_t data = Mem::Read<std::uintptr_t>(self + SilentAim::kCmdData);
-        if (count <= 0 || count > 150 || !HeapPtr(data)) return;
+        if (count <= 0 || count > SilentAim::kCmdCountMax || !HeapPtr(data)) return;
 
         const float hx = g_hx.load(), hy = g_hy.load(), hz = g_hz.load();
         const float ax = g_ax.load(), ay = g_ay.load(), az = g_az.load();
@@ -58,8 +59,8 @@ namespace Nemesis::PacketGuard
             const std::uintptr_t e = data + static_cast<std::uintptr_t>(i) * SilentAim::kCmdStride;
             if (!HeapPtr(e)) break;
 
-            Mem::Write<float>(e + SilentAim::kViewAngle + 0, pitch);
-            Mem::Write<float>(e + SilentAim::kViewAngle + 4, yaw);
+            Mem::Write<float>(e + SilentAim::kViewAngle + SilentAim::kAnglePitch, pitch);
+            Mem::Write<float>(e + SilentAim::kViewAngle + SilentAim::kAngleYaw, yaw);
 
             const float th = Mem::Read<float>(e + SilentAim::kCmdTargetHead + 0);
             const float ti = Mem::Read<float>(e + SilentAim::kCmdTargetHead + 4);
@@ -81,30 +82,104 @@ namespace Nemesis::PacketGuard
         if (!g_have.load()) return;
         if (!std::isfinite(pitch) || !std::isfinite(yaw)) return;
 
-        Mem::Write<float>(self + SilentAim::kBaseAngleA + 0, pitch);
-        Mem::Write<float>(self + SilentAim::kBaseAngleA + 4, yaw);
-        Mem::Write<float>(self + SilentAim::kBaseAngleB + 0, pitch);
-        Mem::Write<float>(self + SilentAim::kBaseAngleB + 4, yaw);
+        Mem::Write<float>(self + SilentAim::kBaseAngleA + SilentAim::kAnglePitch, pitch);
+        Mem::Write<float>(self + SilentAim::kBaseAngleA + SilentAim::kAngleYaw, yaw);
+        Mem::Write<float>(self + SilentAim::kBaseAngleB + SilentAim::kAnglePitch, pitch);
+        Mem::Write<float>(self + SilentAim::kBaseAngleB + SilentAim::kAngleYaw, yaw);
+
+        if constexpr (Cfg::kWriteBasePtrA)
+        {
+            const std::uintptr_t pa = Mem::Read<std::uintptr_t>(self + SilentAim::kBasePtrA);
+            if (HeapPtr(pa))
+            {
+                Mem::Write<float>(pa + SilentAim::kBasePtrAInner + SilentAim::kAnglePitch, pitch);
+                Mem::Write<float>(pa + SilentAim::kBasePtrAInner + SilentAim::kAngleYaw, yaw);
+            }
+        }
+
+        if constexpr (Cfg::kWriteBasePtrB)
+        {
+            const std::uintptr_t pb = Mem::Read<std::uintptr_t>(self + SilentAim::kBasePtrB);
+            if (HeapPtr(pb))
+            {
+                Mem::Write<float>(pb + SilentAim::kBasePtrBInner + SilentAim::kAnglePitch, pitch);
+                Mem::Write<float>(pb + SilentAim::kBasePtrBInner + SilentAim::kAngleYaw, yaw);
+            }
+        }
     }
 
     void DiagBaseAngle(std::uintptr_t self, float realPitch, float realYaw)
     {
         static DWORD last = 0;
         const DWORD now = GetTickCount();
-        if (now - last < 400) return;
-        if (std::fabs(realPitch) < 0.05f && std::fabs(realYaw) < 0.05f) return;
+        if (now - last < Cfg::kDiagInlineMs) return;
+        if (std::fabs(realPitch) < Cfg::kDiagAngMin && std::fabs(realYaw) < Cfg::kDiagAngMin) return;
 
         int hits = 0;
-        for (std::ptrdiff_t off = 0; off <= 0x1200 && hits < 24; off += 4)
+        for (std::ptrdiff_t off = 0; off <= Cfg::kDiagSelfSpan && hits < Cfg::kDiagInlineHits; off += 4)
         {
-            const float p = Mem::Read<float>(self + off);
-            const float y = Mem::Read<float>(self + off + 4);
-            if (std::fabs(p - realPitch) < 0.3f && std::fabs(y - realYaw) < 0.3f)
+            const float p = Mem::Read<float>(self + off + SilentAim::kAnglePitch);
+            const float y = Mem::Read<float>(self + off + SilentAim::kAngleYaw);
+            if (std::fabs(p - realPitch) < Cfg::kDiagAngTol && std::fabs(y - realYaw) < Cfg::kDiagAngTol)
             {
                 NLOG("[diag] base? off=0x%llX  p=%.2f y=%.2f", (unsigned long long)off, p, y);
                 ++hits;
             }
         }
         last = now;
+    }
+
+    void DiagBasePtr(std::uintptr_t self, float realPitch, float realYaw)
+    {
+        static DWORD last = 0;
+        const DWORD now = GetTickCount();
+        if (now - last < Cfg::kDiagPtrMs) return;
+        if (std::fabs(realPitch) < Cfg::kDiagAngMin && std::fabs(realYaw) < Cfg::kDiagAngMin) return;
+        last = now;
+
+        auto match = [&](std::uintptr_t addr) -> bool
+        {
+            const float p = Mem::Read<float>(addr + SilentAim::kAnglePitch);
+            const float y = Mem::Read<float>(addr + SilentAim::kAngleYaw);
+            return std::fabs(p - realPitch) < Cfg::kDiagAngTol && std::fabs(y - realYaw) < Cfg::kDiagAngTol;
+        };
+
+        int hits = 0;
+        for (std::ptrdiff_t off = 0; off <= Cfg::kDiagSelfSpan && hits < Cfg::kDiagPtrHits; off += 8)
+        {
+            const std::uintptr_t p = Mem::Read<std::uintptr_t>(self + off);
+            if (!HeapPtr(p)) continue;
+            if (p >= self && p <= self + Cfg::kDiagSelfSpan) continue;
+
+            for (std::ptrdiff_t in = 0; in <= Cfg::kDiagP1Span && hits < Cfg::kDiagPtrHits; in += 4)
+            {
+                if (match(p + in))
+                {
+                    NLOG("[diag2] P1 self+0x%llX -> +0x%llX",
+                         (unsigned long long)off, (unsigned long long)in);
+                    ++hits;
+                }
+            }
+
+            for (std::ptrdiff_t jo = 0; jo <= Cfg::kDiagP2PtrSpan && hits < Cfg::kDiagPtrHits; jo += 8)
+            {
+                const std::uintptr_t q = Mem::Read<std::uintptr_t>(p + jo);
+                if (!HeapPtr(q)) continue;
+
+                for (std::ptrdiff_t in = 0; in <= Cfg::kDiagP2Span && hits < Cfg::kDiagPtrHits; in += 4)
+                {
+                    if (match(q + in))
+                    {
+                        NLOG("[diag2] P2 self+0x%llX -> +0x%llX -> +0x%llX",
+                             (unsigned long long)off, (unsigned long long)jo,
+                             (unsigned long long)in);
+                        ++hits;
+                    }
+                }
+            }
+        }
+
+        if (hits == 0)
+            NLOG("[diag2] no pointer-reachable base angle found");
     }
 }

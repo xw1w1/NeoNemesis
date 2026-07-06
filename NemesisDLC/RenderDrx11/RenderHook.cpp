@@ -2,6 +2,8 @@
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "Miscellaneous Functions/L functions/Esp/Esp.hpp"
 #include "Miscellaneous Functions/L functions/LegitBot/LegitBot.hpp"
+#include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
+#include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
 #include "Miscellaneous Functions/R Functions/NemsisProject/RageBot.hpp"
 
 #include <Windows.h>
@@ -107,9 +109,10 @@ namespace Nemesis::RenderHook
                 ImGui_ImplWin32_NewFrame();
                 ImGui::NewFrame();
 
+              //  Nemesis::WallHackV2::Render();
                 Nemesis::Esp::Render();
-                Nemesis::RageBot::Render(); 
-                Nemesis::LegitBot::Render();
+                Nemesis::RageBot::Render();
+               // Nemesis::LegitBot::Render();
 
                 if (g_menuOpen)
                 {
@@ -152,6 +155,8 @@ namespace Nemesis::RenderHook
             MH_EnableHook(g_present);
             NLOG("RenderHook: Present hooked");
         }
+
+        Nemesis::ModelChams::Start();
     }
 
     ImFont* GetEspFont()
@@ -162,6 +167,11 @@ namespace Nemesis::RenderHook
     ID3D11Device* GetDevice()
     {
         return g_device;
+    }
+
+    ID3D11DeviceContext* GetContext()
+    {
+        return g_context;
     }
 
     void Stop()

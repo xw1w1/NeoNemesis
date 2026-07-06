@@ -77,6 +77,11 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_vecVelocity           = 0x430;
         inline constexpr std::ptrdiff_t m_entitySpottedState    = 0x1C38;
         inline constexpr std::ptrdiff_t m_bSpotted              = 0x8;
+        // CPlayer_MovementServices — аналоговый ввод движения (для авто-стрейфа)
+        inline constexpr std::ptrdiff_t m_pMovementServices     = 0x1220; // pawn -> services
+        inline constexpr std::ptrdiff_t ms_flMaxspeed           = 0x1AC;
+        inline constexpr std::ptrdiff_t ms_flForwardMove        = 0x1C0;
+        inline constexpr std::ptrdiff_t ms_flLeftMove           = 0x1C4;
     }
 
     namespace EconView
@@ -122,16 +127,21 @@ namespace Nemesis::Addresses
 
     namespace JumpBoost
     {
-        inline constexpr int           kHoldKey      = 0x45;
-        inline constexpr std::uint32_t kOnGroundFlag = 0x1;
-        inline constexpr std::uint32_t kPress        = 65537;
-        inline constexpr std::uint32_t kRelease      = 256;
-        inline constexpr float         kBoost        = 1.08f;
-        inline constexpr float         kMinSpeed     = 10.0f;
-        inline constexpr float         kMaxSpeed     = 3400.0f;
-        inline constexpr float         kBoostAdd     = 30.0f;
+        // Гибрид: руление — через аналоговый ввод (движок сам air-accelerate'ит, гладко),
+        // магнитуда — «пол» скорости (velocity пишем только когда просела: лестницы/приземление/тейкофф).
+        inline constexpr int           kHoldKey      = 0x5A;   // Z
+        inline constexpr std::uint32_t kOnGroundFlag = 0x1;    // FL_ONGROUND
+        inline constexpr std::uint32_t kPress        = 65537;  // dwForceJump: прыжок зажат
+        inline constexpr std::uint32_t kRelease      = 256;    // dwForceJump: отпущен
         inline constexpr int           kPollMs       = 1;
-        inline constexpr int           kJumpDelayMs  = 30;
+        inline constexpr int           kJumpDelayMs  = 0.1;    // 0.10s — чистый реджамп (фикс потери на сервере)
+        inline constexpr std::ptrdiff_t kViewYawOff  = 0x4;    // yaw в QAngle dwViewAngles
+        inline constexpr float         kStrafeMove   = 10000.0f; // сила бок. ввода (движок клампит к maxspeed)
+        inline constexpr float         kYawDeadzone  = 0.01f;  // мертвая зона поворота мыши — меньше = резче
+        inline constexpr float         kForceMaxspeed= 500.0f; // ~x2 базовой maxspeed (в movement services)
+        inline constexpr float         kMinSpeed     = 10.0f;  // ниже — velocity не трогаем
+        inline constexpr float         kMaxSpeed     = 6800.0f;// потолок скорости (x2)
+        inline constexpr float         kBoostAdd     = 25.0f;  // прирост скорости за прыжок (быстрее)
     }
 
     namespace ThirdpersonCam
@@ -164,6 +174,38 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t kBaseAngleA    = 0x2A0;  // eye/base viewangles (sub_180225A10)
         inline constexpr std::ptrdiff_t kBaseAngleB    = 0x758;  // вторая копия текущего угла
         inline constexpr std::ptrdiff_t kCameraAngle   = 0x688;  // камера — НЕ трогать
+        // base.viewangles за указателем (heap, найдено DiagBasePtr) — исходящий пакет читает отсюда
+        inline constexpr std::ptrdiff_t kBasePtrA      = 0xB58;  // self+0xB58 -> (+0x48) QAngle
+        inline constexpr std::ptrdiff_t kBasePtrAInner = 0x48;
+        inline constexpr std::ptrdiff_t kBasePtrB      = 0xFF8;  // self+0xFF8 -> (+0x27C) QAngle
+        inline constexpr std::ptrdiff_t kBasePtrBInner = 0x27C;
+        inline constexpr std::ptrdiff_t kAnglePitch    = 0x0;    // QAngle: pitch
+        inline constexpr std::ptrdiff_t kAngleYaw      = 0x4;    // QAngle: yaw
+        inline constexpr int            kCmdCountMax   = 150;    // sanity-лимит числа команд
+    }
+
+    namespace PacketGuard
+    {
+        // границы валидного heap-указателя
+        inline constexpr std::uintptr_t kHeapMin        = 0x10000;
+        inline constexpr std::uintptr_t kHeapMax        = 0x7FFFFFFFFFFFull;
+        inline constexpr float          kNonZeroVecSq   = 1.0f;   // порог «вектор не нулевой» (кв.)
+
+        // тумблеры записи копий base.viewangles (обе ВКЛ; выключать после обновы для реврайза)
+        inline constexpr bool           kWriteBasePtrA  = true;   // self+0xB58->+0x48
+        inline constexpr bool           kWriteBasePtrB  = true;   // self+0xFF8->+0x27C
+
+        // параметры диагностик-сканов (DiagBaseAngle / DiagBasePtr) — нужны после обновления игры
+        inline constexpr std::ptrdiff_t kDiagSelfSpan   = 0x1200; // сколько байт self сканить
+        inline constexpr std::ptrdiff_t kDiagP1Span     = 0x400;  // pointee 1-го уровня
+        inline constexpr std::ptrdiff_t kDiagP2PtrSpan  = 0x180;  // где искать под-указатели
+        inline constexpr std::ptrdiff_t kDiagP2Span     = 0x40;   // pointee 2-го уровня
+        inline constexpr float          kDiagAngTol     = 0.3f;   // допуск совпадения угла
+        inline constexpr float          kDiagAngMin     = 0.05f;  // ниже — угол «нулевой», скип
+        inline constexpr unsigned       kDiagInlineMs   = 400;    // rate-limit DiagBaseAngle
+        inline constexpr unsigned       kDiagPtrMs      = 700;    // rate-limit DiagBasePtr
+        inline constexpr int            kDiagInlineHits = 24;     // cap хитов DiagBaseAngle
+        inline constexpr int            kDiagPtrHits    = 40;     // cap хитов DiagBasePtr
     }
 
     namespace EngineInput

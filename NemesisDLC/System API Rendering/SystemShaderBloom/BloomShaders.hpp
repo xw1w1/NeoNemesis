@@ -157,7 +157,10 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float4 source = txSource.Sample(sampLinear, input.tex);
 	float4 blurred = txBlurred.Sample(sampLinear, input.tex);
 	float3 bloom = blurred.rgb * colorTint.rgb * intensity * colorTint.a;
-	return float4(source.rgb + bloom, source.a);
+	float3 outRgb = source.rgb + bloom;
+	float glowA = saturate(dot(bloom, float3(0.299f, 0.587f, 0.114f)));
+	float outA = saturate(max(source.a, glowA));
+	return float4(outRgb, outA);
 }
 )hlsl";
 
