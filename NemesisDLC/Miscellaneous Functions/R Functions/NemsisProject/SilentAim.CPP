@@ -3,6 +3,7 @@
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
 #include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "../../../Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.hpp"
+#include "../JumpSystem/JumpSystem.hpp"
 
 #include "MinHook.h"
 
@@ -120,6 +121,8 @@ namespace Nemesis::SilentAim
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
             const std::uintptr_t eng  = Mem::ModuleBase(Modules::kEngine);
             const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(thisptr);
+
+            Nemesis::JumpSystem::JumpTick(base);
 
             if (!g_loggedHook && base)
             {

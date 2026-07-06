@@ -43,6 +43,7 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Functions/R Functions/NemsisProject/RageBot.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/SilentAim.cpp"
     "Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.cpp"
+    "CustomWorldRender/Night/Night.cpp"
     "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"

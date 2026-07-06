@@ -5,6 +5,8 @@
 #include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
 #include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
 #include "Miscellaneous Functions/R Functions/NemsisProject/RageBot.hpp"
+#include "CustomWorldRender/Night/Night.hpp"
+#include "AllUsedAddresses/Address/AllUsedAddresses.hpp"
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -109,10 +111,21 @@ namespace Nemesis::RenderHook
                 ImGui_ImplWin32_NewFrame();
                 ImGui::NewFrame();
 
+                // Nemesis::Night::Render();   // рендер мира (ночь) временно отключён
+
+                static int  aimMode = Nemesis::Addresses::AimMode::kStartRage; // 0=Legit, 1=Rage
+                static bool prevModeKey = false;
+                const bool modeKey = (GetAsyncKeyState(Nemesis::Addresses::AimMode::kToggleKey) & 0x8000) != 0;
+                if (modeKey && !prevModeKey)
+                    aimMode ^= 1;
+                prevModeKey = modeKey;
+
               //  Nemesis::WallHackV2::Render();
                 Nemesis::Esp::Render();
-                Nemesis::RageBot::Render();
-               // Nemesis::LegitBot::Render();
+                if (aimMode == 1)
+                    Nemesis::RageBot::Render();
+                else
+                    Nemesis::LegitBot::Render();
 
                 if (g_menuOpen)
                 {

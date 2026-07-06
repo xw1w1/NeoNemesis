@@ -127,21 +127,33 @@ namespace Nemesis::Addresses
 
     namespace JumpBoost
     {
-        // Гибрид: руление — через аналоговый ввод (движок сам air-accelerate'ит, гладко),
-        // магнитуда — «пол» скорости (velocity пишем только когда просела: лестницы/приземление/тейкофф).
+        // Bhop + авто-стрейф ТОЛЬКО через ввод (dwForceJump + аналоговый move).
+        // БЕЗ записей velocity/maxspeed: они расходятся с сервером -> откаты («затупы»).
         inline constexpr int           kHoldKey      = 0x5A;   // Z
         inline constexpr std::uint32_t kOnGroundFlag = 0x1;    // FL_ONGROUND
         inline constexpr std::uint32_t kPress        = 65537;  // dwForceJump: прыжок зажат
         inline constexpr std::uint32_t kRelease      = 256;    // dwForceJump: отпущен
         inline constexpr int           kPollMs       = 1;
-        inline constexpr int           kJumpDelayMs  = 0.1;    // 0.10s — чистый реджамп (фикс потери на сервере)
+        inline constexpr int           kJumpDelayMs  = 0;      // мгновенный реджамп (release уже есть в воздухе)
         inline constexpr std::ptrdiff_t kViewYawOff  = 0x4;    // yaw в QAngle dwViewAngles
         inline constexpr float         kStrafeMove   = 10000.0f; // сила бок. ввода (движок клампит к maxspeed)
         inline constexpr float         kYawDeadzone  = 0.01f;  // мертвая зона поворота мыши — меньше = резче
-        inline constexpr float         kForceMaxspeed= 500.0f; // ~x2 базовой maxspeed (в movement services)
-        inline constexpr float         kMinSpeed     = 10.0f;  // ниже — velocity не трогаем
-        inline constexpr float         kMaxSpeed     = 6800.0f;// потолок скорости (x2)
-        inline constexpr float         kBoostAdd     = 25.0f;  // прирост скорости за прыжок (быстрее)
+    }
+
+    namespace AimMode
+    {
+        inline constexpr int kToggleKey = 0x79;   // F10 — переключить рендер/аим Rage<->Legit
+        inline constexpr int kStartRage = 0;      // старт: 0 = Legit, 1 = Rage
+    }
+
+    namespace NightMode
+    {
+        inline constexpr int      kToggleKey = 0x78;   // F9
+        // Тёмно-синий полноэкранный пост-тинт (ImGui overlay). kTintA = сила ночи (0..255).
+        inline constexpr unsigned kTintR = 6;
+        inline constexpr unsigned kTintG = 12;
+        inline constexpr unsigned kTintB = 40;
+        inline constexpr unsigned kTintA = 140;
     }
 
     namespace ThirdpersonCam
