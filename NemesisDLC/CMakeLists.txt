@@ -27,6 +27,7 @@ set(NEM_IMGUI_SOURCES
 
 add_library(NemesisDLC SHARED
     dllmain.cpp
+    "resources.rc"
     "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.cpp"
     "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.cpp"
     "Miscellaneous Functions/UnusualNewVisions/InventoryGive/InventoryGive.cpp"
@@ -44,6 +45,10 @@ add_library(NemesisDLC SHARED
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
+    "resource_loader.cpp"
+    "ImGuiUI/imgui_extensions.cpp"
+    "ImGuiUI/layout_utils.cpp"
+    "ImGuiUI/nemesis_ui.cpp"
 )
 
 target_compile_options(NemesisDLC PRIVATE /arch:AVX)

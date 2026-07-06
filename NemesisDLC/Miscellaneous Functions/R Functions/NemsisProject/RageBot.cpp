@@ -117,8 +117,7 @@ namespace Nemesis::RageBot
         if (!holdingGun) return;
 
         // КРАСНЫЙ FOV
-        dl->AddCircle(center, kRageFov, IM_COL32(255, 40, 40, 90), 96, 3.0f);
-        dl->AddCircle(center, kRageFov, IM_COL32(255, 40, 40, 220), 96, 1.4f);
+        dl->AddCircle(center, kRageFov, IM_COL32(155, 40, 40, 90), 96, 3.0f);
 
         BuildCloud();
 

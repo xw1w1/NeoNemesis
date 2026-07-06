@@ -117,7 +117,6 @@ namespace Nemesis::LegitBot
 
         if (holdingGun)
         {
-            dl->AddCircle(center, kFovRadius, IM_COL32(255, 255, 255, 70), 96, 3.0f);
             dl->AddCircle(center, kFovRadius, IM_COL32(255, 255, 255, 200), 96, 1.4f);
         }
 

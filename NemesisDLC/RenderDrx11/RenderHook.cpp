@@ -16,6 +16,8 @@
 #include "kiero.hpp"
 #include "kiero_d3d11.hpp"
 
+#include "../ImGuiUI/nemesis_ui.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Nemesis::RenderHook
@@ -53,15 +55,6 @@ namespace Nemesis::RenderHook
             return CallWindowProcW(g_origWndProc, hWnd, msg, wParam, lParam);
         }
 
-        void DrawMenu()
-        {
-            ImGui::Begin("Nemesis Loader");
-            ImGui::Text("DX11 overlay active.");
-            ImGui::Separator();
-            ImGui::Text("INSERT - toggle menu");
-            ImGui::End();
-        }
-
         bool Initialize(IDXGISwapChain* swapChain)
         {
             if (FAILED(swapChain->GetDevice(__uuidof(ID3D11Device), reinterpret_cast<void**>(&g_device))))
@@ -90,6 +83,7 @@ namespace Nemesis::RenderHook
 
             ImGui_ImplWin32_Init(g_window);
             ImGui_ImplDX11_Init(g_device, g_context);
+            UI::CreateResources();
 
             g_origWndProc = reinterpret_cast<WNDPROC>(
                 SetWindowLongPtrW(g_window, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc)));
@@ -115,13 +109,14 @@ namespace Nemesis::RenderHook
 
                 Nemesis::Esp::Render();
                 Nemesis::RageBot::Render(); 
-             //   Nemesis::LegitBot::Render(); 
-            
+                Nemesis::LegitBot::Render();
 
                 if (g_menuOpen)
                 {
                     ImGui::GetIO().MouseDrawCursor = true;
-                    DrawMenu();
+                    UI::DrawMenu();
+                } else {
+                    ImGui::GetIO().MouseDrawCursor = false;
                 }
 
                 ImGui::Render();
@@ -162,6 +157,11 @@ namespace Nemesis::RenderHook
     ImFont* GetEspFont()
     {
         return g_espFont;
+    }
+
+    ID3D11Device* GetDevice()
+    {
+        return g_device;
     }
 
     void Stop()
