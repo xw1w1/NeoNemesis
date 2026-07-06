@@ -25,43 +25,137 @@ bool LoadTextureFromResource(int resource_id, ID3D11Device* device, ID3D11Shader
     *out_srv = nullptr;
 
     HMODULE hModule = GetCurrentDllModule();
+    if (!hModule)
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: hModule is null\n");
+        return false;
+    }
+
+    // Выводим имя модуля для диагностики
+    char module_name[MAX_PATH] = {};
+    GetModuleFileNameA(hModule, module_name, MAX_PATH);
+    char dbg[512];
+    snprintf(dbg, sizeof(dbg), "[ResourceLoader] Module: %s, ResourceID: %d\n", module_name, resource_id);
+    OutputDebugStringA(dbg);
+
     HRSRC hResource = FindResourceW(hModule, MAKEINTRESOURCEW(resource_id), (LPCWSTR)RT_RCDATA);
-    if (!hResource) return false;
+    if (!hResource)
+    {
+        snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: FindResource failed for ID=%d, LastError=%lu\n",
+            resource_id, GetLastError());
+        OutputDebugStringA(dbg);
+        return false;
+    }
 
     HGLOBAL hMemory = LoadResource(hModule, hResource);
-    if (!hMemory) return false;
+    if (!hMemory)
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: LoadResource failed\n");
+        return false;
+    }
 
     void* data = LockResource(hMemory);
     DWORD size = SizeofResource(hModule, hResource);
-    if (!data || size == 0) return false;
+    if (!data || size == 0)
+    {
+        snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: data=%p size=%lu\n", data, size);
+        OutputDebugStringA(dbg);
+        return false;
+    }
+
+    snprintf(dbg, sizeof(dbg), "[ResourceLoader] Resource loaded OK: ID=%d, size=%lu\n", resource_id, size);
+    OutputDebugStringA(dbg);
+
+    // COM
+    HRESULT hr_com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
     IWICImagingFactory* factory = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr,
         CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory));
-    if (FAILED(hr)) return false;
+    if (FAILED(hr))
+    {
+        snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: CoCreateInstance failed, hr=0x%08X\n", hr);
+        OutputDebugStringA(dbg);
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
 
     IWICStream* stream = nullptr;
-    factory->CreateStream(&stream);
-    if (!stream) { factory->Release(); return false; }
-    stream->InitializeFromMemory((BYTE*)data, size);
+    hr = factory->CreateStream(&stream);
+    if (FAILED(hr) || !stream)
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: CreateStream failed\n");
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
+
+    hr = stream->InitializeFromMemory((BYTE*)data, size);
+    if (FAILED(hr))
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: InitializeFromMemory failed\n");
+        stream->Release();
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
 
     IWICBitmapDecoder* decoder = nullptr;
-    hr = factory->CreateDecoderFromStream(stream, nullptr,
-        WICDecodeMetadataCacheOnLoad, &decoder);
-    if (FAILED(hr)) { stream->Release(); factory->Release(); return false; }
+    hr = factory->CreateDecoderFromStream(stream, nullptr, WICDecodeMetadataCacheOnLoad, &decoder);
+    if (FAILED(hr))
+    {
+        snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: CreateDecoderFromStream failed, hr=0x%08X\n", hr);
+        OutputDebugStringA(dbg);
+        stream->Release();
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
 
     IWICBitmapFrameDecode* frame = nullptr;
     hr = decoder->GetFrame(0, &frame);
-    if (FAILED(hr)) { decoder->Release(); stream->Release(); factory->Release(); return false; }
+    if (FAILED(hr))
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: GetFrame failed\n");
+        decoder->Release();
+        stream->Release();
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
 
     IWICFormatConverter* converter = nullptr;
-    factory->CreateFormatConverter(&converter);
+    hr = factory->CreateFormatConverter(&converter);
+    if (FAILED(hr) || !converter)
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: CreateFormatConverter failed\n");
+        frame->Release();
+        decoder->Release();
+        stream->Release();
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
+
     hr = converter->Initialize(frame, GUID_WICPixelFormat32bppRGBA,
         WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom);
-    if (FAILED(hr)) { converter->Release(); frame->Release(); decoder->Release(); stream->Release(); factory->Release(); return false; }
+    if (FAILED(hr))
+    {
+        OutputDebugStringA("[ResourceLoader] ERROR: Converter Initialize failed\n");
+        converter->Release();
+        frame->Release();
+        decoder->Release();
+        stream->Release();
+        factory->Release();
+        if (SUCCEEDED(hr_com)) CoUninitialize();
+        return false;
+    }
 
     UINT width = 0, height = 0;
     converter->GetSize(&width, &height);
+
+    snprintf(dbg, sizeof(dbg), "[ResourceLoader] Image size: %ux%u\n", width, height);
+    OutputDebugStringA(dbg);
 
     BYTE* pixels = new BYTE[width * height * 4];
     hr = converter->CopyPixels(nullptr, width * 4, width * height * 4, pixels);
@@ -94,6 +188,19 @@ bool LoadTextureFromResource(int resource_id, ID3D11Device* device, ID3D11Shader
 
             hr = device->CreateShaderResourceView(texture, &srv_desc, out_srv);
             texture->Release();
+
+            if (SUCCEEDED(hr))
+                OutputDebugStringA("[ResourceLoader] Texture created successfully!\n");
+            else
+            {
+                snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: CreateShaderResourceView failed, hr=0x%08X\n", hr);
+                OutputDebugStringA(dbg);
+            }
+        }
+        else
+        {
+            snprintf(dbg, sizeof(dbg), "[ResourceLoader] ERROR: CreateTexture2D failed, hr=0x%08X\n", hr);
+            OutputDebugStringA(dbg);
         }
     }
 
@@ -103,6 +210,9 @@ bool LoadTextureFromResource(int resource_id, ID3D11Device* device, ID3D11Shader
     decoder->Release();
     stream->Release();
     factory->Release();
+
+    if (SUCCEEDED(hr_com))
+        CoUninitialize();
 
     return SUCCEEDED(hr);
 }
