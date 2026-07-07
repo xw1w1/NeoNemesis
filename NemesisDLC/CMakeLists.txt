@@ -16,6 +16,9 @@ set(NEM_RES_GEN "${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_resources.cpp")
 
 file(GLOB NEM_RES_FILES CONFIGURE_DEPENDS "${NEM_RES_DIR}/*")
 
+file(GLOB NEM_EMBEDDED_MODELS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/CUSTOM RENDER/CustomModel/generated/*.cpp")
+
 add_custom_command(
     OUTPUT "${NEM_RES_GEN}"
     COMMAND "${CMAKE_COMMAND}"
@@ -52,7 +55,10 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Functions/R Functions/JumpSystem/JumpSystem.cpp"
     "RenderDrx11/RenderHook.cpp"
     "InactiveFileStorage/testicon/TestIcon.cpp"
+    "CUSTOM RENDER/CustomModel/CustomModel.cpp"
+    ${NEM_EMBEDDED_MODELS}
     "Miscellaneous Functions/L functions/Esp/Esp.cpp"
+    "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.cpp"
     "Miscellaneous Functions/L functions/LegitBot/LegitBot.cpp"
     "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.cpp"
     "Miscellaneous Functions/L functions/WallHackV2/ModelChams.cpp"
