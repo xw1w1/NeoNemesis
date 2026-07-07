@@ -229,12 +229,12 @@ namespace ImGuiExt {
 
         ImGui::RenderNavCursor(bb, id);
 
-        ShadowBoxOuter(
-            pos, pos + size,
-            IM_COL32(0, 0, 0, 30),
-            12.0f,
-            style.FrameRounding
-        );
+//        ShadowBoxOuter(
+//            pos, pos + size,
+//            IM_COL32(0, 0, 0, 30),
+//            12.0f,
+//            style.FrameRounding
+//        );
 
         ImGui::RenderFrame(bb.Min, bb.Max, frame_col, true, style.FrameRounding);
 

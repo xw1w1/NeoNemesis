@@ -15,7 +15,7 @@
 namespace Nemesis::UI
 {
 	ImU32		 AccentColor = ImColor(230, 25, 52, 255);
-	ImU32		 AccentColorSub = ImColor(250, 82, 101, 255);
+	ImU32		 AccentColorSub = ImColor(34, 34, 34, 255);
 	ImU32		 BgFillColor = ImColor(23, 23, 23, 255);
 	ImU32		 BgFillColorSub = ImColor(31, 30, 30, 255);
 
@@ -85,15 +85,14 @@ namespace Nemesis::UI
 	    {
 	        dl->PushClipRectFullScreen();
 	        ImDrawFlags rounding_flags = ImDrawFlags_RoundCornersLeft;
-	        DrawBoxShaded(ImGui::GetWindowPos(), size, BgFillColorSub, WindowRounding, rounding_flags);
+	        DrawBoxShaded(ImGui::GetWindowPos(), size, BgFillColorSub, WindowRounding, true, rounding_flags);
 	        dl->PopClipRect();
 
-	        const float line_height = ImGui::GetTextLineHeight();
-	        const float icon_side = line_height * 1.25f;
-	        const ImVec2 icon_size = ImVec2(icon_side, icon_side);
+	        const float button_side = PanelWidth - (WidgetPadding * 4.0f);
+	        const ImVec2 button_size = ImVec2(button_side, button_side);
 
-	        const float button_width = PanelWidth - (WidgetPadding * 2.0f);
-	        const ImVec2 button_size = ImVec2(button_width, button_width);
+			const float icon_side = button_side * 0.85f;
+			const ImVec2 icon_size = ImVec2(icon_side, icon_side);
 
 	        const ImVec2 button_spacer = ImVec2(0.0f, icon_side * 0.85f);
 
@@ -172,7 +171,7 @@ namespace Nemesis::UI
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, Rounding);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(WidgetPadding, WidgetPadding));
-		ImGui::PushStyleColor(ImGuiCol_Button, ElementFillColor);
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	}
 
 	void PopButtonStyle()
