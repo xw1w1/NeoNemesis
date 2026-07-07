@@ -60,7 +60,7 @@ static ID3D11ShaderResourceView* g_profileIcon = nullptr;
 static ID3D11ShaderResourceView* g_settingsIcon = nullptr;
 static ID3D11ShaderResourceView* g_accountsIcon = nullptr;
 
-static ID3D11Texture2D*          g_sceneCaptureTexture = nullptr;
+static ID3D11Texture2D* g_sceneCaptureTexture = nullptr;
 static ID3D11ShaderResourceView* g_sceneCaptureSrv = nullptr;
 
 static int                       g_titleRegionHeight = 54;
@@ -85,7 +85,7 @@ static int                       g_currentPage = 0; // текущая стран
 // Это время появляется в таймере до инжекта, давая кске больше времени открыться
 static int                       g_rsCountdownTime = 55.0f;
 
-static Product*                  p_currentProduct = nullptr;
+static Product* p_currentProduct = nullptr;
 
 enum eRunState {
     RS_Idle,
@@ -107,7 +107,7 @@ static float     g_runTimer = 0.0f;
 static HINFRES   g_injectStatus = HINFRES::EMPTY;
 
 static std::vector<SteamAccount> g_steamAccounts;
-static SteamAccount*             g_currentAccount = nullptr;
+static SteamAccount* g_currentAccount = nullptr;
 static bool                      g_accountsLoaded = false;
 
 // Прототипы функций
@@ -511,26 +511,26 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
 
                 float progress = 0.0f;
-                const char* btn_text;
+                std::string btn_text = "Run " + p_currentProduct->GetTitle();
                 bool btn_disabled = false;
 
-               if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
-               else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
-               else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
-               else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
-               else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
-               else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
-               else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
-               else if (g_runState == RS_Countdown) {
+                if (g_runState == RS_CheckingSteamState) { btn_text = "Checking Steam state..."; btn_disabled = true; progress = 0.05f; }
+                else if (g_runState == RS_ClosingSteam) { btn_text = "Closing Steam..."; btn_disabled = true; progress = 0.15f; }
+                else if (g_runState == RS_CheckingFiles) { btn_text = "Verifying files..."; btn_disabled = true; progress = 0.25f; }
+                else if (g_runState == RS_LaunchingSteam) { btn_text = "Launching Steam..."; btn_disabled = true; progress = 0.35f; }
+                else if (g_runState == RS_WaitingForSteam) { btn_text = "Waiting for Steam..."; btn_disabled = true; progress = 0.45f; }
+                else if (g_runState == RS_LaunchingSteamGame) { btn_text = "Starting game..."; btn_disabled = true; progress = 0.55f; }
+                else if (g_runState == RS_WaitingForGame) { btn_text = "Waiting for game to launch..."; btn_disabled = true; progress = 0.60f; }
+                else if (g_runState == RS_Countdown) {
                     static char timer_buf[64];
                     sprintf(timer_buf, "Finalizing in %.0fs...", g_runTimer);
                     btn_text = timer_buf;
                     btn_disabled = true;
                     progress = 0.60f + (1.0f - g_runTimer / g_rsCountdownTime) * 0.25f;
                 }
-               else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
-               else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
-               else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
+                else if (g_runState == RS_Finalizing) { btn_text = "Injecting..."; btn_disabled = true; progress = 0.90f; }
+                else if (g_runState == RS_CheckingCrash) { btn_text = "Verification..."; btn_disabled = true; progress = 0.95f; }
+                else if (g_runState == RS_Finished) { btn_text = "Ready!"; btn_disabled = true; progress = 1.0f; }
 
                 ImVec4 btn_col = ImVec4(67.0f / 255.0f, 120.0f / 255.0f, 232.0f / 255.0f, eased);
                 if (btn_disabled) btn_col = ImVec4(0.22f, 0.22f, 0.25f, eased);
@@ -543,7 +543,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                 ImVec2 btn_size(sx(408.0f), sy(35.0f));
                 ImVec2 btn_pos_scr = ImGui::GetCursorScreenPos();
 
-                if (ImGui::Button(btn_text, btn_size) && !btn_disabled)
+                if (ImGui::Button(btn_text.c_str(), btn_size) && !btn_disabled)
                 {
                     g_runState = RS_ClosingSteam;
                     g_runTimer = 0.5f;
@@ -702,7 +702,18 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
                         }
                         else if (g_runState == RS_Finalizing)
                         {
-                            g_injectStatus = Injector::Inject(L"NemesisLoader.dll", p_currentProduct->GetProcNameW().c_str());
+                            if (Injector::IsWindows10OrLower())
+                            {
+                                nemesis::Process proc;
+                                if (NT_SUCCESS(proc.Attach(p_currentProduct->GetProcNameW().c_str())))
+                                {
+                                    proc.mmap().MapImage(L"NemesisLoader.dll", nemesis::NoThreads);
+                                }
+                            }
+                            else
+                            {
+                                g_injectStatus = Injector::Inject(L"NemesisLoader.dll", p_currentProduct->GetProcNameW().c_str());
+                            }
                             g_runState = RS_CheckingCrash;
                             g_runTimer = 8.0f;
                         }
@@ -853,7 +864,7 @@ void DrawWindowBackgroundBody()
 // Рисует левую панель окна
 void DrawControlPanel(ImVec2 avail, float lPw)
 {
-    ImDrawList*  dl = ImGui::GetWindowDrawList();
+    ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImVec2 child_size(lPw, avail.y);
     const float  cr = ImGui::GetStyle().ChildRounding;
 
@@ -1239,7 +1250,7 @@ void DrawProductCard(Product* product, const ImVec2& card_size)
 // Рисует карточку аккаунта стима
 bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
 {
-    ImDrawList*  dl = ImGui::GetWindowDrawList();
+    ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImVec2 pos = ImGui::GetCursorScreenPos();
     const float  height = 56.0f;
     const float  rounding = 10.0f;
@@ -1279,7 +1290,7 @@ bool DrawAccountCard(const SteamAccount& acc, bool is_current, float width)
         col_top = IM_COL32(10, 30, 68, 255);
         col_bottom = IM_COL32(33, 82, 128, 255);
     }
-    
+
     ImGuiExt::ShadowBoxOuter(
         pos, ImVec2(pos.x + size.x, pos.y + size.y),
         IM_COL32(0, 0, 0, 30),
@@ -1761,7 +1772,7 @@ void DrawAccountsPage()
             available_list_pos,
             ImVec2(available_list_pos.x + content_width, available_list_pos.y + available_height),
             IM_COL32(0, 0, 0, 30),
-            15.0f,container_rounding);
+            15.0f, container_rounding);
         dl->AddRectFilled(
             available_list_pos,
             ImVec2(available_list_pos.x + content_width, available_list_pos.y + available_height),
@@ -1861,28 +1872,6 @@ void DrawProfilePage()
         ImDrawList* dl = ImGui::GetWindowDrawList();
         RemoteProfile* profile = ProductRegistry::s_profile.get();
 
-        DrawCard(IM_COL32(18, 18, 18, 255), 100.0f, [profile]() {
-            if (profile)
-            {
-                ImGui::Text("Hello, ");
-                ImGui::SameLine();
-                ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.3f);
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
-                ImGui::TextUnformatted(profile->GetUsername().c_str());
-                ImGui::PopStyleColor();
-                ImGui::PopFont();
-            }
-            else
-            {
-                ImGui::SameLine();
-                ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(160, 160, 160, 255));
-                ImGui::TextUnformatted("You are not logged in.");
-                ImGui::PopStyleColor();
-                ImGui::PopFont();
-            }
-            });
-
         ImGui::Dummy(ImVec2(0, 16.0f));
 
         DrawCardSimple("System", 205.0f, []() {
@@ -1937,20 +1926,20 @@ void DrawProfilePage()
             ImGui::PopStyleVar();
             });
 
-//        DrawCardSimple("Processor", 125.0f, []() {
-//            LabelValueRowCopyable("Cores", g_systemInfo.cpu_cores.c_str());
-//            });
+        //        DrawCardSimple("Processor", 125.0f, []() {
+        //            LabelValueRowCopyable("Cores", g_systemInfo.cpu_cores.c_str());
+        //            });
 
-//        DrawCardSimple("Memory", 125.0f, []() {
-//            LabelValueRowCopyable("Total RAM", g_systemInfo.ram_total.c_str());
-//            LabelValueRowCopyable("Status", g_systemInfo.ram_available.c_str());
-//            });
+        //        DrawCardSimple("Memory", 125.0f, []() {
+        //            LabelValueRowCopyable("Total RAM", g_systemInfo.ram_total.c_str());
+        //            LabelValueRowCopyable("Status", g_systemInfo.ram_available.c_str());
+        //            });
 
-//        DrawCardSimple("Graphics", 125.0f, []() {
-//            LabelValueRowCopyable("Adapter", g_systemInfo.gpu_name.c_str(),
-//                true, g_systemInfo.gpu_name.c_str());
-//            LabelValueRowCopyable("VRAM", g_systemInfo.gpu_vram.c_str());
-//            });
+        //        DrawCardSimple("Graphics", 125.0f, []() {
+        //            LabelValueRowCopyable("Adapter", g_systemInfo.gpu_name.c_str(),
+        //                true, g_systemInfo.gpu_name.c_str());
+        //            LabelValueRowCopyable("VRAM", g_systemInfo.gpu_vram.c_str());
+        //            });
     }
     ImGui::EndChild();
     ImGui::PopStyleVar();

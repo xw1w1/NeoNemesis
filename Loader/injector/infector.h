@@ -144,6 +144,25 @@ namespace Injector {
 		return false;
 	}
 
+	bool IsWindows10OrLower()
+	{
+		HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+		if (hMod) {
+			auto rtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
+			if (rtlGetVersion) {
+				RTL_OSVERSIONINFOW osvi = { 0 };
+				osvi.dwOSVersionInfoSize = sizeof(osvi);
+
+				if (rtlGetVersion(&osvi) == 0) {
+					if (osvi.dwMajorVersion > 10) return false;
+					if (osvi.dwMajorVersion == 10 && osvi.dwBuildNumber >= 22000) return false;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	HANDLE HijackProcHandle(DWORD dwTargetProcessId)
 	{
 		HMODULE Ntdll = GetModuleHandleA("ntdll");
