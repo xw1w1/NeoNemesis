@@ -36,6 +36,15 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t fnSetColorModulation    = 0xB91580;
         inline constexpr std::uintptr_t fnReapplyTint           = 0x8E4150;
         inline constexpr std::uintptr_t fnSetModel              = 0x8DDAC0;
+        inline constexpr std::uintptr_t fnSetGraphDefinition    = 0x8CEFE0;
+        inline constexpr std::uintptr_t fnGetAgentId            = 0x810730;
+        inline constexpr std::uintptr_t fnAgentModelResolve     = 0x7218E0;
+        inline constexpr std::uintptr_t fnRecreateGraphInstance = 0x8AA770;
+        inline constexpr std::uintptr_t fnApplyModelHandle      = 0x8DDB00;
+        inline constexpr std::uintptr_t dwGameModelInfo         = 0x233CEE0;
+        inline constexpr std::uintptr_t fnLiveSetModel          = 0xC19930;
+        inline constexpr std::uintptr_t fnLiveApply             = 0xC1B270;
+        inline constexpr std::uintptr_t fnGetLocalPawnLive      = 0x8E3970;
         inline constexpr std::uintptr_t dwFileSystem            = 0x233CED8;
         inline constexpr std::uintptr_t dwResourceSystem        = 0x25583C0;
         inline constexpr std::uintptr_t fnBuildResourceName     = 0x17F4B90;
@@ -49,6 +58,10 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_iTeamNum        = 0x3EB;
         inline constexpr std::ptrdiff_t m_pCameraServices = 0x1218;
         inline constexpr std::ptrdiff_t m_hPlayerPawn     = 0x90C;
+        inline constexpr std::ptrdiff_t m_hPawn           = 0x6BC;
+        inline constexpr std::ptrdiff_t m_hController     = 0x13A8;
+        inline constexpr std::ptrdiff_t m_szModelNameLive = 0x11B0;
+        inline constexpr std::ptrdiff_t m_bModelNameDirty = 0x11E2;
         inline constexpr std::ptrdiff_t m_bPawnIsAlive    = 0x914;
 
         inline constexpr std::ptrdiff_t m_pObserverServices = 0x11F8;
@@ -76,6 +89,8 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
         inline constexpr std::ptrdiff_t m_pGameSceneNode        = 0x330;
         inline constexpr std::ptrdiff_t m_pRenderComponent      = 0x338;
+        inline constexpr std::ptrdiff_t m_CBodyComponent        = 0x30;
+        inline constexpr std::ptrdiff_t m_nAgentId              = 0x922;
         inline constexpr std::ptrdiff_t m_clrRender             = 0xC98;
         inline constexpr std::ptrdiff_t m_ClientOverrideTint    = 0xF58;
         inline constexpr std::ptrdiff_t m_bUseClientOverrideTint = 0xF5C;
@@ -123,6 +138,17 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_nModelID          = 0x8;
     }
 
+    namespace AnimGraph
+    {
+        inline constexpr std::ptrdiff_t m_animationController  = 0x4E0;
+        inline constexpr std::ptrdiff_t m_hGraphDefinitionAG2  = 0x370;
+        inline constexpr std::ptrdiff_t m_pGraphInstanceAG2    = 0x448;
+        inline constexpr std::ptrdiff_t kDirtyFlag             = 0x688;
+        inline constexpr std::ptrdiff_t m_pControllerOnSkeleton = 0x3D0;
+        inline constexpr std::ptrdiff_t m_pSkeletonOnController = 0x08;
+        inline constexpr std::uint64_t  kTagVnmGraph           = 0x68706172676D6E76;
+    }
+
     namespace ResourceLoad
     {
         inline constexpr std::size_t   kLoadIndex       = 0x140 / 8;
@@ -133,9 +159,14 @@ namespace Nemesis::Addresses
 
     namespace CustomModel
     {
-        inline constexpr const char* kContentRoot = "D:\\Nemesis\\NemesisDLC\\CUSTOM RENDER\\Custom render Model";
-        inline constexpr const char* kPathID      = "GAME";
-        inline constexpr const char* kModelPath   = "characters/models/toppi/gfl2/gfl2_lenna_night.vmdl";
+        inline constexpr const char* kPathID       = "GAME";
+
+        inline constexpr const char* kModelAositala = "characters/models/kolka/2026/aositala/aositala.vmdl";
+        inline constexpr const char* kModelYidhari  = "characters/models/kolka/2026/yidhari/yidhari.vmdl";
+
+        inline constexpr const char* kModelPath    = kModelYidhari;
+        inline constexpr const char* kModelToken   = "yidhari";
+        inline constexpr const char* kContentRoot  = "D:\\Nemesis\\NemesisDLC\\CUSTOM RENDER\\Custom render Model\\model3";
     }
 
     namespace EntityList
