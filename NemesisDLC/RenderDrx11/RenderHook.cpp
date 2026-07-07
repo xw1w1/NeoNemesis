@@ -1,6 +1,7 @@
 #include "RenderHook.hpp"
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "Miscellaneous Functions/L functions/Esp/Esp.hpp"
+#include "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.hpp"
 #include "Miscellaneous Functions/L functions/LegitBot/LegitBot.hpp"
 #include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
 #include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
@@ -123,6 +124,7 @@ namespace Nemesis::RenderHook
 
               //  Nemesis::WallHackV2::Render();
                 Nemesis::Esp::Render();
+                Nemesis::EnemyChams::Render();
                 Nemesis::TestIcon::Render();
                 if (aimMode == 1)
                     Nemesis::RageBot::Render();

@@ -33,6 +33,13 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t dwSvCheatsRef2          = 0x2355FE0;
         inline constexpr std::uintptr_t fnResolveConVarValue    = 0x1826BA0;
         inline constexpr std::uintptr_t dwForceJump             = 0x2065FA0;
+        inline constexpr std::uintptr_t fnSetColorModulation    = 0xB91580;
+        inline constexpr std::uintptr_t fnReapplyTint           = 0x8E4150;
+        inline constexpr std::uintptr_t fnSetModel              = 0x8DDAC0;
+        inline constexpr std::uintptr_t dwFileSystem            = 0x233CED8;
+        inline constexpr std::uintptr_t dwResourceSystem        = 0x25583C0;
+        inline constexpr std::uintptr_t fnBuildResourceName     = 0x17F4B90;
+        inline constexpr std::uintptr_t fnCheckResourceType     = 0x17F42A0;
     }
 
     namespace Schema
@@ -68,6 +75,10 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_nSubclassID           = 0x380;
         inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
         inline constexpr std::ptrdiff_t m_pGameSceneNode        = 0x330;
+        inline constexpr std::ptrdiff_t m_pRenderComponent      = 0x338;
+        inline constexpr std::ptrdiff_t m_clrRender             = 0xC98;
+        inline constexpr std::ptrdiff_t m_ClientOverrideTint    = 0xF58;
+        inline constexpr std::ptrdiff_t m_bUseClientOverrideTint = 0xF5C;
         inline constexpr std::ptrdiff_t m_vecAbsOrigin          = 0xC8;
         inline constexpr std::ptrdiff_t m_vecViewOffset         = 0xE70;
         inline constexpr std::ptrdiff_t m_bModelDirty           = 0x11E2;
@@ -103,6 +114,28 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t kVDataCategory = 0x08;
         inline constexpr std::ptrdiff_t kVDataToken    = 0x0C;
         inline constexpr std::ptrdiff_t kVDataName     = 0x10;
+    }
+
+    namespace FileSystem
+    {
+        inline constexpr std::size_t    kAddSearchPathIndex = 0x190 / 8;
+        inline constexpr std::ptrdiff_t m_modelState        = 0x150;
+        inline constexpr std::ptrdiff_t m_nModelID          = 0x8;
+    }
+
+    namespace ResourceLoad
+    {
+        inline constexpr std::size_t   kLoadIndex       = 0x140 / 8;
+        inline constexpr std::size_t   kCheckIndex      = 0x198 / 8;
+        inline constexpr std::size_t   kGetBindingIndex = 0x278 / 8;
+        inline constexpr std::uint64_t kTypeVmdl        = 0x6C646D76;
+    }
+
+    namespace CustomModel
+    {
+        inline constexpr const char* kContentRoot = "D:\\Nemesis\\NemesisDLC\\CUSTOM RENDER\\Custom render Model";
+        inline constexpr const char* kPathID      = "GAME";
+        inline constexpr const char* kModelPath   = "characters/models/toppi/gfl2/gfl2_lenna_night.vmdl";
     }
 
     namespace EntityList

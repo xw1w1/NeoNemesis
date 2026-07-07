@@ -4,6 +4,7 @@
 #include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "../../../Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.hpp"
 #include "../JumpSystem/JumpSystem.hpp"
+#include "../../../CUSTOM RENDER/CustomModel/CustomModel.hpp"
 
 #include "MinHook.h"
 
@@ -123,6 +124,7 @@ namespace Nemesis::SilentAim
             const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(thisptr);
 
             Nemesis::JumpSystem::JumpTick(base);
+            Nemesis::CustomModel::Render();
 
             if (!g_loggedHook && base)
             {
