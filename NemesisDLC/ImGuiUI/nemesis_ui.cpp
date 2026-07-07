@@ -1,7 +1,6 @@
 #include "nemesis_ui.h"
 
 #include "../RenderDrx11/RenderHook.hpp"
-#include "../resources.h"
 #include "../resource_loader.h"
 
 #include "imgui.h"
@@ -187,17 +186,18 @@ namespace Nemesis::UI
 		ImGuiIO& io = ImGui::GetIO();
 		ID3D11Device* g_pd3dDevice = Nemesis::RenderHook::GetDevice();
 
-		std::vector<uint8_t> font_data;
-		if (LoadResourceToMemory(IDR_FONT_INTER, font_data))
+		unsigned int font_size = 0;
+		const unsigned char* font_bytes = GetResourceBytes("Inter_18pt-Medium.ttf", &font_size);
+		if (font_bytes && font_size)
 		{
-			void* copy = IM_ALLOC(font_data.size());
-			memcpy(copy, font_data.data(), font_data.size());
+			void* copy = IM_ALLOC(font_size);
+			memcpy(copy, font_bytes, font_size);
 
 			ImFontConfig cfg;
 			cfg.FontDataOwnedByAtlas = true;
 
 			MainFont = io.Fonts->AddFontFromMemoryTTF(
-				copy, (int)font_data.size(),
+				copy, (int)font_size,
 				16.0f, &cfg,
 				io.Fonts->GetGlyphRangesCyrillic()
 			);
@@ -205,12 +205,12 @@ namespace Nemesis::UI
 			ImGui_ImplDX11_CreateDeviceObjects();
 		}
 
-		LoadTextureFromResource(IDR_ICON_AIM, g_pd3dDevice, &IconAim);
-		LoadTextureFromResource(IDR_ICON_AIMBOT, g_pd3dDevice, &IconAimBot);
-		LoadTextureFromResource(IDR_ICON_VISUALS, g_pd3dDevice, &IconVisuals);
-		LoadTextureFromResource(IDR_ICON_SETTINGS, g_pd3dDevice, &IconSettings);
-		LoadTextureFromResource(IDR_ICON_SETTINGS_ALT, g_pd3dDevice, &IconSettingsAlt);
-		LoadTextureFromResource(IDR_ICON_MOVEMENT, g_pd3dDevice, &IconMovement);
-		LoadTextureFromResource(IDR_ICON_VISION, g_pd3dDevice, &IconVision);
+		LoadTextureByName("target.png", g_pd3dDevice, &IconAim);
+		LoadTextureByName("location-crosshairs.png", g_pd3dDevice, &IconAimBot);
+		LoadTextureByName("sparkles.png", g_pd3dDevice, &IconVisuals);
+		LoadTextureByName("settings.png", g_pd3dDevice, &IconSettings);
+		LoadTextureByName("settings-sliders.png", g_pd3dDevice, &IconSettingsAlt);
+		LoadTextureByName("running.png", g_pd3dDevice, &IconMovement);
+		LoadTextureByName("eye.png", g_pd3dDevice, &IconVision);
 	}
 }

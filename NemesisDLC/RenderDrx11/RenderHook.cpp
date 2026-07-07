@@ -21,6 +21,7 @@
 #include "kiero_d3d11.hpp"
 
 #include "../ImGuiUI/nemesis_ui.h"
+#include "../InactiveFileStorage/testicon/TestIcon.hpp"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -122,6 +123,7 @@ namespace Nemesis::RenderHook
 
               //  Nemesis::WallHackV2::Render();
                 Nemesis::Esp::Render();
+                Nemesis::TestIcon::Render();
                 if (aimMode == 1)
                     Nemesis::RageBot::Render();
                 else

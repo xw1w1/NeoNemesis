@@ -11,6 +11,22 @@ endif()
 
 set(NEM_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/RequiredDependencies")
 
+set(NEM_RES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Resources")
+set(NEM_RES_GEN "${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_resources.cpp")
+
+file(GLOB NEM_RES_FILES CONFIGURE_DEPENDS "${NEM_RES_DIR}/*")
+
+add_custom_command(
+    OUTPUT "${NEM_RES_GEN}"
+    COMMAND "${CMAKE_COMMAND}"
+        -DRES_DIR=${NEM_RES_DIR}
+        -DOUT_CPP=${NEM_RES_GEN}
+        -P "${NEM_RES_DIR}/embed_resources.cmake"
+    DEPENDS ${NEM_RES_FILES} "${NEM_RES_DIR}/embed_resources.cmake"
+    COMMENT "Embedding Resources/ into DLL (bin2c)"
+    VERBATIM
+)
+
 set(NEM_IMGUI_SOURCES
     "${NEM_DEPS}/imgui-master/imgui.cpp"
     "${NEM_DEPS}/imgui-master/imgui_draw.cpp"
@@ -27,7 +43,7 @@ set(NEM_IMGUI_SOURCES
 
 add_library(NemesisDLC SHARED
     dllmain.cpp
-    "resources.rc"
+    "${NEM_RES_GEN}"
     "Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/CameraPositionChange.cpp"
     "Miscellaneous Functions/UnusualNewVisions/CustomSkinsgun/CustomSkins.cpp"
     "Miscellaneous Functions/UnusualNewVisions/InventoryGive/InventoryGive.cpp"
@@ -35,6 +51,7 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Utilities/sc_cheat/SvCheats.cpp"
     "Miscellaneous Functions/R Functions/JumpSystem/JumpSystem.cpp"
     "RenderDrx11/RenderHook.cpp"
+    "InactiveFileStorage/testicon/TestIcon.cpp"
     "Miscellaneous Functions/L functions/Esp/Esp.cpp"
     "Miscellaneous Functions/L functions/LegitBot/LegitBot.cpp"
     "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.cpp"
@@ -58,6 +75,7 @@ target_compile_options(NemesisDLC PRIVATE /arch:AVX)
 
 target_include_directories(NemesisDLC PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources
     ${CMAKE_CURRENT_SOURCE_DIR}/AllUsedAddresses/Address
     "${CMAKE_CURRENT_SOURCE_DIR}/Miscellaneous Utilities/LogsSystem"
     "${CMAKE_CURRENT_SOURCE_DIR}/System API Rendering/SystemShaderBloom"
