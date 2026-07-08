@@ -103,7 +103,7 @@ namespace Nemesis::RenderHook
             if (!g_initialized)
             {
                 if (!Initialize(swapChain))
-                    return g_origPresent(swapChain, syncInterval, flags);
+                    return g_origPresent(swapChain, 0, flags);
                 g_initialized = true;
             }
 
@@ -144,7 +144,7 @@ namespace Nemesis::RenderHook
                 ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
             }
 
-            return g_origPresent(swapChain, syncInterval, flags);
+            return g_origPresent(swapChain, 0, flags);
         }
     }
 

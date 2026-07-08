@@ -92,129 +92,145 @@ namespace Nemesis::UI
 		ImGui::End();
 	}
 
-	void DrawControlPanel()
-	{
-		ImGui::SetCursorPos(ImVec2(0.0f, 0.0f));
+    void DrawControlPanel()
+    {
+        ImGui::SetCursorPos(ImVec2(0.0f, 0.0f));
 
-		ImVec2 panel_pos = ImGui::GetCursorScreenPos();
-		ImVec2 size(PanelWidth, ImGui::GetWindowHeight());
+        ImVec2 panel_pos = ImGui::GetCursorScreenPos();
+        ImVec2 size(PanelWidth, ImGui::GetWindowHeight());
 
-		ImGui::PushStyleColor(ImGuiCol_Border, AccentColorSub);
-		DrawBoxShaded(
-			panel_pos,
-			size,
-			BgFillColorSub,
-			WindowRounding,
-			true,
-			ImDrawFlags_RoundCornersLeft
-		);
-		ImGui::PopStyleColor();
+        ImGui::PushStyleColor(ImGuiCol_Border, AccentColorSub);
+        DrawBoxShaded(
+            panel_pos,
+            size,
+            BgFillColorSub,
+            WindowRounding,
+            true,
+            ImDrawFlags_RoundCornersLeft
+        );
+        ImGui::PopStyleColor();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::BeginChild(
-			"##NemesisControlPanel",
-			size,
-			false,
-			ImGuiWindowFlags_NoBackground |
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse
-		);
-		ImGui::PopStyleVar();
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::BeginChild(
+            "##NemesisControlPanel",
+            size,
+            false,
+            ImGuiWindowFlags_NoBackground |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoScrollWithMouse
+        );
+        ImGui::PopStyleVar();
 
-		struct PanelButton
-		{
-			ID3D11ShaderResourceView* icon;
-			const char* id;
-			int page_index;
-		};
+        struct PanelButton
+        {
+            ID3D11ShaderResourceView* icon;
+            const char* id;
+            int page_index;
+        };
 
-		PanelButton top_buttons[] =
-		{
-			{ IconAim,      "##Aim",      0 },
-			{ IconVisuals,  "##Visuals",  2 },
-			{ IconMovement, "##Movement", 3 },
-			{ IconVision,   "##Vision",   4 },
-		};
+        PanelButton top_buttons[] =
+        {
+            { IconAim,      "##Aim",      0 },
+            { IconVisuals,  "##Visuals",  2 },
+            { IconMovement, "##Movement", 3 },
+            { IconVision,   "##Vision",   4 },
+        };
 
-		PanelButton bottom_buttons[] =
-		{
-			{ IconCloud,    "##Configs",  1 },
-			{ IconSettings, "##Settings", 5 },
-		};
+        PanelButton bottom_buttons[] =
+        {
+            { IconCloud,    "##Configs",  1 },
+            { IconSettings, "##Settings", 5 },
+        };
 
-		const int top_count = (int)(sizeof(top_buttons) / sizeof(top_buttons[0]));
-		const int bottom_count = (int)(sizeof(bottom_buttons) / sizeof(bottom_buttons[0]));
+        const int top_count = (int)(sizeof(top_buttons) / sizeof(top_buttons[0]));
+        const int bottom_count = (int)(sizeof(bottom_buttons) / sizeof(bottom_buttons[0]));
 
-		const float button_gap = 8.0f;
-		const float edge_padding = WidgetPadding * 8.0f;
+        const float button_gap = 4.5f;
+        const float edge_padding = WidgetPadding * 8.0f;
 
-		const float button_side = PanelWidth - (WidgetPadding * 4.2f);
-		const ImVec2 button_size(button_side, button_side);
+        const float button_side = PanelWidth - (WidgetPadding * 4.2f);
+        const ImVec2 button_size(button_side, button_side);
 
-		const float icon_side = button_side * 0.5f;
-		const ImVec2 icon_size(icon_side, icon_side);
+        const float icon_side = button_side * 0.5f;
+        const ImVec2 icon_size(icon_side, icon_side);
 
-		float start_x = (size.x - button_size.x) * 0.5f;
-		if (start_x < 0.0f)
-			start_x = 0.0f;
+        float start_x = (size.x - button_size.x) * 0.5f;
+        if (start_x < 0.0f)
+            start_x = 0.0f;
 
-		PushButtonStyle();
+        const float title_icon_padding = start_x;
+        const float title_icon_size = PanelWidth - title_icon_padding * 2.0f;
+        const float title_icon_x = title_icon_padding;
+        const float title_icon_y = title_icon_padding;
 
-		float top_y = WidgetPadding * 16.0f;
-		ImGui::SetCursorPos(ImVec2(start_x, top_y));
+        if (TitleIcon)
+        {
+            ImGui::SetCursorPos(ImVec2(title_icon_x, title_icon_y));
+            ImGui::Image(
+                (ImTextureID)TitleIcon,
+                ImVec2(title_icon_size, title_icon_size)
+            );
+        }
 
-		for (int i = 0; i < top_count; ++i)
-		{
-			ImGui::SetCursorPosX(start_x);
+        const float icon_to_buttons_gap = button_side * 0.65f;
+        float top_y = title_icon_y + title_icon_size + icon_to_buttons_gap;
 
-			if (ImGuiExt::IconButton(
-				(ImTextureID)top_buttons[i].icon,
-				top_buttons[i].id,
-				icon_size,
-				AccentColor, AccentColorSub,
-				(CurrentPage == top_buttons[i].page_index),
-				0, button_size))
-			{
-				CurrentPage = top_buttons[i].page_index;
-			}
+        PushButtonStyle();
 
-			if (i < top_count - 1)
-			{
-				ImGui::SetCursorPosX(start_x);
-				ImGui::Dummy(ImVec2(0.0f, button_gap));
-			}
-		}
+        ImGui::SetCursorPos(ImVec2(start_x, top_y));
 
-		float bottom_total_height = bottom_count * button_size.y + (bottom_count - 1) * button_gap;
-		float bottom_y = size.y - edge_padding - bottom_total_height;
+        for (int i = 0; i < top_count; ++i)
+        {
+            ImGui::SetCursorPosX(start_x);
 
-		ImGui::SetCursorPos(ImVec2(start_x, bottom_y));
+            if (ImGuiExt::IconButton(
+                (ImTextureID)top_buttons[i].icon,
+                top_buttons[i].id,
+                icon_size,
+                AccentColor, AccentColorSub,
+                (CurrentPage == top_buttons[i].page_index),
+                0, button_size))
+            {
+                CurrentPage = top_buttons[i].page_index;
+            }
 
-		for (int i = 0; i < bottom_count; ++i)
-		{
-			ImGui::SetCursorPosX(start_x);
+            if (i < top_count - 1)
+            {
+                ImGui::SetCursorPosX(start_x);
+                ImGui::Dummy(ImVec2(0.0f, button_gap));
+            }
+        }
 
-			if (ImGuiExt::IconButton(
-				(ImTextureID)bottom_buttons[i].icon,
-				bottom_buttons[i].id,
-				icon_size,
-				AccentColor, AccentColorSub,
-				(CurrentPage == bottom_buttons[i].page_index),
-				0, button_size))
-			{
-				CurrentPage = bottom_buttons[i].page_index;
-			}
+        float bottom_total_height = bottom_count * button_size.y + (bottom_count - 1) * button_gap;
+        float bottom_y = size.y - edge_padding - bottom_total_height;
 
-			if (i < bottom_count - 1)
-			{
-				ImGui::SetCursorPosX(start_x);
-				ImGui::Dummy(ImVec2(0.0f, button_gap));
-			}
-		}
+        ImGui::SetCursorPos(ImVec2(start_x, bottom_y));
 
-		PopButtonStyle();
-		ImGui::EndChild();
-	}
+        for (int i = 0; i < bottom_count; ++i)
+        {
+            ImGui::SetCursorPosX(start_x);
+
+            if (ImGuiExt::IconButton(
+                (ImTextureID)bottom_buttons[i].icon,
+                bottom_buttons[i].id,
+                icon_size,
+                AccentColor, AccentColorSub,
+                (CurrentPage == bottom_buttons[i].page_index),
+                0, button_size))
+            {
+                CurrentPage = bottom_buttons[i].page_index;
+            }
+
+            if (i < bottom_count - 1)
+            {
+                ImGui::SetCursorPosX(start_x);
+                ImGui::Dummy(ImVec2(0.0f, button_gap));
+            }
+        }
+
+        PopButtonStyle();
+        ImGui::EndChild();
+    }
 
 	void DrawWidgetsStack();
 	void DrawWidget(std::string title, const ImVec2 pos, std::function<void()> content);
@@ -231,11 +247,12 @@ namespace Nemesis::UI
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, Rounding);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(WidgetPadding, WidgetPadding));
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, AccentColorSub);
 	}
 
 	void PopButtonStyle()
 	{
-		ImGui::PopStyleColor();
+		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar(2);
 	}
 
@@ -270,5 +287,6 @@ namespace Nemesis::UI
 		LoadTextureByName("settings-sliders.png", g_pd3dDevice, &IconSettingsAlt);
 		LoadTextureByName("running.png", g_pd3dDevice, &IconMovement);
 		LoadTextureByName("eye.png", g_pd3dDevice, &IconVision);
+		LoadTextureByName("uglycaticon.png", g_pd3dDevice, &TitleIcon);
 	}
 }

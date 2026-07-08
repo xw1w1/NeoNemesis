@@ -221,7 +221,7 @@ namespace ImGuiExt {
 
         ImU32 frame_col;
         if (held && hovered)
-            frame_col = (accent_color != 0) ? accent_color : ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+            frame_col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
         else if (hovered)
             frame_col = (highlight_color != 0) ? highlight_color : ImGui::GetColorU32(ImGuiCol_ButtonActive);
         else
