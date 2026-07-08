@@ -228,14 +228,6 @@ namespace ImGuiExt {
             frame_col = ImGui::GetColorU32(ImGuiCol_Button);
 
         ImGui::RenderNavCursor(bb, id);
-
-//        ShadowBoxOuter(
-//            pos, pos + size,
-//            IM_COL32(0, 0, 0, 30),
-//            12.0f,
-//            style.FrameRounding
-//        );
-
         ImGui::RenderFrame(bb.Min, bb.Max, frame_col, true, style.FrameRounding);
 
         const float img_x = bb.Min.x + (size.x - image_size.x) * 0.5f;
@@ -248,12 +240,16 @@ namespace ImGuiExt {
             style.ImageRounding
         );
 
+        ImU32 icon_col = IM_COL32(185, 185, 185, 255);
+        if (selected || hovered || held)
+            icon_col = (accent_color != 0) ? accent_color : ImGui::GetColorU32(ImGuiCol_Text);
+
         if (image_rounding > 0.0f)
         {
             window->DrawList->AddImageRounded(
                 tex_id, img_min, img_max,
                 ImVec2(0, 0), ImVec2(1, 1),
-                IM_COL32_WHITE, image_rounding
+                icon_col, image_rounding
             );
         }
         else
@@ -261,7 +257,7 @@ namespace ImGuiExt {
             window->DrawList->AddImage(
                 tex_id, img_min, img_max,
                 ImVec2(0, 0), ImVec2(1, 1),
-                IM_COL32_WHITE
+                icon_col
             );
         }
 
@@ -285,9 +281,11 @@ namespace ImGuiExt {
 
             if ((selected || hovered || held))
             {
-                window->DrawList->AddRect(
-                    bb.Min, bb.Max,
-                    accent_color, style.FrameRounding, 0, 1.5f
+                ShadowBoxOuter(
+                    pos, pos + size,
+                    IM_COL32(0, 0, 0, 55),
+                    12.0f,
+                    style.FrameRounding
                 );
             }
 

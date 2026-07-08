@@ -246,12 +246,34 @@ void DrawCardSimple(const char* title, float height, std::function<void()> conte
     ImGui::Dummy(ImVec2(width, height + 12.0f));
 }
 
+static inline ImDrawFlags FixCornerFlags(ImDrawFlags flags)
+{
+    ImDrawFlags corner_flags = flags & ImDrawFlags_RoundCornersMask_;
+
+    if (corner_flags & ImDrawFlags_RoundCornersNone)
+        return ImDrawFlags_RoundCornersNone;
+
+    if (corner_flags == 0)
+        return ImDrawFlags_RoundCornersAll;
+
+    return corner_flags;
+}
+
+static inline bool HasCornerFlag(ImDrawFlags flags, ImDrawFlags corner)
+{
+    if (flags & ImDrawFlags_RoundCornersNone)
+        return false;
+    return (flags & corner) != 0;
+}
+
 void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool shaded, ImDrawFlags flags)
 {
-    const ImU32  bg_col = col ? col : ImGui::GetColorU32(ImGuiCol_ChildBg);
-
+    const ImU32 bg_col = col ? col : ImGui::GetColorU32(ImGuiCol_ChildBg);
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const ImDrawFlags corner_flags = flags & ImDrawFlags_RoundCornersMask_;
+
+    const ImDrawFlags corner_flags = FixCornerFlags(flags);
+    const float effective_rounding = (corner_flags & ImDrawFlags_RoundCornersNone) ? 0.0f : rounding;
+
     if (shaded)
     {
         ImGuiExt::ShadowBoxOuter(
@@ -259,15 +281,29 @@ void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col, float rounding, bool 
             ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
             IM_COL32(0, 0, 0, 30),
             15.0f,
-            rounding,
+            effective_rounding,
             corner_flags
         );
     }
 
     ImU32 border_col = ImGui::GetColorU32(ImGuiCol_Border);
 
-    dl->AddRectFilled(p_pos, ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y), bg_col, rounding, corner_flags);
-    dl->AddRect(p_pos, ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y), border_col, rounding, corner_flags, 1.0f);
+    dl->AddRectFilled(
+        p_pos,
+        ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
+        bg_col,
+        effective_rounding,
+        corner_flags
+    );
+
+    dl->AddRect(
+        p_pos,
+        ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
+        border_col,
+        effective_rounding,
+        corner_flags,
+        1.0f
+    );
 }
 
 void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, float rounding, bool shaded, ImDrawFlags flags)
@@ -284,11 +320,13 @@ void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, fl
         return;
     }
 
-    const ImU32  bg_col_top = col_top ? col_top : ImGui::GetColorU32(ImGuiCol_ChildBg);
-    const ImU32  bg_col_bot = col_bot ? col_bot : ImGui::GetColorU32(ImGuiCol_ChildBg);
+    const ImU32 bg_col_top = col_top ? col_top : ImGui::GetColorU32(ImGuiCol_ChildBg);
+    const ImU32 bg_col_bot = col_bot ? col_bot : ImGui::GetColorU32(ImGuiCol_ChildBg);
 
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const ImDrawFlags corner_flags = flags & ImDrawFlags_RoundCornersMask_;
+    const ImDrawFlags corner_flags = FixCornerFlags(flags);
+    const float effective_rounding = (corner_flags & ImDrawFlags_RoundCornersNone) ? 0.0f : rounding;
+
     if (shaded)
     {
         ImGuiExt::ShadowBoxOuter(
@@ -296,13 +334,28 @@ void DrawBoxShaded(ImVec2 p_pos, ImVec2 p_size, ImU32 col_top, ImU32 col_bot, fl
             ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
             IM_COL32(0, 0, 0, 30),
             15.0f,
-            rounding,
+            effective_rounding,
             corner_flags
         );
     }
 
     ImU32 border_col = ImGui::GetColorU32(ImGuiCol_Border);
 
-    ImGuiExt::AddRectFilledMultiColor(p_pos, ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y), bg_col_top, bg_col_bot, rounding, corner_flags);
-    dl->AddRect(p_pos, ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y), border_col, rounding, corner_flags, 1.0f);
+    ImGuiExt::AddRectFilledMultiColor(
+        p_pos,
+        ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
+        bg_col_top,
+        bg_col_bot,
+        effective_rounding,
+        corner_flags
+    );
+
+    dl->AddRect(
+        p_pos,
+        ImVec2(p_pos.x + p_size.x, p_pos.y + p_size.y),
+        border_col,
+        effective_rounding,
+        corner_flags,
+        1.0f
+    );
 }
