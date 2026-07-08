@@ -50,6 +50,8 @@ namespace Nemesis::UI
 	ID3D11ShaderResourceView* IconVision = nullptr;
 	ID3D11ShaderResourceView* TitleIcon = nullptr;
 
+    void DrawContentPane();
+
 	void DrawMenu()
 	{
 		ImGuiStyle& g = ImGui::GetStyle();
@@ -87,10 +89,44 @@ namespace Nemesis::UI
 		);
 
 		DrawControlPanel();
+        DrawContentPane();
 
 		ImGui::PopFont();
 		ImGui::End();
 	}
+
+    void DrawContentPane()
+    {
+        const float content_x = PanelWidth;
+        const float content_w = WindowSize.x - PanelWidth;
+        const float content_h = WindowSize.y;
+
+        ImGui::SetCursorPos(ImVec2(content_x, 0.0f));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::BeginChild(
+            "##NemesisContent",
+            ImVec2(content_w, content_h),
+            false,
+            ImGuiWindowFlags_NoBackground |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoScrollWithMouse
+        );
+        ImGui::PopStyleVar();
+
+        switch (CurrentPage)
+        {
+        case 0: DrawAimPage(); break;
+        case 1: /* DrawConfigsPage(); */ break;
+        case 2: /* DrawVisualsPage(); */ break;
+        case 3: /* DrawMovementPage(); */ break;
+        case 4: /* DrawDeveloperPage(); */ break;
+        case 5: /* DrawSettingsPage(); */ break;
+        default: break;
+        }
+
+        ImGui::EndChild();
+    }
 
     void DrawControlPanel()
     {
@@ -235,12 +271,186 @@ namespace Nemesis::UI
 	void DrawWidgetsStack();
 	void DrawWidget(std::string title, const ImVec2 pos, std::function<void()> content);
 
-	void DrawAimPage();
-	void DrawVisualsPage();
-	void DrawMovementPage();
-	void DrawConfigsPage();
-	void DrawDeveloperPage();
-	void DrawSettingsPage();
+    void DrawAimPage()
+    {
+        const float page_padding = 24.0f;
+        const float box_gap = 16.0f;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(page_padding, page_padding));
+        ImGui::BeginChild(
+            "##AimPageScroll",
+            ImVec2(0, 0),
+            ImGuiChildFlags_AlwaysUseWindowPadding,
+            ImGuiWindowFlags_NoBackground
+        );
+        ImGui::PopStyleVar();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+        ImGui::TextUnformatted("Aim Assistance");
+        ImGui::PopStyleColor();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
+        ImGui::TextUnformatted("Configure aim bot and trigger bot settings");
+        ImGui::PopStyleColor();
+
+        ImGui::Dummy(ImVec2(0.0f, 16.0f));
+
+        float content_width = ImGui::GetContentRegionAvail().x;
+
+        float box_width = (content_width - box_gap) * 0.5f;
+
+        ImGui::BeginGroup();
+        {
+            BeginFeatureBox("Aim Bot", box_width);
+
+            SettingRow("Enabled", 40.0f, []() {
+                ImGuiExt::Toggle(
+                    "##aimbot_toggle",
+                    &g_aimbotEnabled, // bool ВКЛЮЧЕН ЛИ АИМБОТ
+                    AccentColor,
+                    AccentColor,
+                    ImVec2(40.0f, 20.0f)
+                );
+                });
+
+            SettingRow("FOV", 120.0f, []() {
+                ImGui::PushStyleColor(ImGuiCol_SliderGrab, AccentColor);
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(45, 45, 48, 255));
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+                ImGui::SliderFloat(
+                    "##aimbot_fov",
+                    &g_aimbotFov,   // float ФОВ АИМБОТА
+                    0.5f, 30.0f, "%.1f"
+                );
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor(2);
+                });
+
+            SettingRow("Smooth", 120.0f, []() {
+                ImGui::PushStyleColor(ImGuiCol_SliderGrab, AccentColor);
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(45, 45, 48, 255));
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+                ImGui::SliderFloat(
+                    "##aimbot_smooth",
+                    &g_aimbotSmooth, // float СГЛАЖИВАНИЕ АИМБОТА
+                    1.0f, 20.0f, "%.1f"
+                );
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor(2);
+                });
+
+            SettingRow("Target Bone", 120.0f, []() {
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(45, 45, 48, 255));
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+                const char* bones[] = { "Head", "Chest", "Stomach" };
+                ImGui::Combo(
+                    "##aimbot_bone",
+                    &g_aimbotBone,  // какую часть тела стрелять
+                    bones, IM_ARRAYSIZE(bones)
+                );
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                });
+
+            SettingRow("Vis Check", 40.0f, []() {
+                ImGuiExt::Toggle(
+                    "##aimbot_vischeck",
+                    &g_aimbotVisCheck, // визуальнный чек
+                    AccentColor,
+                    AccentColor,
+                    ImVec2(40.0f, 20.0f)
+                );
+                });
+
+            EndFeatureBox();
+        }
+        ImGui::EndGroup();
+
+        ImGui::SameLine(0.0f, box_gap);
+
+        ImGui::BeginGroup();
+        {
+            BeginFeatureBox("Trigger Bot", box_width);
+
+            SettingRow("Enabled", 40.0f, []() {
+                ImGuiExt::Toggle(
+                    "##triggerbot_toggle",
+                    &g_triggerbotEnabled,   //bool триггер бот
+                    AccentColor,
+                    AccentColor,
+                    ImVec2(40.0f, 20.0f)
+                );
+                });
+
+            SettingRow("Delay (ms)", 120.0f, []() {
+                ImGui::PushStyleColor(ImGuiCol_SliderGrab, AccentColor);
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(45, 45, 48, 255));
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+                ImGui::SliderFloat(
+                    "##triggerbot_delay",
+                    &g_triggerbotDelay, // float задержка триггербота
+                    0.0f, 300.0f, "%.0f"
+                );
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor(2);
+                });
+
+            SettingRow("Head Only", 40.0f, []() {
+                ImGuiExt::Toggle(
+                    "##triggerbot_headonly",
+                    &g_triggerbotHeadOnly, // триггербот только в голову
+                    AccentColor,
+                    AccentColor,
+                    ImVec2(40.0f, 20.0f)
+                );
+                });
+
+            SettingRow("Scope Only", 40.0f, []() {
+                ImGuiExt::Toggle(
+                    "##triggerbot_scopeonly",  // триггербот только с прицелом
+                    &g_triggerbotScopeOnly,
+                    AccentColor,
+                    AccentColor,
+                    ImVec2(40.0f, 20.0f)
+                );
+                });
+
+            EndFeatureBox();
+        }
+        ImGui::EndGroup();
+
+        ImGui::EndChild();
+    }
+
+    void DrawVisualsPage()
+    {
+        ImGui::SetCursorPos(ImVec2(24.0f, 24.0f));
+        ImGui::TextUnformatted(" coming soon");
+    }
+
+    void DrawMovementPage()
+    {
+        ImGui::SetCursorPos(ImVec2(24.0f, 24.0f));
+        ImGui::TextUnformatted("coming soon");
+    }
+
+    void DrawConfigsPage()
+    {
+        ImGui::SetCursorPos(ImVec2(24.0f, 24.0f));
+        ImGui::TextUnformatted("coming soon");
+    }
+
+    void DrawDeveloperPage()
+    {
+        ImGui::SetCursorPos(ImVec2(24.0f, 24.0f));
+        ImGui::TextUnformatted("coming soon");
+    }
+
+    void DrawSettingsPage()
+    {
+        ImGui::SetCursorPos(ImVec2(24.0f, 24.0f));
+        ImGui::TextUnformatted("coming soon");
+    }
 
 	void PushButtonStyle()
 	{
