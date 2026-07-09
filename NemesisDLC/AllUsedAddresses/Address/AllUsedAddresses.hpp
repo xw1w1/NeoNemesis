@@ -13,12 +13,15 @@ namespace Nemesis::Addresses
 
     namespace Client
     {
-        inline constexpr std::uintptr_t dwLocalPlayerPawn       = 0x2341528;
-        inline constexpr std::uintptr_t dwLocalPlayerController = 0x2320570;
-        inline constexpr std::uintptr_t dwViewAngles            = 0x2356748;
-        inline constexpr std::uintptr_t dwViewMatrix            = 0x23469C0;
-        inline constexpr std::uintptr_t dwEntityList            = 0x21D95E8;
-        inline constexpr std::uintptr_t dwCameraManager         = 0x2079870;
+        // === Глобалы из дампера (билд 14168) ===
+        inline constexpr std::uintptr_t dwLocalPlayerPawn       = 0x23A3238;
+        inline constexpr std::uintptr_t dwLocalPlayerController = 0x237DBA0;
+        inline constexpr std::uintptr_t dwViewAngles            = 0x23B8C68;
+        inline constexpr std::uintptr_t dwViewMatrix            = 0x23A8340;
+        inline constexpr std::uintptr_t dwEntityList            = 0x254DE50;
+        inline constexpr std::uintptr_t dwCSGOInput             = 0x23B85E0; // CCSGOInput (дампер)
+        // === НЕ В ДАМПЕРЕ — пересверить в MyGame.asm (значения ниже устарели, билд 14166) ===
+        inline constexpr std::uintptr_t dwCameraManager         = 0x209E570;  // off_18209E570 (asm 14168)
         inline constexpr std::uintptr_t fnGetModelName          = 0x10BD860;
         inline constexpr std::uintptr_t fnSetModelString        = 0xC19940;
         inline constexpr std::uintptr_t fnReloadSubclass        = 0x1FAE80;
@@ -28,86 +31,89 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t fnGetPaintKitId         = 0x105F9B0;
         inline constexpr std::uintptr_t dwButterflySubclass     = 0x22AB2F0;
         inline constexpr std::uintptr_t dwSubclassManager       = 0x21D9720;
-        inline constexpr std::uintptr_t dwSvCheatsRef           = 0x233BEC0;
-        inline constexpr std::uintptr_t dwSvCheatsConVar        = 0x233BEC8;
-        inline constexpr std::uintptr_t dwSvCheatsRef2          = 0x2355FE0;
-        inline constexpr std::uintptr_t fnResolveConVarValue    = 0x1826BA0;
-        inline constexpr std::uintptr_t dwForceJump             = 0x2065FA0;
+        inline constexpr std::uintptr_t dwSvCheatsRef           = 0x239D5F0;  // unk_18239D5F0 (asm 14168)
+        inline constexpr std::uintptr_t dwSvCheatsConVar        = 0x239D5F8;  // qword_18239D5F8 (asm 14168)
+        inline constexpr std::uintptr_t dwSvCheatsRef2          = 0x239D5F0;  // same as Ref (asm 14168, только один ConVarRef)
+        inline constexpr std::uintptr_t fnResolveConVarValue    = 0x18607C0;  // sub_1818607C0 (asm 14168)
+        inline constexpr std::uintptr_t dwForceJump             = 0x2093490; // buttons::jump (дампер)
         inline constexpr std::uintptr_t fnSetColorModulation    = 0xB91580;
         inline constexpr std::uintptr_t fnReapplyTint           = 0x8E4150;
-        inline constexpr std::uintptr_t fnSetModel              = 0x8DDAC0;
+        inline constexpr std::uintptr_t fnSetModel              = 0x920630;  // sub_180920630 (asm 14168)
         inline constexpr std::uintptr_t fnSetGraphDefinition    = 0x8CEFE0;
         inline constexpr std::uintptr_t fnGetAgentId            = 0x810730;
         inline constexpr std::uintptr_t fnAgentModelResolve     = 0x7218E0;
         inline constexpr std::uintptr_t fnRecreateGraphInstance = 0x8AA770;
-        inline constexpr std::uintptr_t fnApplyModelHandle      = 0x8DDB00;
-        inline constexpr std::uintptr_t dwGameModelInfo         = 0x233CEE0;
+        inline constexpr std::uintptr_t fnApplyModelHandle      = 0x9206D0;  // sub_1809206D0 (asm 14168)
+        inline constexpr std::uintptr_t dwGameModelInfo         = 0x239E7D8; // qword_18239E7D8 (asm 14168)
         inline constexpr std::uintptr_t fnLiveSetModel          = 0xC19930;
-        inline constexpr std::uintptr_t fnLiveApply             = 0xC1B270;
+        inline constexpr std::uintptr_t fnLiveApply             = 0xC518F0;  // sub_180C518F0 (asm 14168)
         inline constexpr std::uintptr_t fnGetLocalPawnLive      = 0x8E3970;
-        inline constexpr std::uintptr_t dwFileSystem            = 0x233CED8;
-        inline constexpr std::uintptr_t dwResourceSystem        = 0x25583C0;
+        inline constexpr std::uintptr_t dwFileSystem            = 0x239E7D0; // qword_18239E7D0 (asm 14168)
+        inline constexpr std::uintptr_t dwResourceSystem        = 0x25C7410;  // qword_1825C7410 (asm 14168)
         inline constexpr std::uintptr_t fnBuildResourceName     = 0x17F4B90;
         inline constexpr std::uintptr_t fnCheckResourceType     = 0x17F42A0;
     }
 
     namespace Schema
     {
+        // === Всё из дампера client_dll.hpp (билд 14168) ===
         inline constexpr std::ptrdiff_t m_iHealth         = 0x34C;
-        inline constexpr std::ptrdiff_t m_iIDEntIndex     = 0x33FC;
-        inline constexpr std::ptrdiff_t m_iTeamNum        = 0x3EB;
-        inline constexpr std::ptrdiff_t m_pCameraServices = 0x1218;
-        inline constexpr std::ptrdiff_t m_hPlayerPawn     = 0x90C;
+        inline constexpr std::ptrdiff_t m_iIDEntIndex     = 0x341C;
+        inline constexpr std::ptrdiff_t m_iTeamNum        = 0x3E7;
+        inline constexpr std::ptrdiff_t m_pCameraServices = 0x1240;
+        inline constexpr std::ptrdiff_t m_hPlayerPawn     = 0x914;
         inline constexpr std::ptrdiff_t m_hPawn           = 0x6BC;
-        inline constexpr std::ptrdiff_t m_hController     = 0x13A8;
-        inline constexpr std::ptrdiff_t m_szModelNameLive = 0x11B0;
-        inline constexpr std::ptrdiff_t m_bModelNameDirty = 0x11E2;
-        inline constexpr std::ptrdiff_t m_bPawnIsAlive    = 0x914;
+        inline constexpr std::ptrdiff_t m_hController     = 0x13D0;
+        inline constexpr std::ptrdiff_t m_steamID         = 0x780;
+        inline constexpr std::ptrdiff_t m_bPawnIsAlive    = 0x91C;
 
-        inline constexpr std::ptrdiff_t m_pObserverServices = 0x11F8;
+        inline constexpr std::ptrdiff_t m_pObserverServices = 0x1220;
         inline constexpr std::ptrdiff_t obs_iObserverMode   = 0x48;
         inline constexpr std::ptrdiff_t obs_hObserverTarget = 0x4C;
 
-        inline constexpr std::ptrdiff_t m_pWeaponServices       = 0x11E0;
+        inline constexpr std::ptrdiff_t m_pWeaponServices       = 0x1208;
         inline constexpr std::ptrdiff_t m_hMyWeapons            = 0x48;
         inline constexpr std::ptrdiff_t m_hActiveWeapon         = 0x60;
         inline constexpr std::ptrdiff_t m_hOwnerEntity          = 0x520;
-        inline constexpr std::ptrdiff_t m_AttributeManager      = 0x1180;
+        inline constexpr std::ptrdiff_t m_AttributeManager      = 0x11A8; // C_EconEntity
         inline constexpr std::ptrdiff_t m_Item                  = 0x50;
         inline constexpr std::ptrdiff_t m_iItemDefinitionIndex  = 0x1BA;
         inline constexpr std::ptrdiff_t m_iEntityQuality        = 0x1BC;
         inline constexpr std::ptrdiff_t m_iItemIDHigh           = 0x1D0;
         inline constexpr std::ptrdiff_t m_iItemIDLow            = 0x1D4;
         inline constexpr std::ptrdiff_t m_iAccountID            = 0x1D8;
-        inline constexpr std::ptrdiff_t m_steamID               = 0x780;
         inline constexpr std::ptrdiff_t m_bInitialized          = 0x1E8;
-        inline constexpr std::ptrdiff_t m_nFallbackPaintKit     = 0x1658;
-        inline constexpr std::ptrdiff_t m_nFallbackSeed         = 0x165C;
-        inline constexpr std::ptrdiff_t m_flFallbackWear        = 0x1660;
-        inline constexpr std::ptrdiff_t m_nFallbackStatTrak     = 0x1664;
+        inline constexpr std::ptrdiff_t m_nFallbackPaintKit     = 0x1680;
+        inline constexpr std::ptrdiff_t m_nFallbackSeed         = 0x1684;
+        inline constexpr std::ptrdiff_t m_flFallbackWear        = 0x1688;
+        inline constexpr std::ptrdiff_t m_nFallbackStatTrak     = 0x168C;
         inline constexpr std::ptrdiff_t m_nSubclassID           = 0x380;
-        inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
         inline constexpr std::ptrdiff_t m_pGameSceneNode        = 0x330;
         inline constexpr std::ptrdiff_t m_pRenderComponent      = 0x338;
         inline constexpr std::ptrdiff_t m_CBodyComponent        = 0x30;
-        inline constexpr std::ptrdiff_t m_nAgentId              = 0x922;
         inline constexpr std::ptrdiff_t m_clrRender             = 0xC98;
-        inline constexpr std::ptrdiff_t m_ClientOverrideTint    = 0xF58;
-        inline constexpr std::ptrdiff_t m_bUseClientOverrideTint = 0xF5C;
+        inline constexpr std::ptrdiff_t m_ClientOverrideTint    = 0xF60;
+        inline constexpr std::ptrdiff_t m_bUseClientOverrideTint = 0xF64;
         inline constexpr std::ptrdiff_t m_vecAbsOrigin          = 0xC8;
-        inline constexpr std::ptrdiff_t m_vecViewOffset         = 0xE70;
-        inline constexpr std::ptrdiff_t m_bModelDirty           = 0x11E2;
-        inline constexpr std::ptrdiff_t m_bVisualsDataSet = 0x18B9;
-        inline constexpr std::ptrdiff_t m_fFlags                = 0x3F8;
-        inline constexpr std::ptrdiff_t m_vecAbsVelocity        = 0x3FC;
+        inline constexpr std::ptrdiff_t m_vecViewOffset         = 0xE78;
+        inline constexpr std::ptrdiff_t m_bVisualsDataSet       = 0x18E1;
+        inline constexpr std::ptrdiff_t m_fFlags                = 0x3F4;
+        inline constexpr std::ptrdiff_t m_vecAbsVelocity        = 0x3F8;
         inline constexpr std::ptrdiff_t m_vecVelocity           = 0x430;
-        inline constexpr std::ptrdiff_t m_entitySpottedState    = 0x1C38;
+        inline constexpr std::ptrdiff_t m_entitySpottedState    = 0x1C58;
         inline constexpr std::ptrdiff_t m_bSpotted              = 0x8;
-        // CPlayer_MovementServices — аналоговый ввод движения (для авто-стрейфа)
-        inline constexpr std::ptrdiff_t m_pMovementServices     = 0x1220; // pawn -> services
+        inline constexpr std::ptrdiff_t m_bSpottedByMask        = 0xC;
+        inline constexpr std::ptrdiff_t m_pMovementServices     = 0x1248; // pawn -> services
         inline constexpr std::ptrdiff_t ms_flMaxspeed           = 0x1AC;
         inline constexpr std::ptrdiff_t ms_flForwardMove        = 0x1C0;
         inline constexpr std::ptrdiff_t ms_flLeftMove           = 0x1C4;
+
+        // === НЕ В ДАМПЕРЕ — пересверить в MyGame.asm (значения устарели, билд 14166) ===
+        inline constexpr std::ptrdiff_t m_szModelNameLive = 0x34B0;  // asm 14168 [entity+0x34B0]
+        inline constexpr std::ptrdiff_t m_bModelNameDirty = 0x34EC;  // asm 14168
+        inline constexpr std::ptrdiff_t m_bModelDirty           = 0x34EC;
+        inline constexpr std::ptrdiff_t m_nAgentId              = 0x922;
+        inline constexpr std::ptrdiff_t m_pSubclassVData        = 0x388;
     }
 
     namespace EconView
@@ -239,7 +245,7 @@ namespace Nemesis::Addresses
 
         namespace SilentAim
     {
-        inline constexpr std::uintptr_t fnCreateMove = 0xC621D0; // CCSGOInput::CreateMove (хук)
+        inline constexpr std::uintptr_t fnCreateMove = 0xC97330; // CCSGOInput::CreateMove (asm 14168, sub_180C97330)
         inline constexpr std::ptrdiff_t kCmdCount    = 0xBC8;    // int — число команд
         inline constexpr std::ptrdiff_t kCmdData     = 0xBD0;    // ptr — база вектора команд
         inline constexpr std::ptrdiff_t kCmdStride   = 0x60;     // РЕАЛЬНЫЙ страйд команды
@@ -297,12 +303,12 @@ namespace Nemesis::Addresses
 
     namespace Weapon
     {
-        inline constexpr std::ptrdiff_t m_pVData            = 0x388;  // CCSWeaponBaseVData*
-        inline constexpr std::ptrdiff_t m_nFireMode         = 0x17B8; // int 0/1
-        inline constexpr std::ptrdiff_t m_fAccuracyPenalty  = 0x17D0; // float — текущая инаккураси (live!)
-        inline constexpr std::ptrdiff_t m_iRecoilIndex      = 0x17DC; // int
-        inline constexpr std::ptrdiff_t m_flRecoilIndex     = 0x17E0; // float (+1.0/выстрел)
-        inline constexpr std::ptrdiff_t m_flNextClientFire  = 0x1908; // float
+        inline constexpr std::ptrdiff_t m_pVData            = 0x388;  // НЕ в дампере — сверить asm
+        inline constexpr std::ptrdiff_t m_nFireMode         = 0x17B8; // НЕ в дампере — сверить asm
+        inline constexpr std::ptrdiff_t m_fAccuracyPenalty  = 0x17F0; // дампер
+        inline constexpr std::ptrdiff_t m_iRecoilIndex      = 0x17FC; // дампер
+        inline constexpr std::ptrdiff_t m_flRecoilIndex     = 0x1800; // дампер (+1.0/выстрел)
+        inline constexpr std::ptrdiff_t m_flNextClientFire  = 0x1930; // m_flNextClientFireBulletTime (дампер)
         // Поля внутри CCSWeaponBaseVData. CFiringModeFloat = [prim@0][sec@4], 8 байт.
         inline constexpr std::ptrdiff_t vd_flSpread           = 0x758;
         inline constexpr std::ptrdiff_t vd_flInaccuracyCrouch = 0x760;
@@ -314,11 +320,11 @@ namespace Nemesis::Addresses
     }
     namespace PawnCombat
     {
-        inline constexpr std::ptrdiff_t m_iShotsFired                  = 0x1C64;
-        inline constexpr std::ptrdiff_t m_bIsScoped                    = 0x1C50;
-        inline constexpr std::ptrdiff_t m_zoomLevel                    = 0x1CB0;
-        inline constexpr std::ptrdiff_t m_bFireBulletsSeedSynchronized = 0x955;
-        inline constexpr std::ptrdiff_t m_pAimPunchServices            = 0x1490; // CCSPlayer_AimPunchServices*
+        inline constexpr std::ptrdiff_t m_iShotsFired                  = 0x1C84; // дампер
+        inline constexpr std::ptrdiff_t m_bIsScoped                    = 0x1C70; // дампер
+        inline constexpr std::ptrdiff_t m_zoomLevel                    = 0x1CE0; // дампер
+        inline constexpr std::ptrdiff_t m_bFireBulletsSeedSynchronized = 0x95D;  // дампер
+        inline constexpr std::ptrdiff_t m_pAimPunchServices            = 0x14B8; // дампер
         // Внутри AimPunchServices:
         inline constexpr std::ptrdiff_t ap_predictableBaseAngle        = 0x50;   // QAngle — боевой punch
         inline constexpr std::ptrdiff_t ap_predictableBaseAngleVel     = 0x5C;   // QAngle

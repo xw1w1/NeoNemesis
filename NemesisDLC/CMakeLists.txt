@@ -56,6 +56,8 @@ add_library(NemesisDLC SHARED
     "RenderDrx11/RenderHook.cpp"
     "InactiveFileStorage/testicon/TestIcon.cpp"
     "CUSTOM RENDER/CustomModel/CustomModel.cpp"
+    "ConfigSavingSystem/FriendModels.cpp"
+    "ConfigSavingSystem/AdminConsole.cpp"
     ${NEM_EMBEDDED_MODELS}
     "Miscellaneous Functions/L functions/Esp/Esp.cpp"
     "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.cpp"

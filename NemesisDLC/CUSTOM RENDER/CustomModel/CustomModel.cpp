@@ -2,6 +2,7 @@
 #include "../../Miscellaneous Functions/UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
 #include "../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
+#include "../../ConfigSavingSystem/FriendModels.hpp"
 #include "generated/embedded_models.h"
 
 #include <Windows.h>
@@ -31,15 +32,14 @@ namespace Nemesis::CustomModel
         using ResourceLoadFn      = void*(__fastcall*)(void*, ResourceName*, const char*);
         using ResourceCheckFn     = int(__fastcall*)(void*, ResourceName*);
         using ResourceBindingFn   = void*(__fastcall*)(void*, ResourceName*, int);
-
         using SetModelFn          = void(__fastcall*)(void*, const char*);
         using GetLocalPawnFn      = void*(__fastcall*)(int);
         using LiveApplyFn         = void(__fastcall*)(void*);
 
         LiveApplyFn    g_origLiveApply = nullptr;
         bool           g_installed = false;
+        bool           g_deployed = false;
         bool           g_mounted = false;
-        void*          g_binding = nullptr;
         std::uintptr_t g_livePawn = 0;
         std::uintptr_t g_rawApplied = 0;
 
@@ -76,15 +76,12 @@ namespace Nemesis::CustomModel
             return EntityFromHandle(base, ctrlHandle) == localController;
         }
 
-        bool IsGfl2(std::uintptr_t pawn)
+        bool CurrentModelIs(std::uintptr_t pawn, const char* token)
         {
             const std::uintptr_t namePtr = Mem::Read<std::uintptr_t>(pawn + Schema::m_szModelNameLive);
-            if (!HeapPtr(namePtr))
+            if (!HeapPtr(namePtr) || !token)
                 return false;
-            __try
-            {
-                return std::strstr(reinterpret_cast<const char*>(namePtr), Addresses::CustomModel::kModelToken) != nullptr;
-            }
+            __try { return std::strstr(reinterpret_cast<const char*>(namePtr), token) != nullptr; }
             __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
         }
 
@@ -92,39 +89,32 @@ namespace Nemesis::CustomModel
         {
             __try
             {
-                const std::uintptr_t pawn = reinterpret_cast<std::uintptr_t>(
-                    reinterpret_cast<GetLocalPawnFn>(base + Client::fnGetLocalPawnLive)(-1));
+                const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
                 return HeapPtr(pawn) ? pawn : 0;
             }
             __except (EXCEPTION_EXECUTE_HANDLER) { return 0; }
         }
 
-        bool EnsureMounted(std::uintptr_t base)
+        void EnsureMounted(std::uintptr_t base)
         {
             if (g_mounted)
-                return true;
+                return;
             const std::uintptr_t fs = Mem::Read<std::uintptr_t>(base + Client::dwFileSystem);
             const std::uintptr_t vt = fs ? Mem::Read<std::uintptr_t>(fs) : 0;
             const std::uintptr_t fn = vt ? Mem::Read<std::uintptr_t>(vt + FileSystem::kAddSearchPathIndex * 8) : 0;
             if (!HeapPtr(fn))
-                return false;
+                return;
             __try
             {
                 reinterpret_cast<AddSearchPathFn>(fn)(reinterpret_cast<void*>(fs),
                     Addresses::CustomModel::kContentRoot, Addresses::CustomModel::kPathID);
                 g_mounted = true;
             }
-            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
-            return g_mounted;
+            __except (EXCEPTION_EXECUTE_HANDLER) {}
         }
 
-        bool EnsureLoaded(std::uintptr_t base)
+        bool EnsureLoaded(std::uintptr_t base, const char* modelPath)
         {
-            if (g_binding)
-                return true;
-            if (!EnsureMounted(base))
-                return false;
-
             const std::uintptr_t rs = Mem::Read<std::uintptr_t>(base + Client::dwResourceSystem);
             const std::uintptr_t vt = rs ? Mem::Read<std::uintptr_t>(rs) : 0;
             const std::uintptr_t loadFn = vt ? Mem::Read<std::uintptr_t>(vt + ResourceLoad::kLoadIndex * 8) : 0;
@@ -132,34 +122,62 @@ namespace Nemesis::CustomModel
             const std::uintptr_t bindFn = vt ? Mem::Read<std::uintptr_t>(vt + ResourceLoad::kGetBindingIndex * 8) : 0;
             if (!HeapPtr(loadFn) || !HeapPtr(checkFn) || !HeapPtr(bindFn))
                 return false;
-
+            void* binding = nullptr;
             __try
             {
                 ResourceName name;
                 std::memset(&name, 0, sizeof(name));
                 name.allocated = 0xC00000C8;
-                reinterpret_cast<BuildResourceNameFn>(base + Client::fnBuildResourceName)(&name, Addresses::CustomModel::kModelPath);
+                reinterpret_cast<BuildResourceNameFn>(base + Client::fnBuildResourceName)(&name, modelPath);
                 reinterpret_cast<CheckResourceTypeFn>(base + Client::fnCheckResourceType)(&name, ResourceLoad::kTypeVmdl);
                 reinterpret_cast<ResourceLoadFn>(loadFn)(reinterpret_cast<void*>(rs), &name, "NemesisCustomModel");
                 if (reinterpret_cast<ResourceCheckFn>(checkFn)(reinterpret_cast<void*>(rs), &name))
-                    g_binding = reinterpret_cast<ResourceBindingFn>(bindFn)(reinterpret_cast<void*>(rs), &name, 0);
+                    binding = reinterpret_cast<ResourceBindingFn>(bindFn)(reinterpret_cast<void*>(rs), &name, 0);
             }
             __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
-            return g_binding != nullptr;
+            return binding != nullptr;
+        }
+
+        std::uint64_t PawnSteamID(std::uintptr_t base, std::uintptr_t pawn)
+        {
+            const std::uint32_t ctrlHandle = Mem::Read<std::uint32_t>(pawn + Schema::m_hController, 0xFFFFFFFF);
+            const std::uintptr_t controller = EntityFromHandle(base, ctrlHandle);
+            if (!HeapPtr(controller))
+                return 0;
+            return Mem::Read<std::uint64_t>(controller + Schema::m_steamID, 0);
+        }
+
+        void ApplyModelInHook(std::uintptr_t base, std::uintptr_t pawn, const char* model, const char* token)
+        {
+            if (!model || CurrentModelIs(pawn, token) || !EnsureLoaded(base, model))
+                return;
+            Mem::Write<std::uintptr_t>(pawn + Schema::m_szModelNameLive, reinterpret_cast<std::uintptr_t>(model));
+            Mem::Write<std::uint8_t>(pawn + Schema::m_bModelNameDirty, 1);
         }
 
         void __fastcall hkLiveApply(void* entity)
         {
             const std::uintptr_t base = entity ? Mem::ModuleBase(Modules::kClient) : 0;
-            if (Enabled && base && IsLocalPawn(base, reinterpret_cast<std::uintptr_t>(entity)))
+            if (Enabled && base)
             {
                 const std::uintptr_t pawn = reinterpret_cast<std::uintptr_t>(entity);
-                if (EnsureLoaded(base) && !IsGfl2(pawn))
+                if (IsLocalPawn(base, pawn))
                 {
-                    Mem::Write<std::uintptr_t>(pawn + Schema::m_szModelNameLive,
-                        reinterpret_cast<std::uintptr_t>(Addresses::CustomModel::kModelPath));
-                    Mem::Write<std::uint8_t>(pawn + Schema::m_bModelNameDirty, 1);
-                    NLOG("[custommodel] liveapply hook -> gfl2 pawn=%p", entity);
+                    ApplyModelInHook(base, pawn, Addresses::CustomModel::kModelPath, Addresses::CustomModel::kModelToken);
+                }
+                else if (Nemesis::FriendModels::LoadedCount() > 0)
+                {
+                    const std::uint64_t steamID = PawnSteamID(base, pawn);
+                    const char* token = nullptr;
+                    const char* model = Nemesis::FriendModels::MatchSteamID(steamID, token);
+                    static int s_flog = 0;
+                    if (s_flog < 40)
+                    {
+                        ++s_flog;
+                        NLOG("[friend] hook non-local pawn=%p steamID=%llu matched=%d",
+                             entity, static_cast<unsigned long long>(steamID), model ? 1 : 0);
+                    }
+                    ApplyModelInHook(base, pawn, model, token);
                 }
             }
             g_origLiveApply(entity);
@@ -167,20 +185,19 @@ namespace Nemesis::CustomModel
 
         void FallbackRawSetModel(std::uintptr_t base, std::uintptr_t pawn)
         {
-            if (pawn == g_rawApplied || IsGfl2(pawn))
+            if (pawn == g_rawApplied || CurrentModelIs(pawn, Addresses::CustomModel::kModelToken))
                 return;
             if (Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0)
                 return;
-            if (!EnsureLoaded(base))
+            if (!EnsureLoaded(base, Addresses::CustomModel::kModelPath))
                 return;
             g_rawApplied = pawn;
             __try
             {
                 reinterpret_cast<SetModelFn>(base + Client::fnSetModel)(
                     reinterpret_cast<void*>(pawn), Addresses::CustomModel::kModelPath);
-                NLOG("[custommodel] fallback raw setmodel pawn=%p", reinterpret_cast<void*>(pawn));
             }
-            __except (EXCEPTION_EXECUTE_HANDLER) { NERR("[custommodel] fallback crashed pawn=%p", reinterpret_cast<void*>(pawn)); }
+            __except (EXCEPTION_EXECUTE_HANDLER) {}
         }
 
         void InstallHook(std::uintptr_t base)
@@ -207,10 +224,9 @@ namespace Nemesis::CustomModel
         if (!base)
             return;
 
-        static bool s_deployed = false;
-        if (!s_deployed)
+        if (!g_deployed)
         {
-            s_deployed = true;
+            g_deployed = true;
             EmbeddedModels::Deploy();
         }
 
@@ -218,11 +234,17 @@ namespace Nemesis::CustomModel
         EnsureMounted(base);
         g_livePawn = GetLivePawn(base);
 
-        static DWORD s_seen = 0;
         if (HeapPtr(g_livePawn))
         {
             static std::uintptr_t s_lastPawn = 0;
+            static DWORD s_seen = 0;
+            static std::uint8_t s_lastTeam = 0;
+
             if (g_livePawn != s_lastPawn) { s_lastPawn = g_livePawn; s_seen = GetTickCount(); }
+
+            const std::uint8_t team = Mem::Read<std::uint8_t>(g_livePawn + Schema::m_iTeamNum, 0);
+            if (team != s_lastTeam) { s_lastTeam = team; g_rawApplied = 0; s_seen = GetTickCount(); }
+
             if (GetTickCount() - s_seen > 3000)
                 FallbackRawSetModel(base, g_livePawn);
         }

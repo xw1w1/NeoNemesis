@@ -115,4 +115,26 @@ namespace Nemesis::Visibility
 
         return frac >= 0.95f;
     }
+
+    bool VisiblePoint(std::uintptr_t clientBase, std::uintptr_t localPawn, const float target[3])
+    {
+        if (!localPawn || !target)
+            return false;
+
+        const std::uintptr_t scene = Mem::Read<std::uintptr_t>(localPawn + Schema::m_pGameSceneNode);
+        if (!scene)
+            return false;
+
+        float eye[3];
+        eye[0] = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 0);
+        eye[1] = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 4);
+        eye[2] = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 8)
+               + Mem::Read<float>(localPawn + Schema::m_vecViewOffset + 8);
+
+        float end[3] = { target[0], target[1], target[2] };
+        const float frac = TraceFraction(clientBase, eye, end);
+        if (frac < 0.0f)
+            return false;
+        return frac >= 0.95f;
+    }
 }

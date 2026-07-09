@@ -37,10 +37,53 @@ namespace Nemesis::JumpSystem
             return GameInForeground() && (GetAsyncKeyState(JumpBoost::kHoldKey) & 0x8000);
         }
 
-        // Руление (пока — только тренировка/listen): боковой ввод в сторону поворота мыши.
-        void AutoStrafe(std::uintptr_t ms, float viewYaw, float prevYaw)
+        // Прыжок и стрейф теперь тик-точно в JumpTick (исходящая команда). Поток простаивает.
+        void Worker()
         {
-            float dy = viewYaw - prevYaw;
+            while (g_running.load())
+                std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
+        }
+    }
+
+    void JumpTick(std::uintptr_t base)
+    {
+        if (!base)
+            return;
+
+        static float s_prevYaw = 0.0f;
+        static bool  s_wasHeld = false;
+
+        if (!HoldKeyDown())
+        {
+            Mem::Write<std::uint32_t>(base + Client::dwForceJump, JumpBoost::kRelease);
+            s_wasHeld = false;
+            return;
+        }
+
+        const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
+        if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0)
+        {
+            Mem::Write<std::uint32_t>(base + Client::dwForceJump, JumpBoost::kRelease);
+            s_wasHeld = false;
+            return;
+        }
+
+        const std::uint32_t flags = Mem::Read<std::uint32_t>(pawn + Schema::m_fFlags);
+        const bool onGround = (flags & JumpBoost::kOnGroundFlag) != 0;
+
+        // Тик-точно: на земле — прыжок в эту команду, в воздухе — отпускаем (даёт фронт для реджампа).
+        Mem::Write<std::uint32_t>(base + Client::dwForceJump,
+                                  onGround ? JumpBoost::kPress : JumpBoost::kRelease);
+
+        // Разгонный авто-стрейф В ЭТУ ЖЕ КОМАНДУ (авторитетно на dedicated, как прыжок).
+        const std::uintptr_t ms = Mem::Read<std::uintptr_t>(pawn + Schema::m_pMovementServices);
+        const float viewYaw = Mem::Read<float>(base + Client::dwViewAngles + JumpBoost::kViewYawOff);
+        if (!s_wasHeld)
+            s_prevYaw = viewYaw;
+
+        if (!onGround && HeapPtr(ms))
+        {
+            float dy = viewYaw - s_prevYaw;
             while (dy >  180.0f) dy -= 360.0f;
             while (dy < -180.0f) dy += 360.0f;
 
@@ -54,72 +97,8 @@ namespace Nemesis::JumpSystem
             Mem::Write<float>(ms + Schema::ms_flLeftMove, side);
         }
 
-        void Worker()
-        {
-            bool  wasHeld = false;
-            float prevYaw = 0.0f;
-
-            while (g_running.load())
-            {
-                const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
-                if (!base || !HoldKeyDown())
-                {
-                    wasHeld = false;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
-                    continue;
-                }
-
-                const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
-                if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0)
-                {
-                    wasHeld = false;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
-                    continue;
-                }
-
-                const std::uintptr_t ms = Mem::Read<std::uintptr_t>(pawn + Schema::m_pMovementServices);
-                const std::uint32_t flags = Mem::Read<std::uint32_t>(pawn + Schema::m_fFlags);
-                const bool onGround = (flags & JumpBoost::kOnGroundFlag) != 0;
-                const float viewYaw = Mem::Read<float>(base + Client::dwViewAngles + JumpBoost::kViewYawOff);
-
-                if (!wasHeld)
-                    prevYaw = viewYaw;
-
-                if (!onGround && HeapPtr(ms))
-                    AutoStrafe(ms, viewYaw, prevYaw);
-
-                prevYaw = viewYaw;
-                wasHeld = true;
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(JumpBoost::kPollMs));
-            }
-        }
-    }
-
-    void JumpTick(std::uintptr_t base)
-    {
-        if (!base)
-            return;
-
-        if (!HoldKeyDown())
-        {
-            Mem::Write<std::uint32_t>(base + Client::dwForceJump, JumpBoost::kRelease);
-            return;
-        }
-
-        const std::uintptr_t pawn = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn);
-        if (!pawn || Mem::Read<int>(pawn + Schema::m_iHealth, 0) <= 0)
-        {
-            Mem::Write<std::uint32_t>(base + Client::dwForceJump, JumpBoost::kRelease);
-            return;
-        }
-
-        const std::uint32_t flags = Mem::Read<std::uint32_t>(pawn + Schema::m_fFlags);
-        const bool onGround = (flags & JumpBoost::kOnGroundFlag) != 0;
-
-        // Тик-точно: на земле — прыжок в эту команду, в воздухе — отпускаем (даёт фронт для реджампа).
-        Mem::Write<std::uint32_t>(base + Client::dwForceJump,
-                                  onGround ? JumpBoost::kPress : JumpBoost::kRelease);
+        s_prevYaw = viewYaw;
+        s_wasHeld = true;
     }
 
     void Start()

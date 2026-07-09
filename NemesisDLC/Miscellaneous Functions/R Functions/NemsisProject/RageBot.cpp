@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <cmath>
-#include <vector>
 
 namespace Nemesis::RageBot
 {
@@ -23,18 +22,6 @@ namespace Nemesis::RageBot
         constexpr int            kHeadBone   = 6;
 
         struct Vec3 { float x, y, z; };
-
-        std::vector<Vec3> g_cloud;
-
-        void BuildCloud()
-        {
-            if (!g_cloud.empty()) return;
-            for (float x = -3.5f; x <= 3.5f; x += 0.6f)
-                for (float y = -3.5f; y <= 3.5f; y += 0.6f)
-                    for (float z = -3.5f; z <= 3.5f; z += 0.6f)
-                        if (x * x + y * y + z * z <= 12.25f)
-                            g_cloud.push_back({ x, y, z });
-        }
 
         std::uintptr_t EntFromHandle(std::uintptr_t base, std::uint32_t h)
         {
@@ -119,8 +106,6 @@ namespace Nemesis::RageBot
         // КРАСНЫЙ FOV
         dl->AddCircle(center, kRageFov, IM_COL32(155, 40, 40, 90), 96, 3.0f);
 
-        BuildCloud();
-
         const std::uint8_t localTeam = Mem::Read<std::uint8_t>(localPawn + Schema::m_iTeamNum);
         float vm[16];
         for (int k = 0; k < 16; ++k)
@@ -157,21 +142,18 @@ namespace Nemesis::RageBot
                 origin.z = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 8);
             }
 
-            for (const Vec3& o : g_cloud)
+            float sx, sy;
+            if (!W2S(vm, head, ds.x, ds.y, sx, sy)) continue;
+            const float dx = sx - center.x, dy = sy - center.y;
+            const float d = std::sqrt(dx * dx + dy * dy);
+            if (d < bestDist)
             {
-                float sx, sy;
-                if (!W2S(vm, { head.x + o.x, head.y + o.y, head.z + o.z }, ds.x, ds.y, sx, sy)) continue;
-                const float dx = sx - center.x, dy = sy - center.y;
-                const float d = std::sqrt(dx * dx + dy * dy);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestScreen = ImVec2(sx, sy);
-                    bestPawnIndex = static_cast<int>(pawnHandle & EntityList::kIndexMask);
-                    bestHead = head;
-                    bestAbs = origin;
-                    haveBest = true;
-                }
+                bestDist = d;
+                bestScreen = ImVec2(sx, sy);
+                bestPawnIndex = static_cast<int>(pawnHandle & EntityList::kIndexMask);
+                bestHead = head;
+                bestAbs = origin;
+                haveBest = true;
             }
         }
 

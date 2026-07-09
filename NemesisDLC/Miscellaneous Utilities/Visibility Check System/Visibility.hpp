@@ -19,4 +19,7 @@ namespace Nemesis::Visibility
 {
     // Виден ли локальному игроку враг с индексом пешки targetPawnIndex.
     bool VisibleToLocal(std::uintptr_t clientBase, std::uintptr_t localPawn, int targetPawnIndex);
+
+    // Видна ли локальному игроку конкретная точка мира (луч глаз -> точка).
+    bool VisiblePoint(std::uintptr_t clientBase, std::uintptr_t localPawn, const float target[3]);
 }

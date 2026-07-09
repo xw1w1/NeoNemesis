@@ -6,11 +6,9 @@
 
 #include "imgui.h"
 
-#include <DirectXMath.h>
-
 #include <cstdint>
 #include <cmath>
-#include <vector>
+#include <chrono>
 #include <Windows.h>
 
 namespace Nemesis::LegitBot
@@ -20,11 +18,41 @@ namespace Nemesis::LegitBot
     namespace
     {
         constexpr float          kFovRadius   = Config::fovRadius;
-        constexpr std::ptrdiff_t kBoneArray   = 0x1D0; // sceneNode -> bone transform array (m_modelState + 0x80)
-        constexpr std::ptrdiff_t kBoneStride  = 0x20;  // size of one bone transform
-        constexpr int            kHeadBone    = 6;     // standard player head bone
+        constexpr std::ptrdiff_t kBoneArray   = 0x1D0;
+        constexpr std::ptrdiff_t kBoneStride  = 0x20;
+        constexpr int            kHeadBone    = 6;
+        constexpr float          kRecoilEps   = 0.05f;
 
         struct Vec3 { float x, y, z; };
+
+        Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
+        {
+            return { a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t };
+        }
+
+        bool PartEnabled(int id)
+        {
+            switch (id)
+            {
+                case 0:  return Config::aimHead;
+                case 1:  return Config::aimChest;
+                case 2:  return Config::aimStomach;
+                case 3:  return Config::aimHands;
+                default: return Config::aimLegs;
+            }
+        }
+
+        Vec3 PartPoint(int id, const Vec3& head, const Vec3& feet)
+        {
+            switch (id)
+            {
+                case 0:  return head;
+                case 1:  return Lerp(feet, head, 0.83f);
+                case 2:  return Lerp(feet, head, 0.60f);
+                case 3:  return Lerp(feet, head, 0.72f);
+                default: return Lerp(feet, head, 0.25f);
+            }
+        }
 
         std::uintptr_t EntFromHandle(std::uintptr_t base, std::uint32_t h)
         {
@@ -102,8 +130,9 @@ namespace Nemesis::LegitBot
         const ImVec2 center(ds.x * 0.5f, ds.y * 0.5f);
         ImDrawList* dl = ImGui::GetBackgroundDrawList();
 
-        const std::uintptr_t ws = Mem::Read<std::uintptr_t>(localPawn + Schema::m_pWeaponServices);
+        std::uintptr_t activeWeapon = 0;
         bool holdingGun = false;
+        const std::uintptr_t ws = Mem::Read<std::uintptr_t>(localPawn + Schema::m_pWeaponServices);
         if (ws)
         {
             const std::uintptr_t active = EntFromHandle(base, Mem::Read<std::uint32_t>(ws + Schema::m_hActiveWeapon));
@@ -112,34 +141,23 @@ namespace Nemesis::LegitBot
                 const std::uint16_t def = Mem::Read<std::uint16_t>(
                     active + Schema::m_AttributeManager + Schema::m_Item + Schema::m_iItemDefinitionIndex);
                 holdingGun = (def != 0 && !IsKnife(def));
+                activeWeapon = active;
             }
         }
 
         if (holdingGun)
-        {
             dl->AddCircle(center, kFovRadius, IM_COL32(255, 255, 255, 200), 96, 1.4f);
-        }
 
         if (!holdingGun)
             return;
 
-        static std::vector<Vec3> g_head;
-        if (g_head.empty())
-        {
-            if (Config::aimHead)
-                for (float x = -3.5f; x <= 3.5f; x += 0.6f)
-                    for (float y = -3.5f; y <= 3.5f; y += 0.6f)
-                        for (float z = -3.5f; z <= 3.5f; z += 0.6f)
-                            if (x * x + y * y + z * z <= 12.25f)
-                                g_head.push_back({ x, y, z });
-            if (Config::aimBody)
-                for (float x = -7.0f; x <= 7.0f; x += 1.5f)
-                    for (float y = -7.0f; y <= 7.0f; y += 1.5f)
-                        for (float z = -44.0f; z <= -8.0f; z += 2.5f)
-                            g_head.push_back({ x, y, z });
-        }
-
         const std::uint8_t localTeam = Mem::Read<std::uint8_t>(localPawn + Schema::m_iTeamNum);
+
+        const std::uintptr_t localController = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
+        int localSlot = -1;
+        for (std::uint32_t i = 1; i <= 64; ++i)
+            if (EntByIndex(base, i) == localController) { localSlot = static_cast<int>(i) - 1; break; }
+
         float vm[16];
         {
             const std::uintptr_t mp = base + Client::dwViewMatrix;
@@ -147,13 +165,19 @@ namespace Nemesis::LegitBot
                 vm[k] = Mem::Read<float>(mp + k * 4);
         }
 
-        float   bestDist = kFovRadius;
-        ImVec2  bestScreen(0.0f, 0.0f);
-        Vec3    bestPoint{};
-        int     bestPawnIndex = -1;
-        bool    haveBest = false;
+        static int s_lockPawn = -1;
+        static int s_lockPart = -1;
 
-        for (std::uint32_t i = 1; i <= 64; ++i)
+        int    chosenPawn = -1, chosenPart = -1;
+        float  chosenDist = kFovRadius;
+        Vec3   chosenPoint{};
+        ImVec2 chosenScreen(0.0f, 0.0f);
+
+        bool   lockValid = false;
+        Vec3   lockPoint{};
+        ImVec2 lockScreen(0.0f, 0.0f);
+
+        for (std::uint32_t i = 1; i <= 64 && localSlot >= 0; ++i)
         {
             const std::uintptr_t controller = EntByIndex(base, i);
             if (!controller)
@@ -169,38 +193,92 @@ namespace Nemesis::LegitBot
             if (team < 2 || team == localTeam)
                 continue;
 
+            const std::uint64_t mask = Mem::Read<std::uint64_t>(
+                pawn + Schema::m_entitySpottedState + Schema::m_bSpottedByMask, 0);
+            if (((mask >> localSlot) & 1ull) == 0)
+                continue;
+
+            const std::uintptr_t scene = Mem::Read<std::uintptr_t>(pawn + Schema::m_pGameSceneNode);
+            if (!scene)
+                continue;
             Vec3 head;
             if (!HeadBone(pawn, head))
                 continue;
+            Vec3 feet;
+            feet.x = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 0);
+            feet.y = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 4);
+            feet.z = Mem::Read<float>(scene + Schema::m_vecAbsOrigin + 8);
 
-            for (const Vec3& o : g_head)
+            const int pawnIdx = static_cast<int>(pawnHandle & EntityList::kIndexMask);
+
+            int    bestPart = -1;
+            float  bestPd = kFovRadius;
+            Vec3   bestPp{};
+            ImVec2 bestPs(0.0f, 0.0f);
+            for (int id = 0; id < 5; ++id)
             {
-                const Vec3 p = { head.x + o.x, head.y + o.y, head.z + o.z };
+                if (!PartEnabled(id))
+                    continue;
+                const Vec3 p = PartPoint(id, head, feet);
                 float sx, sy;
                 if (!W2S(vm, p, ds.x, ds.y, sx, sy))
                     continue;
-
-                const float dx = sx - center.x;
-                const float dy = sy - center.y;
+                const float dx = sx - center.x, dy = sy - center.y;
                 const float d = std::sqrt(dx * dx + dy * dy);
-                if (d < bestDist)
+                if (d < bestPd) { bestPd = d; bestPart = id; bestPp = p; bestPs = ImVec2(sx, sy); }
+            }
+            if (bestPart < 0)
+                continue;
+
+            if (pawnIdx == s_lockPawn && s_lockPart >= 0 && PartEnabled(s_lockPart))
+            {
+                const Vec3 lp = PartPoint(s_lockPart, head, feet);
+                float lsx, lsy;
+                if (W2S(vm, lp, ds.x, ds.y, lsx, lsy))
                 {
-                    bestDist = d;
-                    bestScreen = ImVec2(sx, sy);
-                    bestPoint = p;
-                    bestPawnIndex = static_cast<int>(pawnHandle & EntityList::kIndexMask);
-                    haveBest = true;
+                    const float dx = lsx - center.x, dy = lsy - center.y;
+                    if (std::sqrt(dx * dx + dy * dy) <= kFovRadius)
+                    {
+                        lockValid = true;
+                        lockPoint = lp;
+                        lockScreen = ImVec2(lsx, lsy);
+                    }
                 }
+            }
+
+            if (bestPd < chosenDist)
+            {
+                chosenDist = bestPd;
+                chosenPawn = pawnIdx;
+                chosenPart = bestPart;
+                chosenPoint = bestPp;
+                chosenScreen = bestPs;
             }
         }
 
-        bool seen = false;
-        if (haveBest)
+        bool   haveBest = false;
+        bool   seen = false;
+        Vec3   bestPoint{};
+        ImVec2 bestScreen(0.0f, 0.0f);
+        int    bestPawnIndex = -1;
+
+        if (lockValid)
         {
-            const std::uintptr_t bestPawn = EntByIndex(base, static_cast<std::uint32_t>(bestPawnIndex));
-            if (bestPawn)
-                seen = Mem::Read<bool>(bestPawn + Schema::m_entitySpottedState + Schema::m_bSpotted);
+            haveBest = true; seen = true;
+            bestPoint = lockPoint; bestScreen = lockScreen; bestPawnIndex = s_lockPawn;
         }
+        else if (chosenPawn >= 0)
+        {
+            s_lockPawn = chosenPawn; s_lockPart = chosenPart;
+            haveBest = true; seen = true;
+            bestPoint = chosenPoint; bestScreen = chosenScreen; bestPawnIndex = chosenPawn;
+        }
+        else
+        {
+            s_lockPawn = -1; s_lockPart = -1;
+        }
+
+        Vec3 aimPoint = bestPoint;
 
         if (haveBest)
         {
@@ -209,30 +287,111 @@ namespace Nemesis::LegitBot
             dl->AddCircle(bestScreen, 5.0f, IM_COL32(255, 255, 0, 255), 16, 1.5f);
         }
 
-        static bool s_firing = false;
-
-        // FOV / автоприцел: тянем мышь только когда врага реально видно
         if (seen)
         {
-            const int mx = static_cast<int>((bestScreen.x - center.x) * Config::aimSpeed);
-            const int my = static_cast<int>((bestScreen.y - center.y) * Config::aimSpeed);
-            if (mx != 0 || my != 0)
-                mouse_event(MOUSEEVENTF_MOVE, mx, my, 0, 0);
+            const std::uintptr_t lscene = Mem::Read<std::uintptr_t>(localPawn + Schema::m_pGameSceneNode);
+            if (lscene)
+            {
+                const float ex = Mem::Read<float>(lscene + Schema::m_vecAbsOrigin + 0);
+                const float ey = Mem::Read<float>(lscene + Schema::m_vecAbsOrigin + 4);
+                const float ez = Mem::Read<float>(lscene + Schema::m_vecAbsOrigin + 8)
+                               + Mem::Read<float>(localPawn + Schema::m_vecViewOffset + 8);
+
+                const float ddx = aimPoint.x - ex;
+                const float ddy = aimPoint.y - ey;
+                const float ddz = aimPoint.z - ez;
+                const float flat = std::sqrt(ddx * ddx + ddy * ddy);
+
+                constexpr float kRad = 57.2957795131f;
+                const float tgtYaw   = std::atan2(ddy, ddx) * kRad;
+                const float tgtPitch = -std::atan2(ddz, flat) * kRad;
+
+                const std::uintptr_t va = base + Client::dwViewAngles;
+                const float curPitch = Mem::Read<float>(va + 0);
+                const float curYaw   = Mem::Read<float>(va + 4);
+
+                float dYaw = tgtYaw - curYaw;
+                while (dYaw > 180.0f)  dYaw -= 360.0f;
+                while (dYaw < -180.0f) dYaw += 360.0f;
+                float dPitch = tgtPitch - curPitch;
+
+                static std::chrono::steady_clock::time_point s_lastAim = std::chrono::steady_clock::now();
+                const auto tAim = std::chrono::steady_clock::now();
+                float dt = std::chrono::duration<float>(tAim - s_lastAim).count();
+                s_lastAim = tAim;
+                if (dt > 0.1f) dt = 0.1f;
+
+                const float ease = 1.0f - std::exp(-Config::aimSmooth * dt);
+                float sYaw   = dYaw * ease;
+                float sPitch = dPitch * ease;
+
+                const float maxStep = Config::aimSpeed * dt;
+                const float mag = std::sqrt(sYaw * sYaw + sPitch * sPitch);
+                if (mag > maxStep && mag > 0.0001f)
+                {
+                    const float s = maxStep / mag;
+                    sYaw *= s;
+                    sPitch *= s;
+                }
+
+                float nYaw   = curYaw + sYaw;
+                float nPitch = curPitch + sPitch;
+                if (nPitch > 89.0f)  nPitch = 89.0f;
+                if (nPitch < -89.0f) nPitch = -89.0f;
+
+                Mem::Write<float>(va + 0, nPitch);
+                Mem::Write<float>(va + 4, nYaw);
+            }
         }
 
-        // Стрельба: только когда прицел реально наведён на врага (crosshair-ID)
         const int crosshairId = Mem::Read<int>(localPawn + Schema::m_iIDEntIndex, -1);
-        const bool onTarget = haveBest && crosshairId == bestPawnIndex;
-        if (onTarget && !s_firing)
+        const bool onTarget = seen && haveBest && crosshairId == bestPawnIndex;
+
+        float recoil = 0.0f;
+        if (activeWeapon)
+            recoil = Mem::Read<float>(activeWeapon + Weapon::m_flRecoilIndex, 0.0f);
+        const int shots = Mem::Read<int>(localPawn + PawnCombat::m_iShotsFired, 0);
+
+        static bool s_hadTarget = false;
+        static std::chrono::steady_clock::time_point s_since;
+        static int s_fireState = 0;
+        static int s_startShots = 0;
+        const auto now = std::chrono::steady_clock::now();
+
+        if (onTarget)
         {
-            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-            s_firing = true;
+            if (!s_hadTarget) { s_hadTarget = true; s_since = now; }
         }
-        else if (!onTarget && s_firing)
+        else
         {
-            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-            s_firing = false;
+            s_hadTarget = false;
         }
-      
+
+        const double heldMs = s_hadTarget
+            ? std::chrono::duration<double, std::milli>(now - s_since).count() : 0.0;
+        const bool reactionOk = s_hadTarget && heldMs >= Config::reactionMs;
+
+        if (s_fireState == 0)
+        {
+            if (reactionOk && onTarget && recoil <= kRecoilEps)
+            {
+                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                s_startShots = shots;
+                s_fireState = 1;
+            }
+        }
+        else if (s_fireState == 1)
+        {
+            if (!onTarget || (shots - s_startShots) >= Config::burstShots)
+            {
+                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+                s_fireState = 2;
+            }
+        }
+        else
+        {
+            if (recoil <= kRecoilEps)
+                s_fireState = 0;
+        }
     }
 }

@@ -1,0 +1,139 @@
+CUSTOM MODEL / ANIMATION - ОСНОВНОЕ
+База: 0x180000000, ниже RVA.
+
+ВЫВОД
+- Модель грузится: resource state=3, binding != 0. Проблема не в loader.
+- Дефолтная модель после load: apply не попал в актуальную live pawn или штатная игра позже перезаписала модель.
+- T-pose/пропажа частей: late raw SetModel/ApplyModelHandle обходит штатный KV-порядок model_name -> apply -> root_anim/animgraph.
+- Главный путь фикса: ранняя подмена пути до spawn или точный live model_name setter на актуальной C_CSPlayerPawn.
+- Не дергать 0xA30AA0 после spawn: если [skeleton+0x3D0] уже занят, будет fatal assert.
+
+LOCAL PAWN
+0x394420
+  GetLocalPlayerPawn script API. Возвращает [obj+0x10]+0x28 после sub_1808E3970.
+
+0x3943E0
+  GetLocalPlayerController script API. Возвращает [obj+0x10]+0x28 после sub_1808E3930.
+
+0x8E3930
+  rcx = split-screen index или -1. Return = qword_182320570[index] = local controller.
+
+0x8E3970
+  rcx = split-screen index или -1. Берет controller из qword_182320570[index], читает [controller+0x6BC] m_hPawn, резолвит через entity list 0x21B2130. Return = C_CSPlayerPawn*.
+
+Важно:
+  m_hPawn = 0x6BC используется live getter-ом текущей пешки.
+  m_hPlayerPawn = 0x90C есть в schema, но это не тот путь, который использует GetLocalPlayerPawn.
+
+AGENT / MODEL RESOLVE
+0x810730
+  GetAgentId: rcx = pawn/controller-like, return ax = word [rcx+0x922].
+  0x922 = m_nPawnCharacterDefIndex.
+
+0x7218E0
+  Agent model resolver: rcx = econ/item-system, edx/dx = agentId, return rax = const char* model path.
+  Внутри: agentId -> econ item -> vfunc +0x30.
+
+0x730480
+  Preview/uimodel path builder. Если entity подходит по team, делает:
+  local pawn/controller -> 0x810730 -> 0x7218E0 -> KV model_name.
+  fallback: CT agents/models/ctm_sas/ctm_sas.vmdl, T agents/models/tm_phoenix/tm_phoenix.vmdl.
+
+0xEEADA0
+  Inline getter для agent model: atoi64 entity id -> entity -> 0x810730 -> econ -> vfunc +0x30. Return const char*/empty.
+
+LIVE MODEL APPLY
+0xC19930
+  Live/base model_name setter.
+  rcx = entity/CCSPlayerPawnBase*, rdx = const char* path.
+  Пишет [rcx+0x11B0], ставит [rcx+0x11E2]=1, jmp 0xC1B270.
+
+0xC1B270
+  Live apply.
+  Если dirty и path не пустой: 0x8DDAC0, затем обновление children/attachments/root state.
+  0xC19940 и 0xC1B280 опасны: это середина функций, entry только 0xC19930 / 0xC1B270.
+
+0xC19EF0
+  Live CCSPlayerPawnBase KV parser/apply.
+  Порядок: reset_model_on_spawn -> model_name/model -> item_skin -> 0xC1B270 -> 0x8E0450 -> root_anim -> root_anim_loop.
+  Если reset_model_on_spawn true, блок model_name/model/item_skin пропускается.
+
+PREVIEW MODEL APPLY
+0xC199A0 -> 0xC1B520
+  Preview/uimodel setter/apply.
+  Пишет [rcx+0x3490], dirty [rcx+0x34CC]. Это не live pawn +0x11B0.
+
+RAW SETMODEL
+0x8DDAC0
+  rcx = entity, rdx = const char* path.
+  path -> resource/model handle через qword_18233CEE0 vfunc +0x60, затем 0x8DDB00.
+
+0x8DDB00
+  rcx = entity, rdx = model handle.
+  Меняет skeleton/body model через 0x1D6030, чистит attachment/child state, вызывает entity vfunc +0x788.
+  Не вызывает root_anim/root_anim_loop KV-блок.
+
+0x1D6030 -> 0xA2FE20
+  Skeleton/model rebuild path.
+
+ANIMATION
+0x8CAA90
+  rcx = entity, rdx = out seq, r8 = root_anim name.
+  entity+0x330 -> skeleton -> [skeleton+0x3D0] controller, затем поиск sequence/activity на текущем model/skeleton.
+
+0x8DEE50
+  rcx = entity, edx = sequence, r8d/r9d = flags. Запускает sequence через skeleton controller vfunc +0x70.
+
+0x8CCBA0
+  rcx = entity, dl = root_anim_loop bool. Пишет [controller+0xCC].
+
+0x8CEF90 -> 0x8CEFE0
+  Entity wrapper animgraph resource setter.
+  0x8CEF90 берет controller через entity+0x330 -> skeleton -> [skeleton+0x3D0].
+  0x8CEFE0 принимает resource tags: vnmgraph / vnmskel / vnmclip, обновляет controller graph resource.
+
+0x8AA770
+  Recreate graph instance.
+  rcx = animController*, rdx = graphDefinitionHandle, r8d = mode/flag.
+  Пишет [controller+0x370], создает [controller+0x448], инкрементит [controller+0x400].
+
+0x8AB2D0 / 0x8ADC00
+  0x8AB2D0 ставит [controller+0x688]=1.
+  0x8ADC00 обрабатывает dirty graph/update.
+
+0xA30AA0
+  Bind AnimController <-> Skeleton.
+  Пишет [controller+0x8]=skeleton и [skeleton+0x3D0]=controller.
+  Late call опасен: assert m_pController == NULL.
+
+РЕСУРСЫ
+0x233CED8  VFileSystem017 global, AddSearchPath vtable +0x190.
+0x25583C0  ResourceSystem013 global.
+0x25583C8  ResourceHandleUtils001 global.
+0x25583D0  ResourceManifestRegistry001 global.
+0x2558660  GameResourceServiceClientV001 global.
+0x17F4B90  BuildResourceName(path).
+0x17F42A0  CheckResourceType, vmdl tag 0x6C646D76.
+ResourceSystem vtable: +0x140 load/preload, +0x198 status/check, +0x278 get binding.
+
+ОФФСЕТЫ
++0x330 entity -> scene node / skeleton path
++0x6BC controller -> m_hPawn
++0x90C CCSPlayerController -> m_hPlayerPawn
++0x922 m_nPawnCharacterDefIndex / agentId
++0x11B0 live model_name string
++0x11E2 live model dirty
++0x1158 root_anim
++0x1160 root_anim flags/loop
++0x3490 preview model string
++0x34CC preview dirty
+skeleton +0x150 CModelState
+skeleton +0x3D0 animController back pointer
+CModelState +0xA0 m_hModel
+CModelState +0xB0 pending/dirty
+CModelState +0xB8 pending model handle
+animController +0x370 graph definition handle
+animController +0x448 graph instance
+animController +0x688 graph dirty
+
+

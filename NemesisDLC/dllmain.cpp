@@ -10,6 +10,7 @@
 #include "RenderDrx11/RenderHook.hpp"
 #include "RenderDrx11/UsedHook.hpp"
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
+#include "ConfigSavingSystem/AdminConsole.hpp"
 
 static void AsmjitSelfTest()
 {
@@ -44,6 +45,7 @@ static DWORD WINAPI Bootstrap(LPVOID)
     // Nemesis::InventoryGive::Start();   // путь инвентаря-меню отложен (тупик для ножа в руке)
     Nemesis::RenderHook::Start();
     Nemesis::SilentAim::Init();
+    Nemesis::AdminConsole::Start();
     return 0;
 }
 
