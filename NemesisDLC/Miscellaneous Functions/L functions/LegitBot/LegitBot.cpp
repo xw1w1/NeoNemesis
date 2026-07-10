@@ -19,9 +19,9 @@ namespace Nemesis::LegitBot
 
     namespace
     {
-        constexpr std::ptrdiff_t kBoneArray   = 0x1D0;
-        constexpr std::ptrdiff_t kBoneStride  = 0x20;
-        constexpr int            kHeadBone    = 6;
+        constexpr std::ptrdiff_t kBoneArray   = Bones::kBoneArray;
+        constexpr std::ptrdiff_t kBoneStride  = Bones::kBoneStride;
+        constexpr int            kHeadBone    = Bones::kHeadBone;
         constexpr float          kRecoilEps   = 0.05f;
 
         struct Vec3 { float x, y, z; };

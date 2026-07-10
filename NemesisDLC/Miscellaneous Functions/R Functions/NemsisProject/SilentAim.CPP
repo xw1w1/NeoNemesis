@@ -5,6 +5,7 @@
 #include "../../../Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.hpp"
 #include "../JumpSystem/JumpSystem.hpp"
 #include "../../../CUSTOM RENDER/CustomModel/CustomModel.hpp"
+#include "AimMath.hpp"
 
 #include "MinHook.h"
 
@@ -21,7 +22,6 @@ namespace Nemesis::SilentAim
     namespace
     {
         constexpr float          kRad2Deg = 57.2957795f;
-        constexpr std::uintptr_t kSeedFn  = 0xC81D80;   // sub_180C81D80: seed = SHA1(qAng, seedBase)
 
         using CreateMoveFn = void(__fastcall*)(void*, int, void*);
         using SeedFn       = int(__fastcall*)(void*, void*, int);
@@ -32,6 +32,9 @@ namespace Nemesis::SilentAim
         std::atomic<bool>  g_valid{ false };
         std::atomic<bool>  g_enabled{ false };
         std::atomic<float> g_hx{ 0.f }, g_hy{ 0.f }, g_hz{ 0.f };
+        std::atomic<std::uint32_t> g_seedBase{ 0 };
+        std::atomic<bool>  g_haveSeed{ false };
+        std::atomic<int>   g_tickOffset{ 0 };   // seedBase - clientTick (глубина предсказания, live из hkSeed)
         bool  g_loggedHook = false;
         DWORD g_lastSeedLog = 0;
 
@@ -68,6 +71,52 @@ namespace Nemesis::SilentAim
             pitch = -std::atan2(dz, d2) * kRad2Deg;
         }
 
+        // seedBase выстрела == engine clientTickCount (подтверждено: diff=0). Читаем заранее в CreateMove.
+        int ClientTick(std::uintptr_t eng)
+        {
+            if (!eng) return -1;
+            const std::uintptr_t nc = Mem::Read<std::uintptr_t>(eng + EngineNet::dwNetworkGameClient);
+            if (!HeapPtr(nc)) return -1;
+            return Mem::Read<int>(nc + EngineNet::clientTickCount, -1);
+        }
+
+        // Предиктор: компенсация разброса/inaccuracy/recoil. ТОЛЬКО чтение полей (без vtable — vtable крашил).
+        // Валидирует значения; при мусоре откатывает на чистый угол (return false).
+        bool SolveAimAngle(std::uintptr_t base, std::uintptr_t pawn, std::uint32_t seedBase,
+                           float aimP, float aimY, float& outP, float& outY)
+        {
+            __try
+            {
+                const std::uintptr_t ws = Mem::Read<std::uintptr_t>(pawn + Schema::m_pWeaponServices);
+                if (!HeapPtr(ws)) return false;
+                const std::uintptr_t weapon =
+                    EntFromHandle(base, Mem::Read<std::uint32_t>(ws + Schema::m_hActiveWeapon));
+                if (!HeapPtr(weapon)) return false;
+                const std::uintptr_t vdata = Mem::Read<std::uintptr_t>(weapon + Weapon::m_pVData);
+                if (!HeapPtr(vdata)) return false;
+
+                float inacc  = Mem::Read<float>(weapon + Weapon::m_fAccuracyPenalty, 0.f);
+                float spread = Mem::Read<float>(vdata + Weapon::vd_flSpread, 0.f);
+                if (!std::isfinite(inacc)  || inacc  < 0.f || inacc  > AimFn::kMaxInacc)  inacc  = 0.f;
+                if (!std::isfinite(spread) || spread < 0.f || spread > AimFn::kMaxSpread) spread = 0.f;
+
+                float punchP = 0.f, punchY = 0.f;
+                const std::uintptr_t aps = Mem::Read<std::uintptr_t>(pawn + PawnCombat::m_pAimPunchServices);
+                if (HeapPtr(aps))
+                {
+                    punchP = Mem::Read<float>(aps + PawnCombat::ap_predictableBaseAngle + 0, 0.f);
+                    punchY = Mem::Read<float>(aps + PawnCombat::ap_predictableBaseAngle + 4, 0.f);
+                    if (!std::isfinite(punchP)) punchP = 0.f;
+                    if (!std::isfinite(punchY)) punchY = 0.f;
+                }
+
+                AimMath::SolveWriteAngle(aimP, aimY, punchP, punchY, seedBase,
+                                        inacc, spread, AimFn::kRecoilScale, outP, outY);
+                return std::isfinite(outP) && std::isfinite(outY);
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+        }
+
         std::uintptr_t FrameAngle(std::uintptr_t eng)
         {
             if (!eng) return 0;
@@ -81,6 +130,14 @@ namespace Nemesis::SilentAim
         // ����: ������� seedBase (r8d) � ����������-������
         int __fastcall hkSeed(void* rcx, void* rdx, int seedBase)
         {
+            g_seedBase.store(static_cast<std::uint32_t>(seedBase));
+            g_haveSeed.store(true);
+
+            const std::uintptr_t engB = Mem::ModuleBase(Modules::kEngine);
+            const int liveTick = ClientTick(engB);
+            if (liveTick >= 0)
+                g_tickOffset.store(seedBase - liveTick);   // глубина предсказания (адаптив к пингу)
+
             const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
             const DWORD now = GetTickCount();
             if (base && now - g_lastSeedLog > 250)
@@ -101,8 +158,15 @@ namespace Nemesis::SilentAim
                 }
                 float qp = 0.f, qy = 0.f;
                 if (HeapPtr((std::uintptr_t)rdx)) { qp = Mem::Read<float>((std::uintptr_t)rdx + 0); qy = Mem::Read<float>((std::uintptr_t)rdx + 4); }
-                NLOG("[seed] seedBase=%d (0x%X) shots=%d ent=%d recoil=%.1f ang(%.2f,%.2f)",
-                     seedBase, (unsigned)seedBase, shots, entIdx, recoil, qp, qy);
+                int tick = -1;
+                const std::uintptr_t eng = Mem::ModuleBase(Modules::kEngine);
+                if (eng)
+                {
+                    const std::uintptr_t nc = Mem::Read<std::uintptr_t>(eng + EngineNet::dwNetworkGameClient);
+                    if (HeapPtr(nc)) tick = Mem::Read<int>(nc + EngineNet::clientTickCount, -1);
+                }
+                NLOG("[seed] seedBase=%d tick=%d diff=%d shots=%d recoil=%.1f ang(%.2f,%.2f)",
+                     seedBase, tick, (tick >= 0 ? seedBase - tick : 0), shots, recoil, qp, qy);
             }
             return g_origSeed(rcx, rdx, seedBase);
         }
@@ -132,40 +196,81 @@ namespace Nemesis::SilentAim
                 NLOG("[silent] hook alive this=%p (F6)", thisptr);
             }
 
-            bool injected = false;
+            bool haveShot = false;      // цель есть и угол посчитан — база silent
+            bool ringInjected = false;  // pre-inject в engine-ring удался (необязателен)
             std::uintptr_t qa = 0;
             float op = 0.f, oy = 0.f, np = 0.f, ny = 0.f;
 
             const std::uintptr_t pawn = base ? Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerPawn) : 0;
-            const bool armed = base && eng && g_enabled.load() && g_valid.load()
-                             && (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
-                             && pawn && Mem::Read<int>(pawn + Schema::m_iHealth, 0) > 0;
+            const bool alive = pawn && Mem::Read<int>(pawn + Schema::m_iHealth, 0) > 0;
+            const bool lmb   = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+            const bool armed = base && g_enabled.load() && g_valid.load() && lmb && alive;
+
+            {
+                static DWORD s_dbg = 0;
+                if (base && g_enabled.load() && GetTickCount() - s_dbg > 400)
+                {
+                    s_dbg = GetTickCount();
+                    const int count = Mem::Read<int>(self + Addr::SilentAim::kCmdCount, -1);
+                    NLOG("[silent] en=%d valid(target)=%d lmb=%d alive=%d armed=%d cmdCount=%d haveSeed=%d",
+                         g_enabled.load() ? 1 : 0, g_valid.load() ? 1 : 0, lmb ? 1 : 0,
+                         alive ? 1 : 0, armed ? 1 : 0, count, g_haveSeed.load() ? 1 : 0);
+                }
+            }
 
             if (armed)
             {
                 ComputeAngle(pawn, g_hx.load(), g_hy.load(), g_hz.load(), np, ny);
                 if (std::isfinite(np) && std::isfinite(ny))
                 {
-                    qa = FrameAngle(eng);
-                    if (qa)
+                    if constexpr (AimFn::kPredictSpread)
                     {
-                        op = Mem::Read<float>(qa + 0);
-                        oy = Mem::Read<float>(qa + 4);
-                        Mem::Write<float>(qa + 0, np);
-                        Mem::Write<float>(qa + 4, ny);
-                        injected = true;
+                        const int tick = ClientTick(eng);
+                        if (tick >= 0)
+                        {
+                            // seedBase выстрела = clientTick + глубина предсказания (live offset из hkSeed) + ручной тюнинг.
+                            const std::uint32_t seedBase = static_cast<std::uint32_t>(
+                                tick + g_tickOffset.load() + AimFn::kSeedTickOffset);
+                            float cp, cy;
+                            if (SolveAimAngle(base, pawn, seedBase, np, ny, cp, cy)) { np = cp; ny = cy; }
+                        }
+                    }
+                    haveShot = true;
+                    if (eng)
+                    {
+                        qa = FrameAngle(eng);
+                        if (qa)
+                        {
+                            op = Mem::Read<float>(qa + 0);
+                            oy = Mem::Read<float>(qa + 4);
+                            Mem::Write<float>(qa + 0, np);
+                            Mem::Write<float>(qa + 4, ny);
+                            ringInjected = true;
+                        }
                     }
                 }
             }
 
             g_orig(thisptr, a2, a3);
 
-            if (injected)
+            if (haveShot)
             {
-                Mem::Write<float>(qa + 0, op);
-                Mem::Write<float>(qa + 4, oy);
+                if (ringInjected)
+                {
+                    Mem::Write<float>(qa + 0, op);
+                    Mem::Write<float>(qa + 4, oy);
+                }
                 Nemesis::PacketGuard::SanitizeCommands(self, np, ny);
                 Nemesis::PacketGuard::SanitizeBaseAngle(self, np, ny);
+
+                static DWORD s_wdbg = 0;
+                if (GetTickCount() - s_wdbg > 400)
+                {
+                    s_wdbg = GetTickCount();
+                    const float vp = base ? Mem::Read<float>(base + Client::dwViewAngles + 0) : 0.f;
+                    const float vy = base ? Mem::Read<float>(base + Client::dwViewAngles + 4) : 0.f;
+                    NLOG("[silent] WROTE aim(p=%.1f y=%.1f) view(p=%.1f y=%.1f) ring=%d", np, ny, vp, vy, ringInjected ? 1 : 0);
+                }
             }
         }
     }
@@ -181,6 +286,11 @@ namespace Nemesis::SilentAim
         g_valid.store(false);
     }
 
+    bool Enabled()
+    {
+        return g_enabled.load();
+    }
+
     void Init()
     {
         MH_Initialize();
@@ -193,7 +303,7 @@ namespace Nemesis::SilentAim
         if (MH_EnableHook(target) != MH_OK)
         { NERR("[silent] EnableHook failed"); return; }
 
-        g_seedTarget = reinterpret_cast<void*>(base + kSeedFn);
+        g_seedTarget = reinterpret_cast<void*>(base + Addr::AimFn::fnSeedSha1);
         if (MH_CreateHook(g_seedTarget, &hkSeed, reinterpret_cast<void**>(&g_origSeed)) == MH_OK)
             MH_EnableHook(g_seedTarget);
         else

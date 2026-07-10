@@ -12,13 +12,13 @@ namespace Nemesis::Visibility
 
     namespace
     {
-        constexpr std::uintptr_t kTraceMgr    = 0x20459C0;
-        constexpr std::uintptr_t kFnTrace     = 0x9913A0;
-        constexpr std::uintptr_t kRayVtable   = 0x193D358;
-        constexpr std::uintptr_t kFnBuildFilt = 0x21A6E0;
-        constexpr std::ptrdiff_t kFraction    = 0xAC;   // CGameTrace.fraction
-        constexpr std::ptrdiff_t kBoneArray   = 0x1D0;
-        constexpr int            kHeadBone    = 6;
+        constexpr std::uintptr_t kTraceMgr    = Trace::kTraceMgr;
+        constexpr std::uintptr_t kFnTrace     = Trace::kFnTrace;
+        constexpr std::uintptr_t kRayVtable   = Trace::kRayVtable;
+        constexpr std::uintptr_t kFnBuildFilt = Trace::kFnBuildFilt;
+        constexpr std::ptrdiff_t kFraction    = Trace::kFraction;
+        constexpr std::ptrdiff_t kBoneArray   = Trace::kBoneArray;
+        constexpr int            kHeadBone    = Trace::kHeadBone;
 
         using TraceFn       = char (__fastcall*)(void*, void*, void*, void*, void*, void*);
         using BuildFilterFn = void* (__fastcall*)(void*, void*);
@@ -46,7 +46,7 @@ namespace Nemesis::Visibility
             const std::uintptr_t bones = Mem::Read<std::uintptr_t>(scene + kBoneArray);
             if (bones < 0x10000)
                 return false;
-            const std::uintptr_t b = bones + kHeadBone * 0x20;
+            const std::uintptr_t b = bones + kHeadBone * Trace::kBoneStride;
             out[0] = Mem::Read<float>(b + 0);
             out[1] = Mem::Read<float>(b + 4);
             out[2] = Mem::Read<float>(b + 8);

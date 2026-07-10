@@ -6,6 +6,7 @@
 //#include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
 //#include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
 #include "Miscellaneous Functions/R Functions/NemsisProject/RageBot.hpp"
+#include "Miscellaneous Functions/R Functions/NemsisProject/SilentAim.hpp"
 #include "CustomWorldRender/Night/Night.hpp"
 #include "AllUsedAddresses/Address/AllUsedAddresses.hpp"
 
@@ -129,7 +130,8 @@ namespace Nemesis::RenderHook
                 Nemesis::Esp::Render();
 //                Nemesis::EnemyChams::Render();
                 Nemesis::TestIcon::Render();
-                if (aimMode == 1)
+                // При включённом F6 silent RageBot должен искать цель независимо от F10-режима.
+                if (aimMode == 1 || Nemesis::SilentAim::Enabled())
                     Nemesis::RageBot::Render();
                 else
                     Nemesis::LegitBot::Render();

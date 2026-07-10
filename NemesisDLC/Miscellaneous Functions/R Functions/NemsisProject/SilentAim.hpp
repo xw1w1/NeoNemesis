@@ -6,4 +6,5 @@ namespace Nemesis::SilentAim
     void Shutdown();
     void SetTarget(float x, float y, float z);   // мир: голова цели
     void ClearTarget();
+    bool Enabled();                              // F6 silent включён
 }

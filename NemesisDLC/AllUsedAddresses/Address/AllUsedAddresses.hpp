@@ -21,40 +21,40 @@ namespace Nemesis::Addresses
         inline constexpr std::uintptr_t dwEntityList = 0x254EE60;
         inline constexpr std::uintptr_t dwCSGOInput = 0x23B95F0;
 
-        // === НЕ В ДАМПЕРЕ — пересверить в MyGame.asm / pattern scan (значения ниже устарели, билд 14166/14168) ===
-        // Эти адреса (fn*, dwCameraManager, dwSvCheats*, SilentAim internals и т.д.) отсутствуют в стандартном дампере.
-        // Требуется ручная проверка после обновления на билд 14169.
-        inline constexpr std::uintptr_t dwCameraManager = 0x209E570;  // off_18209E570 (asm 14168) — UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetModelName = 0x10BD860;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSetModelString = 0xC19940;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnReloadSubclass = 0x1FAE80;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSetPaintKit = 0x8DEE60;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetRenderItemView = 0x8BB840;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnApplyModel = 0xC1B280;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetPaintKitId = 0x105F9B0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwButterflySubclass = 0x22AB2F0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwSubclassManager = 0x21D9720;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwSvCheatsRef = 0x239D5F0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwSvCheatsConVar = 0x239D5F8;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwSvCheatsRef2 = 0x239D5F0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnResolveConVarValue = 0x18607C0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwForceJump = 0x2093490;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSetColorModulation = 0xB91580;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnReapplyTint = 0x8E4150;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSetModel = 0x920630;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSetGraphDefinition = 0x8CEFE0;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetAgentId = 0x810730;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnAgentModelResolve = 0x7218E0;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnRecreateGraphInstance = 0x8AA770;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnApplyModelHandle = 0x9206D0;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwGameModelInfo = 0x239E7D8;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnLiveSetModel = 0xC19930;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnLiveApply = 0xC518F0;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetLocalPawnLive = 0x8E3970;   // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwFileSystem = 0x239E7D0;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t dwResourceSystem = 0x25C7410;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnBuildResourceName = 0x17F4B90;  // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnCheckResourceType = 0x17F42A0;  // UPDATE REQUIRED
+        // === НЕ В ДАМПЕРЕ — реверс из D:\INFO\client.dll.asm (билд 14169, ImageBase 0x180000000) ===
+        // ОБНОВЛЕНО для 14169 — только те, что реально используются активным кодом.
+        // Неиспользуемые (скины/subclass/agent/tint) оставлены со старыми значениями (UPDATE REQUIRED).
+        inline constexpr std::uintptr_t dwCameraManager = 0x209F570;  // off_18209F570 — thirdperson callback sub_180B07940
+        inline constexpr std::uintptr_t fnGetModelName = 0x10BD860;  // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnSetModelString = 0xC19940;   // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnReloadSubclass = 0x1FAE80;   // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnSetPaintKit = 0x8DEE60;   // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnGetRenderItemView = 0x8BB840;   // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnApplyModel = 0xC1B280;   // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t fnGetPaintKitId = 0x105F9B0;  // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t dwButterflySubclass = 0x22AB2F0;  // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t dwSubclassManager = 0x21D9720;  // UPDATE REQUIRED (скины, не используется)
+        inline constexpr std::uintptr_t dwSvCheatsRef = 0x239E5F0;  // unk_18239E5F0 (ConVarRef sv_cheats) — не используется кодом
+        inline constexpr std::uintptr_t dwSvCheatsConVar = 0x239E5F8;  // qword_18239E5F8 (ConVar-объект sv_cheats)
+        inline constexpr std::uintptr_t dwSvCheatsRef2 = 0x239E5F0;  // не используется кодом
+        inline constexpr std::uintptr_t fnResolveConVarValue = 0x1860BC0;  // sub_181860BC0 (edx=-1) — не используется кодом
+        inline constexpr std::uintptr_t dwForceJump = 0x2093490;  // bhop — обновлять не требуется
+        inline constexpr std::uintptr_t fnSetColorModulation = 0xB91580;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnReapplyTint = 0x8E4150;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnSetModel = 0x920AE0;   // sub_180920AE0 (entity, const char* path) GameModelInfo[0x60]->handle->apply
+        inline constexpr std::uintptr_t fnSetGraphDefinition = 0x8CEFE0;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnGetAgentId = 0x810730;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnAgentModelResolve = 0x7218E0;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnRecreateGraphInstance = 0x8AA770;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnApplyModelHandle = 0x920B20;   // sub_180920B20 (не используется напрямую)
+        inline constexpr std::uintptr_t dwGameModelInfo = 0x239F7D8;  // qword_18239F7D8 (не используется напрямую)
+        inline constexpr std::uintptr_t fnLiveSetModel = 0xC19930;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnLiveApply = 0xC51D10;   // sub_180C51D10 (хук CustomModel) спавн-парсер sub_180C514D0
+        inline constexpr std::uintptr_t fnGetLocalPawnLive = 0x8E3970;   // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t dwFileSystem = 0x239F7D0;  // qword_18239F7D0 (IFileSystem VFileSystem017)
+        inline constexpr std::uintptr_t dwResourceSystem = 0x25C8430;  // qword_1825C8430 (ResourceSystem013)
+        inline constexpr std::uintptr_t fnBuildResourceName = 0x18300D0;  // sub_1818300D0 (&nameBuf, const char* path)
+        inline constexpr std::uintptr_t fnCheckResourceType = 0x182F7E0;  // sub_18182F7E0 (&nameBuf, type 0x6C646D76)
 
         // Дополнительные глобалы из дампера 14169 (sezzyaep/CS2-OFFSETS)
         // inline constexpr std::uintptr_t dwGameRules          = 0x1A515A8; // пример
@@ -124,11 +124,11 @@ namespace Nemesis::Addresses
         inline constexpr std::ptrdiff_t m_pSubclassVData = 0x388;
     }
 
-    // Остальные namespaces (EconView, Subclass, FileSystem, AnimGraph, ResourceLoad, CustomModel,
-    // EntityList, CustomSkins, JumpBoost, AimMode, NightMode, ThirdpersonCam, CameraView, SilentAim,
-    // PacketGuard, EngineInput, Weapon, PawnCombat, AimFn) оставлены без изменений.
-    // SilentAim::fnCreateMove, AimFn::* и большинство внутренних структур требуют повторной проверки
-    // через реверс (MyGame.asm / x64dbg / pattern scan) на билде 14169.
+    // Реверс 14169 (D:\INFO\client.dll.asm) — ОБНОВЛЕНО для активного кода:
+    //   SilentAim::fnCreateMove=0xC97750, AimFn::fnSeedSha1=0xCB6E80, Trace/Bones вынесены сюда.
+    // Struct-оффсеты команды (SilentAim kCmdCount/kCmdData/kCmdStride/kViewAngle) подтверждены в
+    // CreateMove — не менялись. EngineInput (engine2 frame-ring) и AimFn::* кроме fnSeedSha1 —
+    // не используются активным кодом, оставлены как есть.
 
     namespace EconView
     {
@@ -199,6 +199,30 @@ namespace Nemesis::Addresses
         inline constexpr std::uint32_t  kSlotMask = 0x1FF;
     }
 
+    namespace Bones
+    {
+        // Массив костей в CGameSceneNode (общий для RageBot/LegitBot/Visibility).
+        inline constexpr std::ptrdiff_t kBoneArray  = 0x1D0;   // scene node -> bone matrix array
+        inline constexpr std::ptrdiff_t kBoneStride = 0x20;    // размер записи кости (pos@0)
+        inline constexpr int            kHeadBone   = 6;
+    }
+
+    namespace Trace
+    {
+        // Трейс видимости (Visibility.cpp). ВНИМАНИЕ: в билдах 14166+ трейс мёртв —
+        // VisibleToLocal при frac<0 (SEH) откатывается на crosshair-id; рабочая видимость идёт
+        // через Schema::m_bSpottedByMask. Адреса функции/менеджера требуют live-RE (x64dbg),
+        // блиндовый реверс 6-арг вызова опасен (краш). Struct-оффсеты ниже (bone/fraction) валидны.
+        inline constexpr std::uintptr_t kTraceMgr    = 0x20459C0;  // GameTraceManager global — UPDATE via live-RE
+        inline constexpr std::uintptr_t kFnTrace     = 0x9913A0;   // TraceShape 6-arg entry — UPDATE via live-RE
+        inline constexpr std::uintptr_t kRayVtable   = 0x193D358;  // Ray_t vtable — UPDATE via live-RE
+        inline constexpr std::uintptr_t kFnBuildFilt = 0x21A6E0;   // build trace filter — UPDATE via live-RE
+        inline constexpr std::ptrdiff_t kFraction    = 0xAC;       // CGameTrace.fraction
+        inline constexpr std::ptrdiff_t kBoneArray   = Bones::kBoneArray;
+        inline constexpr int            kHeadBone    = Bones::kHeadBone;
+        inline constexpr std::ptrdiff_t kBoneStride  = Bones::kBoneStride;
+    }
+
     namespace CustomSkins
     {
         inline constexpr std::uint16_t kKnifeDefIndex = 515;
@@ -254,7 +278,7 @@ namespace Nemesis::Addresses
 
     namespace SilentAim
     {
-        inline constexpr std::uintptr_t fnCreateMove = 0xC97330; // CCSGOInput::CreateMove (asm 14168) — UPDATE REQUIRED for 14169
+        inline constexpr std::uintptr_t fnCreateMove = 0xC97750; // sub_180C97750 CCSGOInput::CreateMove (asm 14169, "CreateMove clamped")
         inline constexpr std::ptrdiff_t kCmdCount = 0xBC8;    // int — число команд
         inline constexpr std::ptrdiff_t kCmdData = 0xBD0;    // ptr — база вектора команд
         inline constexpr std::ptrdiff_t kCmdStride = 0x60;     // РЕАЛЬНЫЙ страйд команды
@@ -304,6 +328,13 @@ namespace Nemesis::Addresses
         inline constexpr int            kRingSize = 10;
     }
 
+    namespace EngineNet
+    {
+        // Из дампера 14169 (engine2). Для корреляции seedBase <-> tick.
+        inline constexpr std::uintptr_t dwNetworkGameClient = 0x90D4B0; // глобал-указатель на CNetworkGameClient
+        inline constexpr std::ptrdiff_t clientTickCount = 0x378;
+    }
+
     namespace Weapon
     {
         inline constexpr std::ptrdiff_t m_pVData = 0x388;
@@ -334,14 +365,23 @@ namespace Nemesis::Addresses
 
     namespace AimFn
     {
-        inline constexpr std::uintptr_t fnFireBullets = 0xC81E30; // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSpreadGen = 0xC826A0; // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnSeedSha1 = 0xC81D80; // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnAngleQuantize = 0xC7BEB0; // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnGetAimPunchAngle = 0x7DB260; // UPDATE REQUIRED
-        inline constexpr std::uintptr_t fnWeaponFire = 0x78F9D0; // UPDATE REQUIRED
+        inline constexpr std::uintptr_t fnFireBullets = 0xC81E30; // UPDATE REQUIRED (не используется — AimMath мёртвый код)
+        inline constexpr std::uintptr_t fnSpreadGen = 0xC826A0; // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnSeedSha1 = 0xCB6E80; // sub_180CB6E80 seed=SHA1(quant angles, seedBase) — хук hkSeed
+        inline constexpr std::uintptr_t fnAngleQuantize = 0xC7BEB0; // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnGetAimPunchAngle = 0x7DB260; // UPDATE REQUIRED (не используется)
+        inline constexpr std::uintptr_t fnWeaponFire = 0x78F9D0; // UPDATE REQUIRED (не используется)
         inline constexpr float          kRecoilScale = 2.0f;
         inline constexpr std::uint32_t  kFlOnGround = 0x1;
         inline constexpr float          kAngleGrid = 0.5f;
+
+        // Предиктор разброса (AimMath) — компенсация spread/inaccuracy/recoil.
+        // ВКЛ: seedBase == engine clientTickCount (подтверждено в игре, diff=0), считаем в CreateMove.
+        // seed теперь точный → компенсация конуса разброса верная → 10/10 (в т.ч. прыжок/спрей).
+        inline constexpr bool           kPredictSpread = true;
+        inline constexpr int            kSeedTickOffset = 0;   // ручной доп.сдвиг тика (обычно 0, offset берётся live)
+        inline constexpr float          kHeadRadius = 5.0f;    // радиус облака точек по хитбоксу головы (юниты)
+        inline constexpr float          kMaxSpread = 1.0f;   // валидация: spread из VData [0..kMaxSpread]
+        inline constexpr float          kMaxInacc  = 2.0f;   // валидация: m_fAccuracyPenalty потолок
     }
 }

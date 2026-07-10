@@ -4,11 +4,13 @@
 #include "../../../Miscellaneous Utilities/Visibility Check System/Visibility.hpp"
 #include "../../UnusualNewVisions/CameraPositionChange/Memory.hpp"
 #include "../../../AllUsedAddresses/Address/AllUsedAddresses.hpp"
+#include "../../../Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 
 #include "imgui.h"
 
 #include <cstdint>
 #include <cmath>
+#include <Windows.h>
 
 #include "../Miscellaneous Functions/AimConfig.h"
 
@@ -18,9 +20,9 @@ namespace Nemesis::RageBot
 
     namespace
     {
-        constexpr std::ptrdiff_t kBoneArray  = 0x1D0;
-        constexpr std::ptrdiff_t kBoneStride = 0x20;
-        constexpr int            kHeadBone   = 6;
+        constexpr std::ptrdiff_t kBoneArray  = Bones::kBoneArray;
+        constexpr std::ptrdiff_t kBoneStride = Bones::kBoneStride;
+        constexpr int            kHeadBone   = Bones::kHeadBone;
 
         struct Vec3 { float x, y, z; };
 
@@ -109,18 +111,28 @@ namespace Nemesis::RageBot
         dl->AddCircle(center, kRageFov, IM_COL32(155, 40, 40, 90), 96, 3.0f);
 
         const std::uint8_t localTeam = Mem::Read<std::uint8_t>(localPawn + Schema::m_iTeamNum);
+
+        // Видимость через m_bSpottedByMask (трейс мёртв): бит локального слота = личная видимость.
+        const std::uintptr_t localController = Mem::Read<std::uintptr_t>(base + Client::dwLocalPlayerController);
+        int localSlot = -1;
+        for (std::uint32_t i = 1; i <= 64; ++i)
+            if (EntByIndex(base, i) == localController) { localSlot = static_cast<int>(i) - 1; break; }
+
         float vm[16];
         for (int k = 0; k < 16; ++k)
             vm[k] = Mem::Read<float>(base + Client::dwViewMatrix + k * 4);
 
+        // Метки считаются для ВСЕХ врагов каждый кадр (мгновенно); цель — если пиксель головы в FOV.
         float  bestDist = kRageFov;
         ImVec2 bestScreen(0, 0);
         int    bestPawnIndex = -1;
         Vec3   bestHead{};
         Vec3   bestAbs{};
         bool   haveBest = false;
+        int    dbgEnemies = 0, dbgSpotted = 0, dbgFov = 0;
+        float  dbgMinD = 1e9f;
 
-        for (std::uint32_t i = 1; i <= 64; ++i)
+        for (std::uint32_t i = 1; i <= 64 && localSlot >= 0; ++i)
         {
             const std::uintptr_t controller = EntByIndex(base, i);
             if (!controller) continue;
@@ -131,45 +143,74 @@ namespace Nemesis::RageBot
             if (hp <= 0 || hp > 100) continue;
             const std::uint8_t team = Mem::Read<std::uint8_t>(pawn + Schema::m_iTeamNum);
             if (team < 2 || team == localTeam) continue;
+            ++dbgEnemies;
 
-            Vec3 head;
-            if (!HeadBone(pawn, head)) continue;
+            const std::uint64_t mask = Mem::Read<std::uint64_t>(
+                pawn + Schema::m_entitySpottedState + Schema::m_bSpottedByMask, 0);
+            if (((mask >> localSlot) & 1ull) == 0) continue;
+            ++dbgSpotted;
 
-            Vec3 origin{};
             const std::uintptr_t sc = Mem::Read<std::uintptr_t>(pawn + Schema::m_pGameSceneNode);
-            if (sc)
-            {
-                origin.x = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 0);
-                origin.y = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 4);
-                origin.z = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 8);
-            }
+            if (!sc) continue;
+            Vec3 origin{};
+            origin.x = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 0);
+            origin.y = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 4);
+            origin.z = Mem::Read<float>(sc + Schema::m_vecAbsOrigin + 8);
 
-            float sx, sy;
-            if (!W2S(vm, head, ds.x, ds.y, sx, sy)) continue;
-            const float dx = sx - center.x, dy = sy - center.y;
-            const float d = std::sqrt(dx * dx + dy * dy);
-            if (d < bestDist)
+            // Голова = origin(ноги) + высота глаз (viewOffset.z, фолбэк) — надёжно, как ESP, без bone-массива.
+            float eyeZ = Mem::Read<float>(pawn + Schema::m_vecViewOffset + 8, 0.0f);
+            if (!(eyeZ > 30.0f && eyeZ < 90.0f)) eyeZ = 64.0f;
+            const Vec3 hc{ origin.x, origin.y, origin.z + eyeZ };
+
+            // Мультиточка по хитбоксу головы: облако точек, берём пиксель ближайший к прицелу
+            // (обход края FOV/частичного перекрытия). Рендерим потом только выбранный.
+            const float R = AimFn::kHeadRadius;
+            const Vec3 cloud[7] = {
+                hc,
+                { hc.x + R, hc.y, hc.z }, { hc.x - R, hc.y, hc.z },
+                { hc.x, hc.y + R, hc.z }, { hc.x, hc.y - R, hc.z },
+                { hc.x, hc.y, hc.z + R }, { hc.x, hc.y, hc.z - R },
+            };
+            float  ed = 1e9f; Vec3 ep{}; ImVec2 es(0, 0); bool eHave = false;
+            for (const Vec3& p : cloud)
             {
-                bestDist = d;
-                bestScreen = ImVec2(sx, sy);
+                float px, py;
+                if (!W2S(vm, p, ds.x, ds.y, px, py)) continue;
+                const float ex = px - center.x, ey = py - center.y;
+                const float dd = std::sqrt(ex * ex + ey * ey);
+                if (dd < ed) { ed = dd; ep = p; es = ImVec2(px, py); eHave = true; }
+            }
+            if (!eHave) continue;
+            if (ed < dbgMinD) dbgMinD = ed;
+            if (ed < kRageFov) ++dbgFov;
+            if (ed < bestDist)
+            {
+                bestDist = ed;
+                bestScreen = es;
                 bestPawnIndex = static_cast<int>(pawnHandle & EntityList::kIndexMask);
-                bestHead = head;
+                bestHead = ep;
                 bestAbs = origin;
                 haveBest = true;
             }
         }
 
-        // видимость трейсом (LOS)
-        const bool visible = haveBest &&
-            Nemesis::Visibility::VisibleToLocal(base, localPawn, bestPawnIndex);
-
-        if (haveBest)
         {
-            const ImU32 col = visible ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255);
-            dl->AddCircleFilled(bestScreen, 3.5f, col);
+            static DWORD s_rdbg = 0;
+            if (Nemesis::SilentAim::Enabled() && GetTickCount() - s_rdbg > 400)
+            {
+                s_rdbg = GetTickCount();
+                NLOG("[rage] localSlot=%d enemies=%d spotted=%d inFov(%.0f)=%d minD=%.0f haveBest=%d",
+                     localSlot, dbgEnemies, dbgSpotted, kRageFov, dbgFov, dbgMinD, haveBest ? 1 : 0);
+            }
         }
 
-                if (visible)
+        // Видимость уже отфильтрована в цикле по m_bSpottedByMask → haveBest == видимая цель.
+        const bool visible = haveBest;
+
+        if (haveBest)
+            dl->AddCircleFilled(bestScreen, 3.5f, IM_COL32(0, 255, 0, 255));
+
+        if (visible)
         {
             Nemesis::SilentAim::SetTarget(bestHead.x, bestHead.y, bestHead.z);
             Nemesis::PacketGuard::SetTarget(bestHead.x, bestHead.y, bestHead.z, bestAbs.x, bestAbs.y, bestAbs.z);
