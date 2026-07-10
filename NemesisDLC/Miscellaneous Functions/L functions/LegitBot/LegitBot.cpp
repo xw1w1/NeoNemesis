@@ -11,13 +11,14 @@
 #include <chrono>
 #include <Windows.h>
 
+#include "../Miscellaneous Functions/AimConfig.h"
+
 namespace Nemesis::LegitBot
 {
     using namespace Nemesis::Addresses;
 
     namespace
     {
-        constexpr float          kFovRadius   = Config::fovRadius;
         constexpr std::ptrdiff_t kBoneArray   = 0x1D0;
         constexpr std::ptrdiff_t kBoneStride  = 0x20;
         constexpr int            kHeadBone    = 6;
@@ -116,6 +117,7 @@ namespace Nemesis::LegitBot
 
     void Render()
     {
+        const float kFovRadius = g_AimConfig.aimbotFov;
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
         if (!base)
             return;

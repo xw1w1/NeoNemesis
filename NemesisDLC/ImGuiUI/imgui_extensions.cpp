@@ -126,8 +126,8 @@ namespace ImGuiExt {
         ImGuiStorage* storage = window->DC.StateStorage;
         const ImGuiID anim_id = id + 1;
 
-        float anim = storage->GetFloat(anim_id, on ? 1.0f : 0.0f);
-        const float target = on ? 1.0f : 0.0f;
+        float anim = storage->GetFloat(anim_id, on ? 0.0f : 1.0f);
+        const float target = on ? 0.0f : 1.0f;
         const float anim_speed = 0.1f;
 
         if (anim != target)

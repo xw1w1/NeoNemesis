@@ -10,6 +10,7 @@ void DrawCard(const char* title, ImU32 col_top, ImU32 col_bot, float height, std
 
 void SettingsSectionHeader(const char* title);
 void SettingsRow(const char* label, const char* tooltip = nullptr);
+void SettingRow(const char* label, float widget_width, std::function<void()> widget_fn);
 void SettingsSliderInt(const char* label, int* value, int min, int max, const char* tooltip = nullptr);
 void SettingsSliderFloat(const char* label, float* value, float min, float max, const char* format = "%.2f", const char* tooltip = nullptr);
 void SettingsColorEditU32(const char* label, ImU32* col, const char* tooltip = nullptr);

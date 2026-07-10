@@ -1,10 +1,10 @@
 #include "RenderHook.hpp"
 #include "Miscellaneous Utilities/LogsSystem/LogsSystem.hpp"
 #include "Miscellaneous Functions/L functions/Esp/Esp.hpp"
-#include "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.hpp"
+//#include "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.hpp"
 #include "Miscellaneous Functions/L functions/LegitBot/LegitBot.hpp"
-#include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
-#include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
+//#include "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.hpp"
+//#include "Miscellaneous Functions/L functions/WallHackV2/ModelChams.hpp"
 #include "Miscellaneous Functions/R Functions/NemsisProject/RageBot.hpp"
 #include "CustomWorldRender/Night/Night.hpp"
 #include "AllUsedAddresses/Address/AllUsedAddresses.hpp"
@@ -23,6 +23,9 @@
 
 #include "../ImGuiUI/nemesis_ui.h"
 #include "../InactiveFileStorage/testicon/TestIcon.hpp"
+
+#include "../Miscellaneous Functions/AimConfig.h"
+AimConfig g_AimConfig;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -122,9 +125,9 @@ namespace Nemesis::RenderHook
                     aimMode ^= 1;
                 prevModeKey = modeKey;
 
-              //  Nemesis::WallHackV2::Render();
+                //Nemesis::WallHackV2::Render();
                 Nemesis::Esp::Render();
-                Nemesis::EnemyChams::Render();
+//                Nemesis::EnemyChams::Render();
                 Nemesis::TestIcon::Render();
                 if (aimMode == 1)
                     Nemesis::RageBot::Render();
@@ -173,7 +176,7 @@ namespace Nemesis::RenderHook
             NLOG("RenderHook: Present hooked");
         }
 
-        Nemesis::ModelChams::Start();
+//        Nemesis::ModelChams::Start();
     }
 
     ImFont* GetEspFont()

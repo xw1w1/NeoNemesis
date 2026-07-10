@@ -12,6 +12,8 @@
 #include <vector>
 #include <winuser.h>
 
+#include "../Miscellaneous Functions/AimConfig.h"
+
 namespace Nemesis::UI
 {
 	ImU32		 AccentColor = ImColor(230, 25, 52, 255);
@@ -271,6 +273,47 @@ namespace Nemesis::UI
 	void DrawWidgetsStack();
 	void DrawWidget(std::string title, const ImVec2 pos, std::function<void()> content);
 
+    void BeginFeatureBox(const char* title, float width, float height)
+    {
+        ImGui::BeginGroup();
+        ImGui::PushID(title);
+
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImVec2 size(width, height);
+
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        float rounding = 8.0f;
+        ImU32 bg = IM_COL32(30, 30, 32, 255);
+        ImU32 border = IM_COL32(50, 50, 52, 255);
+
+        dl->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), bg, rounding);
+        dl->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), border, rounding, 0, 1.0f);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f));
+        ImGui::BeginChild(
+            title,
+            size,
+            false,
+            ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar
+        );
+
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+        ImGui::TextUnformatted(title);
+        ImGui::PopStyleColor();
+
+        ImGui::Dummy(ImVec2(0.0f, 4.0f));
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0.0f, 8.0f));
+    }
+
+    void EndFeatureBox()
+    {
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopID();
+        ImGui::EndGroup();
+    }
+
     void DrawAimPage()
     {
         const float page_padding = 24.0f;
@@ -289,24 +332,23 @@ namespace Nemesis::UI
         ImGui::TextUnformatted("Aim Assistance");
         ImGui::PopStyleColor();
 
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
-        ImGui::TextUnformatted("Configure aim bot and trigger bot settings");
-        ImGui::PopStyleColor();
-
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
 
         float content_width = ImGui::GetContentRegionAvail().x;
 
+        float box_height = 220.0f;
         float box_width = (content_width - box_gap) * 0.5f;
+
+        PushButtonStyle();
 
         ImGui::BeginGroup();
         {
-            BeginFeatureBox("Aim Bot", box_width);
+            BeginFeatureBox("Aim Bot", box_width, box_height);
 
             SettingRow("Enabled", 40.0f, []() {
                 ImGuiExt::Toggle(
                     "##aimbot_toggle",
-                    &g_aimbotEnabled, // bool ВКЛЮЧЕН ЛИ АИМБОТ
+                    &g_AimConfig.aimbotEnabled, // bool ВКЛЮЧЕН ЛИ АИМБОТ
                     AccentColor,
                     AccentColor,
                     ImVec2(40.0f, 20.0f)
@@ -319,7 +361,7 @@ namespace Nemesis::UI
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
                 ImGui::SliderFloat(
                     "##aimbot_fov",
-                    &g_aimbotFov,   // float ФОВ АИМБОТА
+                    &g_AimConfig.aimbotFov,   // float ФОВ АИМБОТА
                     0.5f, 30.0f, "%.1f"
                 );
                 ImGui::PopStyleVar();
@@ -332,30 +374,17 @@ namespace Nemesis::UI
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
                 ImGui::SliderFloat(
                     "##aimbot_smooth",
-                    &g_aimbotSmooth, // float СГЛАЖИВАНИЕ АИМБОТА
+                    &g_AimConfig.aimbotSmooth, // float СГЛАЖИВАНИЕ АИМБОТА
                     1.0f, 20.0f, "%.1f"
                 );
                 ImGui::PopStyleVar();
                 ImGui::PopStyleColor(2);
                 });
 
-            SettingRow("Target Bone", 120.0f, []() {
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(45, 45, 48, 255));
-                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-                const char* bones[] = { "Head", "Chest", "Stomach" };
-                ImGui::Combo(
-                    "##aimbot_bone",
-                    &g_aimbotBone,  // какую часть тела стрелять
-                    bones, IM_ARRAYSIZE(bones)
-                );
-                ImGui::PopStyleVar();
-                ImGui::PopStyleColor();
-                });
-
             SettingRow("Vis Check", 40.0f, []() {
                 ImGuiExt::Toggle(
                     "##aimbot_vischeck",
-                    &g_aimbotVisCheck, // визуальнный чек
+                    &g_AimConfig.aimbotVisCheck, // визуальнный чек
                     AccentColor,
                     AccentColor,
                     ImVec2(40.0f, 20.0f)
@@ -370,12 +399,12 @@ namespace Nemesis::UI
 
         ImGui::BeginGroup();
         {
-            BeginFeatureBox("Trigger Bot", box_width);
+            BeginFeatureBox("Rage Bot", box_width, box_height);
 
             SettingRow("Enabled", 40.0f, []() {
                 ImGuiExt::Toggle(
                     "##triggerbot_toggle",
-                    &g_triggerbotEnabled,   //bool триггер бот
+                    &g_AimConfig.rageMode,   //bool триггер бот
                     AccentColor,
                     AccentColor,
                     ImVec2(40.0f, 20.0f)
@@ -388,7 +417,7 @@ namespace Nemesis::UI
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
                 ImGui::SliderFloat(
                     "##triggerbot_delay",
-                    &g_triggerbotDelay, // float задержка триггербота
+                    &g_AimConfig.triggerbotDelay, // float задержка триггербота
                     0.0f, 300.0f, "%.0f"
                 );
                 ImGui::PopStyleVar();
@@ -398,7 +427,7 @@ namespace Nemesis::UI
             SettingRow("Head Only", 40.0f, []() {
                 ImGuiExt::Toggle(
                     "##triggerbot_headonly",
-                    &g_triggerbotHeadOnly, // триггербот только в голову
+                    &g_AimConfig.triggerbotHeadOnly, // триггербот только в голову
                     AccentColor,
                     AccentColor,
                     ImVec2(40.0f, 20.0f)
@@ -408,7 +437,7 @@ namespace Nemesis::UI
             SettingRow("Scope Only", 40.0f, []() {
                 ImGuiExt::Toggle(
                     "##triggerbot_scopeonly",  // триггербот только с прицелом
-                    &g_triggerbotScopeOnly,
+                    &g_AimConfig.triggerbotScopeOnly,
                     AccentColor,
                     AccentColor,
                     ImVec2(40.0f, 20.0f)
@@ -418,6 +447,7 @@ namespace Nemesis::UI
             EndFeatureBox();
         }
         ImGui::EndGroup();
+        PopButtonStyle();
 
         ImGui::EndChild();
     }

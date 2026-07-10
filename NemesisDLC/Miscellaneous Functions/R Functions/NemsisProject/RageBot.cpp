@@ -10,13 +10,14 @@
 #include <cstdint>
 #include <cmath>
 
+#include "../Miscellaneous Functions/AimConfig.h"
+
 namespace Nemesis::RageBot
 {
     using namespace Nemesis::Addresses;
 
     namespace
     {
-        constexpr float          kRageFov    = 45.0f;  // радиус красного FOV (px)
         constexpr std::ptrdiff_t kBoneArray  = 0x1D0;
         constexpr std::ptrdiff_t kBoneStride = 0x20;
         constexpr int            kHeadBone   = 6;
@@ -77,6 +78,7 @@ namespace Nemesis::RageBot
 
     void Render()
     {
+        const float kRageFov = g_AimConfig.aimbotFov;
         const std::uintptr_t base = Mem::ModuleBase(Modules::kClient);
         if (!base) return;
 

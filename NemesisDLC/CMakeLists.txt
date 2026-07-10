@@ -62,14 +62,14 @@ add_library(NemesisDLC SHARED
     "Miscellaneous Functions/L functions/Esp/Esp.cpp"
     "Miscellaneous Functions/L functions/EnemyChams/EnemyChams.cpp"
     "Miscellaneous Functions/L functions/LegitBot/LegitBot.cpp"
-    "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.cpp"
-    "Miscellaneous Functions/L functions/WallHackV2/ModelChams.cpp"
+#    "Miscellaneous Functions/L functions/WallHackV2/WallHackV2.cpp"
+#    "Miscellaneous Functions/L functions/WallHackV2/ModelChams.cpp"
     "Miscellaneous Utilities/Visibility Check System/Visibility.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/RageBot.cpp"
     "Miscellaneous Functions/R Functions/NemsisProject/SilentAim.cpp"
     "Server Packet Anomaly Guard/Search for Anomalies in Packages/PacketGuard.cpp"
     "CustomWorldRender/Night/Night.cpp"
-    "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
+#    "System API Rendering/SystemShaderBloom/SystemShaderBloomImpl.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_intern.cpp"
     "${NEM_DEPS}/kiero2-master/kiero_d3d11.cpp"
     ${NEM_IMGUI_SOURCES}
@@ -86,7 +86,7 @@ target_include_directories(NemesisDLC PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Resources
     ${CMAKE_CURRENT_SOURCE_DIR}/AllUsedAddresses/Address
     "${CMAKE_CURRENT_SOURCE_DIR}/Miscellaneous Utilities/LogsSystem"
-    "${CMAKE_CURRENT_SOURCE_DIR}/System API Rendering/SystemShaderBloom"
+ #   "${CMAKE_CURRENT_SOURCE_DIR}/System API Rendering/SystemShaderBloom"
     "${NEM_DEPS}/asmjit-master"
     "${NEM_DEPS}/Detours-main/src"
     "${NEM_DEPS}/DirectXShaderCompiler-main/include"

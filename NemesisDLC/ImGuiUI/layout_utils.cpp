@@ -44,6 +44,28 @@ void SettingsRow(const char* label, const char* tooltip)
     ImGui::SetNextItemWidth(200.0f);
 }
 
+void SettingRow(const char* label, float widget_width, std::function<void()> widget_fn)
+{
+    ImGui::PushID(label);
+
+    float avail = ImGui::GetContentRegionAvail().x;
+    float label_x = ImGui::GetCursorPosX();
+    float widget_x = label_x + avail - widget_width;
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label);
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(widget_x);
+    ImGui::SetNextItemWidth(widget_width);
+
+    widget_fn();
+
+    ImGui::Dummy(ImVec2(0.0f, 4.0f));
+
+    ImGui::PopID();
+}
+
 void SettingsSliderInt(const char* label, int* value, int min, int max, const char* tooltip)
 {
     SettingsRow(label, tooltip);
