@@ -31,7 +31,7 @@ add_executable(NemesisLoader WIN32
     "subscription/remote_profile.cpp" 
     "injector/injector.cpp" 
     "injector/infector.h"
-)
+ "neo/LoaderUI.cpp")
 
 set_target_properties(NemesisLoader PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 
