@@ -6,62 +6,62 @@ enable_language(ASM_MASM)
 endif()
 
 include_directories(..)
-include_directories(../3rd_party)
+include_directories(3rd_party)
 
-##########################################################
-set(SOURCE_ASMJIT   ../3rd_party/asmjit/base/assembler.cpp
-                    ../3rd_party/Asmjit/base/codegen.cpp
-                    ../3rd_party/Asmjit/base/constpool.cpp
-                    ../3rd_party/Asmjit/base/containers.cpp
-                    ../3rd_party/Asmjit/base/cpuinfo.cpp
-                    ../3rd_party/Asmjit/base/cputicks.cpp
-                    ../3rd_party/Asmjit/base/error.cpp
-                    ../3rd_party/Asmjit/base/globals.cpp
-                    ../3rd_party/Asmjit/base/operand.cpp
-                    ../3rd_party/Asmjit/base/runtime.cpp
-                    ../3rd_party/Asmjit/base/string.cpp
-                    ../3rd_party/Asmjit/base/vmem.cpp
-                    ../3rd_party/Asmjit/base/zone.cpp
-                    ../3rd_party/Asmjit/x86/x86assembler.cpp
-                    ../3rd_party/Asmjit/x86/x86cpuinfo.cpp
-                    ../3rd_party/Asmjit/x86/x86inst.cpp
-                    ../3rd_party/Asmjit/x86/x86operand.cpp
-                    ../3rd_party/Asmjit/x86/x86operand_regs.cpp)
+#########################################################
+set(SOURCE_ASMJIT   3rd_party/Asmjit/base/assembler.cpp
+                    3rd_party/Asmjit/base/codegen.cpp
+                    3rd_party/Asmjit/base/constpool.cpp
+                    3rd_party/Asmjit/base/containers.cpp
+                    3rd_party/Asmjit/base/cpuinfo.cpp
+                    3rd_party/Asmjit/base/cputicks.cpp
+                    3rd_party/Asmjit/base/error.cpp
+                    3rd_party/Asmjit/base/globals.cpp
+                    3rd_party/Asmjit/base/operand.cpp
+                    3rd_party/Asmjit/base/runtime.cpp
+                    3rd_party/Asmjit/base/string.cpp
+                    3rd_party/Asmjit/base/vmem.cpp
+                    3rd_party/Asmjit/base/zone.cpp
+                    3rd_party/Asmjit/x86/x86assembler.cpp
+                    3rd_party/Asmjit/x86/x86cpuinfo.cpp
+                    3rd_party/Asmjit/x86/x86inst.cpp
+                    3rd_party/Asmjit/x86/x86operand.cpp
+                    3rd_party/Asmjit/x86/x86operand_regs.cpp)
                     
-set (HEADER_ASMJIT  ../3rd_party/Asmjit/apibegin.h
-                    ../3rd_party/Asmjit/apiend.h
-                    ../3rd_party/Asmjit/asmjit.h
-                    ../3rd_party/Asmjit/base.h
-                    ../3rd_party/Asmjit/build.h
-                    ../3rd_party/Asmjit/config.h
-                    ../3rd_party/Asmjit/host.h
-                    ../3rd_party/Asmjit/x86.h
-                    ../3rd_party/Asmjit/base/assembler.h
-                    ../3rd_party/Asmjit/base/codegen.h
-                    ../3rd_party/Asmjit/base/compiler.h
-                    ../3rd_party/Asmjit/base/constpool.h
-                    ../3rd_party/Asmjit/base/containers.h
-                    ../3rd_party/Asmjit/base/context_p.h
-                    ../3rd_party/Asmjit/base/cpuinfo.h
-                    ../3rd_party/Asmjit/base/cputicks.h
-                    ../3rd_party/Asmjit/base/error.h
-                    ../3rd_party/Asmjit/base/globals.h
-                    ../3rd_party/Asmjit/base/intutil.h
-                    ../3rd_party/Asmjit/base/lock.h
-                    ../3rd_party/Asmjit/base/logger.h
-                    ../3rd_party/Asmjit/base/operand.h
-                    ../3rd_party/Asmjit/base/runtime.h
-                    ../3rd_party/Asmjit/base/string.h
-                    ../3rd_party/Asmjit/base/vectypes.h
-                    ../3rd_party/Asmjit/base/vmem.h
-                    ../3rd_party/Asmjit/base/zone.h
-                    ../3rd_party/Asmjit/x86/x86assembler.h
-                    ../3rd_party/Asmjit/x86/x86compiler.h
-                    ../3rd_party/Asmjit/x86/x86context_p.h
-                    ../3rd_party/Asmjit/x86/x86cpuinfo.h
-                    ../3rd_party/Asmjit/x86/x86inst.h
-                    ../3rd_party/Asmjit/x86/x86operand.h
-                    ../3rd_party/Asmjit/x86/x86scheduler_p.h)
+set (HEADER_ASMJIT  3rd_party/Asmjit/apibegin.h
+                    3rd_party/Asmjit/apiend.h
+                    3rd_party/Asmjit/asmjit.h
+                    3rd_party/Asmjit/base.h
+                    3rd_party/Asmjit/build.h
+                    3rd_party/Asmjit/config.h
+                    3rd_party/Asmjit/host.h
+                    3rd_party/Asmjit/x86.h
+                    3rd_party/Asmjit/base/assembler.h
+                    3rd_party/Asmjit/base/codegen.h
+                    3rd_party/Asmjit/base/compiler.h
+                    3rd_party/Asmjit/base/constpool.h
+                    3rd_party/Asmjit/base/containers.h
+                    3rd_party/Asmjit/base/context_p.h
+                    3rd_party/Asmjit/base/cpuinfo.h
+                    3rd_party/Asmjit/base/cputicks.h
+                    3rd_party/Asmjit/base/error.h
+                    3rd_party/Asmjit/base/globals.h
+                    3rd_party/Asmjit/base/intutil.h
+                    3rd_party/Asmjit/base/lock.h
+                    3rd_party/Asmjit/base/logger.h
+                    3rd_party/Asmjit/base/operand.h
+                    3rd_party/Asmjit/base/runtime.h
+                    3rd_party/Asmjit/base/string.h
+                    3rd_party/Asmjit/base/vectypes.h
+                    3rd_party/Asmjit/base/vmem.h
+                    3rd_party/Asmjit/base/zone.h
+                    3rd_party/Asmjit/x86/x86assembler.h
+                    3rd_party/Asmjit/x86/x86compiler.h
+                    3rd_party/Asmjit/x86/x86context_p.h
+                    3rd_party/Asmjit/x86/x86cpuinfo.h
+                    3rd_party/Asmjit/x86/x86inst.h
+                    3rd_party/Asmjit/x86/x86operand.h
+                    3rd_party/Asmjit/x86/x86scheduler_p.h)
                     
 FILE(GLOB AsmJit ${SOURCE_ASMJIT} ${HEADER_ASMJIT})
 source_group(AsmJit\\Core FILES ${AsmJit})
@@ -206,12 +206,12 @@ source_group(Process\\Threads FILES ${Threads})
 set(SOURCE_SUB      Subsystem/NativeSubsystem.cpp
                     Subsystem/Wow64Subsystem.cpp
                     Subsystem/x86Subsystem.cpp
-                    ../3rd_party/rewolf-wow64ext/src/wow64ext.cpp)
+                    3rd_party/rewolf-wow64ext/src/wow64ext.cpp)
                     
 set(HEADER_SUB      Subsystem/NativeSubsystem.h
                     Subsystem/Wow64Subsystem.h
                     Subsystem/x86Subsystem.h
-                    ../3rd_party/rewolf-wow64ext/src/wow64ext.h)
+                    3rd_party/rewolf-wow64ext/src/wow64ext.h)
                     
 FILE(GLOB Subsystem ${SOURCE_SUB} ${HEADER_SUB})
 source_group(Subsystem FILES ${Subsystem})
@@ -278,4 +278,4 @@ set(HEADER_LIB      ${HEADER_ASMJIT}
                     ${HEADER_SYSCALL}
                     ${header_main})
 
-add_library(InjectorLib static ${SOURCE_LIB} ${HEADER_LIB})
+add_library(InjectorLib STATIC ${SOURCE_LIB} ${HEADER_LIB})
