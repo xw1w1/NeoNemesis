@@ -5,11 +5,10 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Loader must be built as x64")
 endif()
 
-set(NEM_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/../NemesisClient/RequiredDependencies")
+set(NEM_DEPS "../Dependencies")
 
 add_executable(NemesisLoader WIN32
-    main.cpp 
-    monitor.cpp
+    "neo/LoaderApp.cpp"
     "${NEM_DEPS}/imgui-master/imgui.cpp"
     "${NEM_DEPS}/imgui-master/imgui_draw.cpp"
     "${NEM_DEPS}/imgui-master/imgui_widgets.cpp"
@@ -29,13 +28,13 @@ add_executable(NemesisLoader WIN32
     "api/loader_api.cpp"
     "api/json.h"
     "subscription/remote_profile.cpp" 
-    "injector/injector.cpp" 
+    "injector/injector.cpp"     
     "injector/infector.h"
- "neo/LoaderUI.cpp")
+    "neo/LoaderUI.cpp")
 
 set_target_properties(NemesisLoader PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 
-target_include_directories(NemesisLoader PRIVATE
+target_include_directories(NemesisLoader PRIVATE ${NEM_DEPS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../Infections/src/Nemesis
     ${CMAKE_CURRENT_SOURCE_DIR}/../Infections/src/3rd_party
     "${NEM_DEPS}/imgui-master"
@@ -47,5 +46,5 @@ target_link_libraries(NemesisLoader PRIVATE
     d3d11
     dxgi
     d3dcompiler
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Injector/src/3rd_party/DIA/lib/amd64/diaguids.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Infections/src/3rd_party/DIA/lib/amd64/diaguids.lib
 )

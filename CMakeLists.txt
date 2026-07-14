@@ -4,7 +4,6 @@ project(Nemesis)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_definitions(ASMJIT_STATIC CONSOLE_TRACE)
 
-
-add_subdirectory(Injector)
+add_subdirectory(Infections/src/Nemesis)
 add_subdirectory(NemesisLoader)
 add_subdirectory(NemesisClient)

@@ -9,7 +9,7 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "NemesisClient must be built as x64")
 endif()
 
-set(NEM_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/RequiredDependencies")
+set(NEM_DEPS "../Dependencies")
 
 set(NEM_RES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Resources")
 set(NEM_RES_GEN "${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_resources.cpp")
@@ -92,16 +92,16 @@ target_include_directories(NemesisClient PRIVATE
     "${NEM_DEPS}/minhook-master/include"
 )
 
-add_subdirectory(RequiredDependencies/minhook-master)
+add_subdirectory(../Dependencies/minhook-master  ${CMAKE_BINARY_DIR}/deps/minhook)
 
 set(ASMJIT_STATIC ON CACHE BOOL "" FORCE)
-add_subdirectory(RequiredDependencies/asmjit-master)
+add_subdirectory(../Dependencies/asmjit-master    ${CMAKE_BINARY_DIR}/deps/asmjit)
 
 set(MI_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(MI_BUILD_OBJECT OFF CACHE BOOL "" FORCE)
 set(MI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(MI_OVERRIDE OFF CACHE BOOL "" FORCE)
-add_subdirectory(RequiredDependencies/mimalloc-main)
+add_subdirectory(../Dependencies/mimalloc-main    ${CMAKE_BINARY_DIR}/deps/mimalloc)
 
 target_link_libraries(NemesisClient PRIVATE
     minhook
