@@ -1,108 +1,39 @@
+#pragma once
+
 #include <windows.h>
-#include <windowsx.h>
-#include <tlhelp32.h>
-#include <shellapi.h>
 
-#pragma comment(lib, "windowscodecs.lib")
-#pragma comment(lib, "Shell32.lib")
-
-struct ProcessWindowSearch {
-    DWORD processID;
-    HWND foundWindow;
-};
-
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-    ProcessWindowSearch* data = (ProcessWindowSearch*)lParam;
-    DWORD procId = 0;
-    GetWindowThreadProcessId(hwnd, &procId);
-    if (procId == data->processID && IsWindowVisible(hwnd)) {
-        // Дополнительно можно проверить класс или имя окна, если нужно.
-        // Для cs2.exe главное окно обычно имеет заголовок "Counter-Strike 2".
-        // Мы просто проверим наличие видимого окна.
-        data->foundWindow = hwnd;
-        return FALSE; // Stop
-    }
-    return TRUE; // Continue
-}
-
-// Проверяет, существует ли процесс с переданным именем
-bool IsProcessRunning(const wchar_t* name)
+namespace ProcessHelper
 {
-    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnap == INVALID_HANDLE_VALUE) return false;
+    // Возвращает PID первого найденного процесса по имени, либо 0
+    DWORD FindProcessId(const wchar_t* processName);
 
-    PROCESSENTRY32W pe;
-    pe.dwSize = sizeof(pe);
-    bool running = false;
+    // Возвращает true, если процесс с таким именем существует
+    bool IsProcessRunning(const wchar_t* processName);
 
-    if (Process32FirstW(hSnap, &pe))
-    {
-        do {
-            if (_wcsicmp(pe.szExeFile, name) == 0)
-            {
-                running = true;
-                break;
-            }
-        } while (Process32NextW(hSnap, &pe));
-    }
-    CloseHandle(hSnap);
-    return running;
+    // Возвращает HWND первого видимого top-level окна процесса, либо nullptr
+    HWND FindVisibleWindowByProcessName(const wchar_t* processName);
+
+    // Возвращает true, если у процесса есть видимое окно
+    bool IsProcessWindowVisible(const wchar_t* processName);
+
+    // Пытается завершить все процессы с таким именем
+    // true, если удалось завершить хотя бы один
+    bool KillProcessByName(const wchar_t* processName);
 }
 
-// Проверяет, виден ли процесс с переданным именем
-bool IsProcessWindowVisible(const wchar_t* name)
+#pragma region Legacy Section
+inline bool IsProcessRunning(const wchar_t* processName)
 {
-    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnap == INVALID_HANDLE_VALUE) return false;
-
-    PROCESSENTRY32W pe;
-    pe.dwSize = sizeof(pe);
-    bool windowVisible = false;
-
-    if (Process32FirstW(hSnap, &pe))
-    {
-        do {
-            if (_wcsicmp(pe.szExeFile, name) == 0)
-            {
-                ProcessWindowSearch searchData = { pe.th32ProcessID, NULL };
-                EnumWindows(EnumWindowsProc, (LPARAM)&searchData);
-                if (searchData.foundWindow != NULL)
-                {
-                    windowVisible = true;
-                    break;
-                }
-            }
-        } while (Process32NextW(hSnap, &pe));
-    }
-    CloseHandle(hSnap);
-    return windowVisible;
+    return ProcessHelper::IsProcessRunning(processName);
 }
 
-// Пытается убить процесс с переданным именем
-bool KillProcessByName(const wchar_t* name)
+inline bool IsProcessWindowVisible(const wchar_t* processName)
 {
-    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnap == INVALID_HANDLE_VALUE) return false;
-
-    PROCESSENTRY32W pe;
-    pe.dwSize = sizeof(pe);
-    bool killed = false;
-
-    if (Process32FirstW(hSnap, &pe))
-    {
-        do {
-            if (_wcsicmp(pe.szExeFile, name) == 0)
-            {
-                HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
-                if (hProc)
-                {
-                    TerminateProcess(hProc, 0);
-                    CloseHandle(hProc);
-                    killed = true;
-                }
-            }
-        } while (Process32NextW(hSnap, &pe));
-    }
-    CloseHandle(hSnap);
-    return killed;
+    return ProcessHelper::IsProcessWindowVisible(processName);
 }
+
+inline bool KillProcessByName(const wchar_t* processName)
+{
+    return ProcessHelper::KillProcessByName(processName);
+}
+#pragma endregion

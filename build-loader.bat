@@ -16,7 +16,7 @@ if not exist "%ROOT%\build" (
     echo Creating build directory...
 
     powershell -Command ^
-        "cmake -S '%ROOT%' -B '%ROOT%\build' -G 'Visual Studio 17' -A x64"
+        "cmake -S '%ROOT%' -B '%ROOT%\build' -G 'Visual Studio 18' -A x64"
 
     if errorlevel 1 (
         echo.

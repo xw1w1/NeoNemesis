@@ -51,6 +51,7 @@ public:
     ID3D11ShaderResourceView* GetPosterDisabled() { return poster_disabled_.srv; }
     ID3D11ShaderResourceView* GetIcon() { return icon_.srv; }
     ID3D11ShaderResourceView* GetIconDisabled() { return icon_disabled_.srv; }
+    ID3D11ShaderResourceView* GetHeader() { return header_.srv; }
 
     ID3D11ShaderResourceView* GetCurrentPoster() {
         if (IsReady()) return poster_.srv;
@@ -100,6 +101,7 @@ private:
     TextureSlot poster_disabled_;
     TextureSlot icon_;
     TextureSlot icon_disabled_;
+    TextureSlot header_;
 
     std::mutex mutex_;
 };

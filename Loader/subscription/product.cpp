@@ -8,8 +8,8 @@
 static bool DecodeImageWIC(const std::vector<uint8_t>&file_data,
     std::vector<uint8_t>&out_pixels, int& out_w, int& out_h)
 {
-    HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    bool need_uninit = SUCCEEDED(com);
+    HRESULT com = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    bool need_uninit = (com == S_OK);
 
     IWICImagingFactory* factory = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr,
@@ -64,6 +64,7 @@ Product::~Product()
     if (poster_disabled_.srv) poster_disabled_.srv->Release();
     if (icon_.srv)            icon_.srv->Release();
     if (icon_disabled_.srv)   icon_disabled_.srv->Release();
+    if (header_.srv)          header_.srv->Release();
 }
 
 void Product::SyncFromCDN()
@@ -94,6 +95,7 @@ void Product::LoadMetaAsync()
             poster_disabled_.hash = json.GetString("poster_disabled");
             icon_.hash = json.GetString("icon");
             icon_disabled_.hash = json.GetString("icon_disabled");
+            header_.hash = json.GetString("header");
 
             int len = MultiByteToWideChar(CP_UTF8, 0, proc_name_.c_str(), -1, nullptr, 0);
             if (len > 0) {
@@ -108,6 +110,7 @@ void Product::LoadMetaAsync()
         if (!poster_disabled_.hash.empty()) LoadImageAsync(poster_disabled_);
         if (!icon_.hash.empty())            LoadImageAsync(icon_);
         if (!icon_disabled_.hash.empty())   LoadImageAsync(icon_disabled_);
+        if (!header_.hash.empty())          LoadImageAsync(header_);
         });
 }
 
@@ -175,4 +178,5 @@ void Product::ProcessCompletedTasks()
     CreateTextureFromPixels(poster_disabled_);
     CreateTextureFromPixels(icon_);
     CreateTextureFromPixels(icon_disabled_);
+    CreateTextureFromPixels(header_);
 }

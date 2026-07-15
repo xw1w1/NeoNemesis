@@ -17,9 +17,8 @@ add_executable(Loader WIN32
     "${NEM_DEPS}/imgui-master/backends/imgui_impl_win32.cpp"
     "${NEM_DEPS}/imgui-master/backends/imgui_impl_dx11.cpp"
     "subscription/product.cpp" 
-    "imgui_extensions.cpp" 
-    "layout_utils.cpp" 
-    "process_helper.h" 
+    "ui/imgui_extensions.cpp" 
+    "ui/layout_utils.cpp" 
     "file_utils.cpp"
     "steam/steamacc.cpp"
     "steam/steam_helper.cpp"
@@ -30,8 +29,10 @@ add_executable(Loader WIN32
     "api/json.h"
     "subscription/remote_profile.cpp" 
     "injector/injector.cpp" 
-    "injector/infector.h"
-)
+    "ui/blur.cpp" 
+    "ui/product_view.cpp" 
+    "injector/infector.cpp"
+    "process_helper.cpp")
 
 set_target_properties(Loader PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 

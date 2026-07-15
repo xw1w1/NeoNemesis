@@ -81,7 +81,7 @@ namespace ImGuiExt {
         ImU32 col_up, 
         ImU32 col_bot, 
         float rounding, 
-        ImDrawFlags flags
+        ImDrawFlags flags = 0
     );
 
     void AddRectFilledMultiColorHorizontal(
@@ -90,7 +90,7 @@ namespace ImGuiExt {
         ImU32 col_left,
         ImU32 col_right,
         float rounding,
-        ImDrawFlags flags
+        ImDrawFlags flags = 0
     );
 
     void ShadowBoxInner(const ImVec2& p_min, const ImVec2& p_max, ImU32 col, float dist, float rounding, ImDrawFlags flags = 0);
